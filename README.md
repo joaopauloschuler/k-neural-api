@@ -2,7 +2,7 @@
 <img align="right" src="docs/cai.png" height="192">
 K-CAI NEURAL API is a Keras based neural network API that will allow you to prototype faster!
 
-This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/).
+This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the pascal based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/blob/master/README.md).
 
 ## Prerequisites
 
