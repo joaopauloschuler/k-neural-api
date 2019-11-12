@@ -14,8 +14,7 @@ setup(name='cai',
       install_requires=['Keras>=2.2.5',
                         'pandas>=0.22.0',
                         'scikit-image>=0.15.0',
-                        'numpy']
-      },
+                        'numpy'],
       classifiers=[
           'Intended Audience :: Developers',
           'Intended Audience :: Education',
