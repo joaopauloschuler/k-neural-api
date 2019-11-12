@@ -1,4 +1,4 @@
-from keras import regularizers, layers
+import keras
 from keras import backend
 import cai.datasets
 import cai.layers
@@ -25,28 +25,28 @@ def densenet_conv_block(x, growth_rate, bottleneck, l2_decay, name):
     """
     bn_axis = 3
     if bottleneck > 0:
-        x1 = layers.BatchNormalization(axis=bn_axis,
+        x1 = keras.layers.BatchNormalization(axis=bn_axis,
                                    epsilon=1.001e-5,                                   
                                    name=name + '_0_bn')(x)
-        x1 = layers.Activation('relu', name=name + '_0_relu')(x1)
-        x1 = layers.Conv2D(bottleneck, 1,
+        x1 = keras.layers.Activation('relu', name=name + '_0_relu')(x1)
+        x1 = keras.layers.Conv2D(bottleneck, 1,
                        use_bias=False,
-                       kernel_regularizer=regularizers.l2(l2_decay),
+                       kernel_regularizer=keras.regularizers.l2(l2_decay),
                        name=name + '_1_conv')(x1)
-        x1 = layers.BatchNormalization(axis=bn_axis, 
+        x1 = keras.layers.BatchNormalization(axis=bn_axis, 
                                    epsilon=1.001e-5,                                   
                                    name=name + '_1_bn')(x1)
     else:
-        x1 = layers.BatchNormalization(axis=bn_axis, 
+        x1 = keras.layers.BatchNormalization(axis=bn_axis, 
                                    epsilon=1.001e-5,                                   
                                    name=name + '_1_bn')(x)
-    x1 = layers.Activation('relu', name=name + '_1_relu')(x1)
-    x1 = layers.Conv2D(growth_rate, 3,
+    x1 = keras.layers.Activation('relu', name=name + '_1_relu')(x1)
+    x1 = keras.layers.Conv2D(growth_rate, 3,
                        padding='same',
                        use_bias=False,
-                       kernel_regularizer=regularizers.l2(l2_decay),
+                       kernel_regularizer=keras.regularizers.l2(l2_decay),
                        name=name + '_2_conv')(x1)
-    x = layers.Concatenate(axis=bn_axis, name=name + '_concat')([x, x1])
+    x = keras.layers.Concatenate(axis=bn_axis, name=name + '_concat')([x, x1])
     return x
 
 def densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name):
@@ -74,61 +74,61 @@ def densenet_transition_block(x, reduction, l2_decay, name):
         output tensor for the block.
     """
     bn_axis = 3
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_bn')(x)
-    x = layers.Activation('relu', name=name + '_relu')(x)
+    x = keras.layers.Activation('relu', name=name + '_relu')(x)
     if reduction < 1: 
-       x = layers.Conv2D(int(backend.int_shape(x)[bn_axis] * reduction), 1,
+       x = keras.layers.Conv2D(int(backend.int_shape(x)[bn_axis] * reduction), 1,
                       use_bias=False,
-                      kernel_regularizer=regularizers.l2(l2_decay),
+                      kernel_regularizer=keras.regularizers.l2(l2_decay),
                       name=name + '_conv')(x)
-    x = layers.AveragePooling2D(2, strides=2, name=name + '_pool')(x)
+    x = keras.layers.AveragePooling2D(2, strides=2, name=name + '_pool')(x)
     return x
     
 def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001,  num_classes=10):
     bn_axis = 3
-    img_input = layers.Input(shape=pinput_shape)
-    x = layers.Conv2D(24, (3, 3), padding='same',
+    img_input = keras.layers.Input(shape=pinput_shape)
+    x = keras.layers.Conv2D(24, (3, 3), padding='same',
                      input_shape=pinput_shape, 
-                     kernel_regularizer=regularizers.l2(l2_decay))(img_input)
+                     kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
     x = densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name='dn1')
     x = densenet_transition_block(x, compression, l2_decay, name='dntransition1')
     x = densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name='dn2')
     x = densenet_transition_block(x, compression, l2_decay, name='dntransition2')
     x = densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name='dn3')
-    x = layers.BatchNormalization(
+    x = keras.layers.BatchNormalization(
         axis=bn_axis, epsilon=1.001e-5, name='bn')(x)
-    x = layers.Activation('relu', name='relu')(x)
-    x = layers.GlobalAveragePooling2D(name='last_avg_pool')(x)
-    x = layers.Dense(num_classes, activation='softmax', name='softmax')(x)            
+    x = keras.layers.Activation('relu', name='relu')(x)
+    x = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(x)
+    x = keras.layers.Dense(num_classes, activation='softmax', name='softmax')(x)            
     return Model(inputs = [img_input], outputs = [x])
     
 def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001, num_classes=10):
     bn_axis = 3
-    img_input = layers.Input(shape=pinput_shape)
+    img_input = keras.layers.Input(shape=pinput_shape)
     x = cai.layers.CopyChannels(0,1)(img_input)
-    x = layers.Conv2D(16, (3, 3), padding='same',
+    x = keras.layers.Conv2D(16, (3, 3), padding='same',
                      input_shape=pinput_shape, 
-                     kernel_regularizer=regularizers.l2(l2_decay))(x)
+                     kernel_regularizer=keras.regularizers.l2(l2_decay))(x)
     x = densenet_block(x, int(blocks/2), growth_rate, bottleneck, l2_decay, name='L1')
     x = densenet_transition_block(x, compression, l2_decay, name='LTRANS')
 
     x2 = cai.layers.CopyChannels(1,2)(img_input)
-    x2 = layers.Conv2D(8, (3, 3), padding='same',
+    x2 = keras.layers.Conv2D(8, (3, 3), padding='same',
                      input_shape=pinput_shape, 
-                     kernel_regularizer=regularizers.l2(l2_decay))(x2)
+                     kernel_regularizer=keras.regularizers.l2(l2_decay))(x2)
     x2 = densenet_block(x2, int(blocks/2), growth_rate, bottleneck, l2_decay, name='AB1')
     x2 = densenet_transition_block(x2, compression, l2_decay, name='ABTRANS')
-    x = layers.Concatenate(axis=bn_axis, name='concat')([x, x2])
+    x = keras.layers.Concatenate(axis=bn_axis, name='concat')([x, x2])
     
     x = densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name='dn2')
     x = densenet_transition_block(x, compression, l2_decay, name='dntransition2')
     x = densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name='dn3')
-    x = layers.BatchNormalization(
+    x = keras.layers.BatchNormalization(
         axis=bn_axis, epsilon=1.001e-5, name='bn')(x)
-    x = layers.Activation('relu', name='relu')(x)
-    x = layers.GlobalAveragePooling2D(name='last_avg_pool')(x)
-    x = layers.Dense(num_classes, activation='softmax', name='softmax')(x)            
+    x = keras.layers.Activation('relu', name='relu')(x)
+    x = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(x)
+    x = keras.layers.Dense(num_classes, activation='softmax', name='softmax')(x)            
     return Model(inputs = [img_input], outputs = [x])
 
 def train_simple_densenet_on_dataset(base_model_name, dataset, input_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.00001,  batch_size=64, epochs=300):
