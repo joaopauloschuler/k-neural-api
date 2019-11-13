@@ -60,14 +60,14 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
         else:
             x_train /= 255
             x_test /= 255
-    if (verbose):
-        for channel in (0,1,2):
-            sub_matrix = x_train[:,:,:,channel]
-            print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
     if dataset is fashion_mnist or dataset is mnist:
         img_rows, img_cols = 28, 28    
         x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
         x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+    if (verbose):
+        for channel in range(0, x_train.shape[3]):
+            sub_matrix = x_train[:,:,:,channel]
+            print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
     return x_train, y_train, x_test, y_test
 
 def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
