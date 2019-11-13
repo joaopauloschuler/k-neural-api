@@ -27,7 +27,7 @@ else:
 !cd k && pip install .
 ```
 ## Features
-* `cai.util.create_image_generator`: extremely tested default parameters for image data augmentation.
+* `cai.util.create_image_generator`: extremely tested default parameters for image data augmentation. For you to get a better image classification accuracy might be a case of just replacing your current data augmentation generator by this one. Give it a go!
 * `cai.datasets.train_model_on_cifar10`: allows you to quickly train a model on CIFAR-10 dataset. It comes with **K-CAI** default data augmentation settings. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
 * `cai.datasets.train_model_on_dataset`: allows you to train a model passed as parameter on a **dataset also passed as parameter**. It comes with **K-CAI** default data augmentation settings making simple to test a given neuronal architecture on multiple datasets. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_100.ipynb).
 
