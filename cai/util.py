@@ -4,21 +4,36 @@ from keras import backend
 from keras.preprocessing.image import ImageDataGenerator
 
 def evaluate_model_print(model, x_test, y_test):
+    """Evaluates a model and prints its result.
+    """
     scores = model.evaluate(x_test, y_test, verbose=1)
     print("Test loss", scores[0])
     print("Test accuracy", scores[1])
     return scores
     
 def create_folder_if_required(save_dir):
+    """Creates a a folder if it doesn't exist.
+    # Arguments
+        save_dir: string with folder to be created.
+    """
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
 def get_model_parameter_counts(model):
+    """Calculates the number of parameters from a given model.
+    # Arguments
+        model: model to have parameters counted.
+    # Returns
+      trainable_count: integer number with trainable parameter count.
+      non_trainable_count:  integer number with non trainable parameter count.
+    """
     trainable_count = int(np.sum([backend.count_params(p) for p in set(model.trainable_weights)]))
     non_trainable_count = int(np.sum([backend.count_params(p) for p in set(model.non_trainable_weights)]))
     return trainable_count, non_trainable_count 
 
 def preprocess(img):
+    """Transforms an image from [0,255] interval into bipolar [-2,+2] interval.
+    """
     # JP prefers bipolar input [-2,+2]
     img /= 64
     img -= 2
@@ -53,6 +68,8 @@ def create_image_generator(
         # fraction of images reserved for validation (strictly between 0 and 1)
         validation_split=0.0
     ):
+    """This is a wrapper for keras.preprocessing.image with extremely well tested K-CAI default values.
+    """
     # This will do preprocessing and realtime data augmentation:
     return ImageDataGenerator(
         featurewise_center=featurewise_center,  # set input mean to 0 over the dataset
@@ -82,4 +99,3 @@ def create_image_generator(
         data_format=data_format,
         # fraction of images reserved for validation (strictly between 0 and 1)
         validation_split=validation_split)
-     
