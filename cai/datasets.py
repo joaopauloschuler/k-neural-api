@@ -1,3 +1,5 @@
+"""data set functions.
+"""
 import skimage
 import numpy as np
 import keras
@@ -18,10 +20,26 @@ labels = np.array([
     'truck'])
     
 def print_cifar10_result(result):
+    """Prints CIFAR-10 result into a readable format.
+    # Arguments
+        result: 10 elements float array
+    """
     for n in range(9):
         print("[{}] : {}%".format(labels[n], round(result[0][n]*100,2)))
 
 def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
+    """Loads a dataset into memory.
+    # Arguments
+        dataset: object capable of loading the dataset.
+        lab: boolean indicating CIELAB (True) color space of RGB color space (False).
+        verbose: boolean value.
+        bipolar: if true, inputs are given in the rage [-2, +2].
+    # Returns
+        x_train: array with training images.
+        y_train: array with training labels.
+        x_test: array with testing images.
+        y_test: array with testing labels.
+    """
     (x_train, y_train), (x_test, y_test) = dataset.load_data()
     if (verbose):
         print("train shape", x_train.shape)
@@ -71,9 +89,38 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
     return x_train, y_train, x_test, y_test
 
 def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
+    """Loads a CIFAR-10 into memory.
+    # Arguments
+        lab: boolean indicating CIELAB (True) color space of RGB color space (False).
+        verbose: boolean value.
+        bipolar: if true, inputs are given in the rage [-2, +2].
+    # Returns
+        x_train: array with training images.
+        y_train: array with training labels.
+        x_test: array with testing images.
+        y_test: array with testing labels.
+    """
     return load_dataset(cifar10, lab=False,  verbose=False,  bipolar=True)
 
 def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batch_size = 64, epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True):
+    """Trains a given neural network model on a given dataset.
+    # Arguments
+        model: neural network model.
+        dataset: object capable of loading the dataset. 
+        base_model_name: string with file name without extension.
+        plrscheduler: learning rate scheduler. 
+        batch_size: integer number.
+        epochs: integer number.
+        momentum: float. 
+        nesterov: bolean. 
+        verbose: boolean value.
+        lab: boolean indicating CIELAB (True) color space of RGB color space (False).
+        bipolar: if true, inputs are given in the rage [-2, +2].
+    # Returns
+        fit_result: object
+        model_name: h5 file name with best model.
+        csv_name: string with CSV file name showing training progress.
+    """
     x_train, y_train, x_test, y_test = load_dataset(dataset, verbose=verbose, lab=lab,  bipolar=bipolar)
 
     batches_per_epoch = int(x_train.shape[0]/batch_size)
@@ -116,6 +163,23 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
     return fit_result,  model_name,  csv_name    
     
 def train_model_on_cifar10(model,  base_model_name, plrscheduler,  batch_size = 64, epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True):
+    """Trains a given neural network model on a given dataset.
+    # Arguments
+        model: neural network model.
+        base_model_name: string with file name without extension.
+        plrscheduler: learning rate scheduler. 
+        batch_size: integer number.
+        epochs: integer number.
+        momentum: float. 
+        nesterov: bolean. 
+        verbose: boolean value.
+        lab: boolean indicating CIELAB (True) color space of RGB color space (False).
+        bipolar: if true, inputs are given in the rage [-2, +2].
+    # Returns
+        fit_result: object
+        model_name: h5 file name with best model.
+        csv_name: string with CSV file name showing training progress.
+    """
     return train_model_on_dataset(model=model, dataset=cifar10,  base_model_name=base_model_name, 
     plrscheduler=plrscheduler,  batch_size=batch_size, epochs=epochs, momentum=momentum, nesterov=nesterov, 
     verbose=verbose, lab=lab, bipolar=bipolar)
