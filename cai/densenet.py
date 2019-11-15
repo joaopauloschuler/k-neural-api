@@ -1,3 +1,7 @@
+"""Functions to create DenseNet architectures.
+https://arxiv.org/abs/1608.06993
+"""
+
 import keras
 from keras import backend
 import cai.datasets
@@ -6,19 +10,26 @@ from keras.models import Model
 from keras.datasets import cifar10
 
 def lrscheduler(epoch):
-  if epoch < 150:
-    return 0.1
-  elif epoch < 225:
-    return 0.01
-  else:
-    return 0.001
+    """Default DenseNet Learning Rate Scheduler.
+    # Arguments
+        epoch: integer with current epoch count.
+    # Returns
+        float with desired learning rate.
+    """
+    if epoch < 150:
+       return 0.1
+    elif epoch < 225:
+       return 0.01
+    else:
+       return 0.001
 
 def densenet_conv_block(x, growth_rate, bottleneck, l2_decay, name):
-    """A building block for a dense block.
+    """Builds a unit inside a densenet convolutional block.
     # Arguments
         x: input tensor.
         growth_rate: float, growth rate at dense layers.
         bottleneck: float, densenet bottleneck.
+        l2_decay: float.
         name: string, block label.
     # Returns
         Output tensor for the block.
@@ -50,12 +61,13 @@ def densenet_conv_block(x, growth_rate, bottleneck, l2_decay, name):
     return x
 
 def densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name):
-    """A dense block.
+    """Builds a densenet convolutional block.
     # Arguments
         x: input tensor.
         blocks: integer, the number of building blocks.
         growth_rate: float, growth rate at dense layers.
         bottleneck: float, densenet bottleneck.
+        l2_decay: float.
         name: string, block label.
     # Returns
         output tensor for the block.
@@ -65,10 +77,11 @@ def densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name):
     return x
     
 def densenet_transition_block(x, reduction, l2_decay, name):
-    """A transition block.
+    """Builds a densenet transition block.
     # Arguments
         x: input tensor.
         reduction: float, compression rate at transition layers.
+        l2_decay: float.
         name: string, block label.
     # Returns
         output tensor for the block.
@@ -86,6 +99,18 @@ def densenet_transition_block(x, reduction, l2_decay, name):
     return x
     
 def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001,  num_classes=10):
+    """Builds a simple densenet model from input to end.
+    # Arguments
+        pinput_shape: array with input shape.
+        blocks: integer number with densenet number of blocks.
+        growth_rate: integer number with the number of channels added at each convolution.
+        bottleneck: integer. This is the number of bottleneck output channels.
+        compression: compression rate at transition blocks.
+        l2_decay: float.
+        num_classes: integer number with the number of classes to be classified.
+    # Returns
+        a densenet model.
+    """
     bn_axis = 3
     img_input = keras.layers.Input(shape=pinput_shape)
     x = keras.layers.Conv2D(24, (3, 3), padding='same',
@@ -104,6 +129,18 @@ def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compr
     return Model(inputs = [img_input], outputs = [x])
     
 def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001, num_classes=10):
+    """Builds a two-paths optimized densenet model from input to end.
+    # Arguments
+        pinput_shape: array with input shape.
+        blocks: integer number with densenet number of blocks.
+        growth_rate: integer number with the number of channels added at each convolution.
+        bottleneck: integer. This is the number of bottleneck output channels.
+        compression: compression rate at transition blocks.
+        l2_decay: float.
+        num_classes: integer number with the number of classes to be classified.
+    # Returns
+        a two paths densenet model.
+    """
     bn_axis = 3
     img_input = keras.layers.Input(shape=pinput_shape)
     x = cai.layers.CopyChannels(0,1)(img_input)
