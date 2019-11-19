@@ -31,6 +31,7 @@ else:
 * `cai.datasets.train_model_on_cifar10`: allows you to quickly train a model on CIFAR-10 dataset. It comes with **K-CAI** default data augmentation settings. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
 * `cai.datasets.train_model_on_dataset`: allows you to train a model passed as parameter on a **dataset also passed as parameter**. It comes with **K-CAI** default data augmentation settings making simple to test a given neuronal architecture on multiple datasets. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_100.ipynb).
 * `cai.densenet.simple_densenet`: simple way to create DenseNet models. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
+* `cai.datasets.load_hyperspectral_matlab_image`: downloads (if required) and loads hyperspectral image from a matlab file. This function has been tested with [AVIRIS](http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes) sensor data stored as a matlab file.
 
 ## Documentation
 The documentation is composed by **examples** and **PyDoc**.
