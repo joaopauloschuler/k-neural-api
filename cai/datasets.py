@@ -1,10 +1,13 @@
-"""data set functions.
+"""K-CAI data set functions.
 """
 import skimage
 import numpy as np
 import keras
 from keras.datasets import cifar10,  fashion_mnist,  mnist
 import cai.util
+import os
+import urllib.request
+import scipy.io
 
 # cifar10 labels
 labels = np.array([
@@ -101,6 +104,128 @@ def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
         y_test: array with testing labels.
     """
     return load_dataset(cifar10, lab=False,  verbose=False,  bipolar=True)
+
+def load_hyperspectral_matlab_image(ImgUrl, ClassUrl, ImgProperty, ClassProperty, LocalBaseName, Verbose=True):
+  """Downloads (if required) and loads hyperspectral image from matlab file.
+  http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes
+  This function has been tested with AVIRIS sensor data stored as matlab file.
+  # Example 1 (AVIRIS sensor):
+  ImgUrl='http://www.ehu.eus/ccwintco/uploads/d/df/SalinasA.mat', 
+  ClassUrl='http://www.ehu.eus/ccwintco/uploads/a/aa/SalinasA_gt.mat', 
+  ImgProperty='salinasA', 
+  ClassProperty='salinasA_gt', 
+  LocalBaseName='SalinasA', 
+  # Example 2 (AVIRIS sensor):
+  ImgUrl='http://www.ehu.eus/ccwintco/uploads/f/f1/Salinas.mat', 
+  ClassUrl='http://www.ehu.eus/ccwintco/uploads/f/fa/Salinas_gt.mat', 
+  ImgProperty='salinas', 
+  ClassProperty='salinas_gt', 
+  LocalBaseName='Salinas', 
+  # Arguments
+    ImgUrl: url from where to download the image file.
+    ClassUrl: url from where to download the ground truth.
+    ImgProperty: property in the loaded file to load the image.
+    ClassProperty: property in the ground truth to load classes.
+    LocalBaseName: file name without extension for local storage.
+    Verbose: 
+  # Returns
+    Image: loaded image.
+    Classes: loaded ground truth.
+    NumClasses: number of classes in the ground truth.
+  """
+  imgfile = LocalBaseName + '.mat'
+  classfile = LocalBaseName + '-class.mat'
+  if not os.path.isfile(imgfile):
+    if Verbose: print('Downloading:', ImgUrl, ' to ', imgfile)
+    urllib.request.urlretrieve(ImgUrl, imgfile)
+
+  if not os.path.isfile(classfile):
+    if Verbose: print('Downloading:', ClassUrl, ' to ', classfile)
+    urllib.request.urlretrieve(ClassUrl, classfile)
+    
+  mat = scipy.io.loadmat(imgfile)
+  Image = mat[ImgProperty]
+  if Verbose: print('matlab file image shape:', Image.shape)
+  
+  mat = scipy.io.loadmat(classfile)
+  Classes = mat[ClassProperty]
+  if Verbose: print('matlab file classes shape:', Classes.shape)
+  
+  Image = Image / Image.max()
+  NumClasses = (Classes.max() - Classes.min() + 1)
+  
+  return Image, Classes, NumClasses
+  
+def slice_image(Image, PixelClasses, NewImageSize=5):
+  """Creates an array of small images from a bigger image.
+  # Arguments
+    Image: array with input image.
+    PixelClasses: ground truth for each pixe.
+    NewImageSize: new image size as NewImageSize x NewImageSize pixels.
+  # Returns
+    aResultImg: array of images.
+    aResultClasses: array of classes.
+  """
+  MaxX = Image.shape[0] - NewImageSize
+  MaxY = Image.shape[1] - NewImageSize
+  Center = int(NewImageSize / 2)
+  aResultImg = [ Image[X:X+NewImageSize, Y:Y+NewImageSize, :]                
+    for X in range(0, MaxX)
+      for Y in range(0, MaxY) ]
+  
+  aResultClasses = [ int(PixelClasses[X+Center, Y+Center])                
+    for X in range(0, MaxX)
+      for Y in range(0, MaxY) ]
+  
+  NumClasses = (PixelClasses.max() - PixelClasses.min() + 1)
+  aResultClasses = keras.utils.to_categorical(aResultClasses, NumClasses)
+  
+  return np.array(aResultImg), aResultClasses
+
+def create_pixel_array_from_3D_image(Image):
+  """Creates a pixel array from a 3D image.
+  # Arguments
+    Image: array with input image.
+  # Returns
+    aResultImage: array of pixels.
+  """
+  SizeX = Image.shape[0]
+  SizeY = Image.shape[1]
+  Channels = Image.shape[2]
+  aResultImage = Image.reshape(SizeX * SizeY, Channels)
+  return aResultImage
+
+def create_image_generator_sliced_image():
+    """ image generator for sliced images (pixel classification) """
+    datagen = keras.preprocessing.image.ImageDataGenerator(
+        featurewise_center=False,  # set input mean to 0 over the dataset
+        samplewise_center=False,  # set each sample mean to 0
+        featurewise_std_normalization=False,  # divide inputs by std of the dataset
+        samplewise_std_normalization=False,  # divide each input by its std
+        zca_whitening=False,  # apply ZCA whitening
+        zca_epsilon=1e-06,  # epsilon for ZCA whitening
+        rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
+        # randomly shift images horizontally (fraction of total width)
+        width_shift_range=0.0,
+        # randomly shift images vertically (fraction of total height)
+        height_shift_range=0.0,
+        shear_range=0.,  # set range for random shear
+        zoom_range=[1.0,1.0],  # set range for random zoom
+        channel_shift_range=0.,  # set range for random channel shifts
+        # set mode for filling points outside the input boundaries
+        fill_mode='nearest',
+        cval=0.,  # value used for fill_mode = "constant"
+        horizontal_flip=True,  # randomly flip images
+        vertical_flip=True,  # randomly flip images
+        # set rescaling factor (applied before any other transformation)
+        rescale=None,
+        # set function that will be applied on each input
+        preprocessing_function=None,
+        # image data format, either "channels_first" or "channels_last"
+        data_format=None,
+        # fraction of images reserved for validation (strictly between 0 and 1)
+        validation_split=0.0)
+    return datagen
 
 def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batch_size = 64, epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True):
     """Trains a given neural network model on a given dataset.
