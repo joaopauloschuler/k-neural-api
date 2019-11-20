@@ -23,10 +23,10 @@ def lrscheduler(epoch):
     else:
        return 0.001
 
-def densenet_conv_block(x, growth_rate, bottleneck, l2_decay, name):
+def densenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name):
     """Builds a unit inside a densenet convolutional block.
     # Arguments
-        x: input tensor.
+        last_tensor: input tensor.
         growth_rate: float, growth rate at dense layers.
         bottleneck: float, densenet bottleneck.
         l2_decay: float.
@@ -37,33 +37,28 @@ def densenet_conv_block(x, growth_rate, bottleneck, l2_decay, name):
     bn_axis = 3
     if bottleneck > 0:
         x1 = keras.layers.BatchNormalization(axis=bn_axis,
-                                   epsilon=1.001e-5,                                   
-                                   name=name + '_0_bn')(x)
-        x1 = keras.layers.Activation('relu', name=name + '_0_relu')(x1)
+                                   epsilon=1.001e-5)(last_tensor)
+        x1 = keras.layers.Activation('relu')(x1)
         x1 = keras.layers.Conv2D(bottleneck, 1,
                        use_bias=False,
-                       kernel_regularizer=keras.regularizers.l2(l2_decay),
-                       name=name + '_1_conv')(x1)
+                       kernel_regularizer=keras.regularizers.l2(l2_decay))(x1)
         x1 = keras.layers.BatchNormalization(axis=bn_axis, 
-                                   epsilon=1.001e-5,                                   
-                                   name=name + '_1_bn')(x1)
+                                   epsilon=1.001e-5)(x1)
     else:
         x1 = keras.layers.BatchNormalization(axis=bn_axis, 
-                                   epsilon=1.001e-5,                                   
-                                   name=name + '_1_bn')(x)
-    x1 = keras.layers.Activation('relu', name=name + '_1_relu')(x1)
+                                   epsilon=1.001e-5)(last_tensor)
+    x1 = keras.layers.Activation('relu')(x1)
     x1 = keras.layers.Conv2D(growth_rate, 3,
                        padding='same',
                        use_bias=False,
-                       kernel_regularizer=keras.regularizers.l2(l2_decay),
-                       name=name + '_2_conv')(x1)
-    x = keras.layers.Concatenate(axis=bn_axis, name=name + '_concat')([x, x1])
-    return x
+                       kernel_regularizer=keras.regularizers.l2(l2_decay))(x1)
+    last_tensor = keras.layers.Concatenate(axis=bn_axis)([last_tensor, x1])
+    return last_tensor
 
-def densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name):
+def densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name):
     """Builds a densenet convolutional block.
     # Arguments
-        x: input tensor.
+        last_tensor: input tensor.
         blocks: integer, the number of building blocks.
         growth_rate: float, growth rate at dense layers.
         bottleneck: float, densenet bottleneck.
@@ -73,13 +68,13 @@ def densenet_block(x, blocks, growth_rate, bottleneck, l2_decay, name):
         output tensor for the block.
     """
     for i in range(blocks):
-        x = densenet_conv_block(x, growth_rate, bottleneck, l2_decay, name=name + '_block' + str(i + 1))
-    return x
+        last_tensor = densenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name=name + '_b' + str(i + 1))
+    return last_tensor
     
-def densenet_transition_block(x, reduction, l2_decay, name):
+def densenet_transition_block(last_tensor, reduction, l2_decay, name):
     """Builds a densenet transition block.
     # Arguments
-        x: input tensor.
+        last_tensor: input tensor.
         reduction: float, compression rate at transition layers.
         l2_decay: float.
         name: string, block label.
@@ -87,16 +82,15 @@ def densenet_transition_block(x, reduction, l2_decay, name):
         output tensor for the block.
     """
     bn_axis = 3
-    x = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
-                                  name=name + '_bn')(x)
-    x = keras.layers.Activation('relu', name=name + '_relu')(x)
+    last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+                                  name=name + '_bn')(last_tensor)
+    last_tensor = keras.layers.Activation('relu')(last_tensor)
     if reduction < 1: 
-       x = keras.layers.Conv2D(int(backend.int_shape(x)[bn_axis] * reduction), 1,
+       last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * reduction), 1,
                       use_bias=False,
-                      kernel_regularizer=keras.regularizers.l2(l2_decay),
-                      name=name + '_conv')(x)
-    x = keras.layers.AveragePooling2D(2, strides=2, name=name + '_pool')(x)
-    return x
+                      kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
+    last_tensor = keras.layers.AveragePooling2D(2, strides=2)(last_tensor)
+    return last_tensor
     
 def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001,  num_classes=10):
     """Builds a simple densenet model from input to end.

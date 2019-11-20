@@ -109,18 +109,50 @@ def load_hyperspectral_matlab_image(ImgUrl, ClassUrl, ImgProperty, ClassProperty
   """Downloads (if required) and loads hyperspectral image from matlab file.
   http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes
   This function has been tested with AVIRIS sensor data stored as matlab file.
-  # Example 1 (AVIRIS sensor):
-  ImgUrl='http://www.ehu.eus/ccwintco/uploads/d/df/SalinasA.mat', 
-  ClassUrl='http://www.ehu.eus/ccwintco/uploads/a/aa/SalinasA_gt.mat', 
-  ImgProperty='salinasA', 
-  ClassProperty='salinasA_gt', 
-  LocalBaseName='SalinasA', 
-  # Example 2 (AVIRIS sensor):
+  
+  #Examples
+  ## AVIRIS sensor over Salinas Valley, California
   ImgUrl='http://www.ehu.eus/ccwintco/uploads/f/f1/Salinas.mat', 
   ClassUrl='http://www.ehu.eus/ccwintco/uploads/f/fa/Salinas_gt.mat', 
   ImgProperty='salinas', 
   ClassProperty='salinas_gt', 
   LocalBaseName='Salinas', 
+
+  ## A small subscene of AVIRIS Salinas image, denoted Salinas-A
+  ImgUrl='http://www.ehu.eus/ccwintco/uploads/d/df/SalinasA.mat', 
+  ClassUrl='http://www.ehu.eus/ccwintco/uploads/a/aa/SalinasA_gt.mat', 
+  ImgProperty='salinasA', 
+  ClassProperty='salinasA_gt', 
+  LocalBaseName='SalinasA', 
+
+  ## AVIRIS sensor over the Indian Pines test site in North-western Indiana
+  ImgUrl='http://www.ehu.eus/ccwintco/uploads/2/22/Indian_pines.mat', 
+  ClassUrl='http://www.ehu.eus/ccwintco/uploads/c/c4/Indian_pines_gt.mat', 
+  ImgProperty='indian_pines', 
+  ClassProperty='indian_pines_gt', 
+  LocalBaseName='indian_pines',
+
+  ## ROSIS sensor during a flight campaign over Pavia, nothern Italy
+  ImgUrl='http://www.ehu.eus/ccwintco/uploads/e/e3/Pavia.mat', 
+  ClassUrl='http://www.ehu.eus/ccwintco/uploads/5/53/Pavia_gt.mat', 
+  ImgProperty='pavia', 
+  ClassProperty='pavia_gt', 
+  LocalBaseName='pavia', 
+  
+  ## ROSIS sensor during a flight over Pavia University
+  ImgUrl='http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat', 
+  ClassUrl='http://www.ehu.eus/ccwintco/uploads/5/50/PaviaU_gt.mat', 
+  ImgProperty='paviaU', 
+  ClassProperty='paviaU_gt', 
+  LocalBaseName='paviaU',
+
+  ## NASA AVIRIS over the Kennedy Space Center (KSC) 
+  ImgUrl='http://www.ehu.es/ccwintco/uploads/2/26/KSC.mat', 
+  ClassUrl='http://www.ehu.es/ccwintco/uploads/a/a6/KSC_gt.mat', 
+  ImgProperty='KSC', 
+  ClassProperty='KSC_gt', 
+  LocalBaseName='KSC',
+
   # Arguments
     ImgUrl: url from where to download the image file.
     ClassUrl: url from where to download the ground truth.
