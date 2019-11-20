@@ -139,7 +139,7 @@ def load_hyperspectral_matlab_image(ImgUrl, ClassUrl, ImgProperty, ClassProperty
   ClassProperty='pavia_gt', 
   LocalBaseName='pavia', 
   
-  ## ROSIS sensor during a flight over Pavia University
+  ##  sensor during a flight over Pavia University
   ImgUrl='http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat', 
   ClassUrl='http://www.ehu.eus/ccwintco/uploads/5/50/PaviaU_gt.mat', 
   ImgProperty='paviaU', 
@@ -152,6 +152,13 @@ def load_hyperspectral_matlab_image(ImgUrl, ClassUrl, ImgProperty, ClassProperty
   ImgProperty='KSC', 
   ClassProperty='KSC_gt', 
   LocalBaseName='KSC',
+  
+  ## NASA EO-1 satellite over the Okavango Delta, Botswana in 2001-2004
+  ImgUrl='http://www.ehu.es/ccwintco/uploads/7/72/Botswana.mat', 
+  ClassUrl='http://www.ehu.es/ccwintco/uploads/5/58/Botswana_gt.mat', 
+  ImgProperty='Botswana', 
+  ClassProperty='Botswana_gt', 
+  LocalBaseName='Botswana',
 
   # Arguments
     ImgUrl: url from where to download the image file.
