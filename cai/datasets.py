@@ -1,6 +1,6 @@
 """K-CAI data set functions.
 """
-import skimage
+from skimage import color as skimage_color
 import numpy as np
 import keras
 from keras.datasets import cifar10,  fashion_mnist,  mnist
@@ -57,8 +57,8 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
             print("Converting RGB to LAB.")
         x_train /= 255
         x_test /= 255
-        x_train = skimage.color.rgb2lab(x_train)
-        x_test = skimage.color.rgb2lab(x_test)
+        x_train = skimage_color.rgb2lab(x_train)
+        x_test = skimage_color.rgb2lab(x_test)
         if (bipolar):
             # JP prefers bipolar input [-2,+2]
             x_train[:,:,:,0:3] /= [25, 50, 50]
