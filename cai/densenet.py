@@ -22,6 +22,50 @@ def lrscheduler(epoch):
        return 0.01
     else:
        return 0.001
+       
+def cyclical_lrscheduler(epoch):
+    """CAI Cyclical DenseNet Learning Rate Scheduler.
+    # Arguments
+        epoch: integer with current epoch count.
+    # Returns
+        float with desired learning rate.
+    """
+    local_epoch = epoch % 100
+    if local_epoch < 50:
+       return 0.1
+    elif local_epoch < 75:
+       return 0.01
+    else:
+       return 0.001
+
+def smooth_lrscheduler(epoch):
+    """CAI Smooth DenseNet Learning Rate Scheduler.
+    # Arguments
+        epoch: integer with current epoch count.
+    # Returns
+        float with desired learning rate.
+    """
+    if epoch < 150:
+       return 0.01
+    elif epoch < 225:
+       return 0.001
+    else:
+       return 0.0001
+
+def cyclical_smooth_lrscheduler(epoch):
+    """CAI Cyclical and Smooth DenseNet Learning Rate Scheduler.
+    # Arguments
+        epoch: integer with current epoch count.
+    # Returns
+        float with desired learning rate.
+    """
+    local_epoch = epoch % 100
+    if local_epoch < 50:
+       return 0.01
+    elif local_epoch < 75:
+       return 0.001
+    else:
+       return 0.0001
 
 def densenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name):
     """Builds a unit inside a densenet convolutional block.
@@ -123,7 +167,10 @@ def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compr
         last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
             use_bias=False,
             kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
-    last_tensor = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(last_tensor)
+        # Extra compression works well with max pooling only.
+        last_tensor = keras.layers.GlobalMaxPooling2D(name='last_max_pool')(last_tensor)
+    else:
+        last_tensor = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(last_tensor)
     last_tensor = keras.layers.Dense(num_classes, activation='softmax', name='softmax')(last_tensor)            
     return Model(inputs = [img_input], outputs = [last_tensor])
     
