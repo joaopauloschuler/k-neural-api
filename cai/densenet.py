@@ -91,7 +91,8 @@ def densenet_transition_block(last_tensor, compression, l2_decay, name):
     last_tensor = keras.layers.AveragePooling2D(2, strides=2)(last_tensor)
     return last_tensor
     
-def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001,  num_classes=10):
+def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,
+    l2_decay=0.000001,  num_classes=10,  extra_compression=False):
     """Builds a simple densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
@@ -101,6 +102,7 @@ def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compr
         compression: compression rate at transition blocks.
         l2_decay: float.
         num_classes: integer number with the number of classes to be classified.
+        extra_compression: an extra compression might increase accuracy.
     # Returns
         a densenet model.
     """
@@ -117,15 +119,16 @@ def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compr
     last_tensor = keras.layers.BatchNormalization(
         axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
     last_tensor = keras.layers.Activation('relu', name='relu')(last_tensor)
-    #Makes sense testing this:
-    #last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
-    #                  use_bias=False,
-    #                  kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
+    if (extra_compression):
+        last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
+            use_bias=False,
+            kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
     last_tensor = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(last_tensor)
     last_tensor = keras.layers.Dense(num_classes, activation='softmax', name='softmax')(last_tensor)            
     return Model(inputs = [img_input], outputs = [last_tensor])
     
-def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,  l2_decay=0.000001, num_classes=10):
+def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,
+    l2_decay=0.000001, num_classes=10,  extra_compression=False):
     """Builds a two-paths optimized densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
@@ -135,6 +138,7 @@ def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, co
         compression: compression rate at transition blocks.
         l2_decay: float.
         num_classes: integer number with the number of classes to be classified.
+        extra_compression: an extra compression might increase accuracy.
     # Returns
         a two paths densenet model.
     """
@@ -161,10 +165,10 @@ def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, co
     last_tensor = keras.layers.BatchNormalization(
         axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
     last_tensor = keras.layers.Activation('relu', name='relu')(last_tensor)
-    #Makes sense testing this:
-    #last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
-    #                  use_bias=False,
-    #                  kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
+    if (extra_compression):
+        last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
+            use_bias=False,
+            kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
     last_tensor = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(last_tensor)
     last_tensor = keras.layers.Dense(num_classes, activation='softmax', name='softmax')(last_tensor)            
     return Model(inputs = [img_input], outputs = [last_tensor])
