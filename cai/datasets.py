@@ -266,7 +266,9 @@ def create_image_generator_sliced_image():
         validation_split=0.0)
     return datagen
 
-def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batch_size = 64, epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True):
+def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batch_size = 64, 
+    epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True,  
+    datagen = cai.util.create_image_generator()):
     """Trains a given neural network model on a given dataset.
     # Arguments
         model: neural network model.
@@ -280,6 +282,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         verbose: boolean value.
         lab: boolean indicating CIELAB (True) color space of RGB color space (False).
         bipolar: if true, inputs are given in the rage [-2, +2].
+        datagen: a data generator
     # Returns
         fit_result: object
         model_name: h5 file name with best model.
@@ -297,8 +300,6 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         loss='categorical_crossentropy',
         optimizer=opt,
         metrics=['accuracy'])
-
-    datagen = cai.util.create_image_generator()
     
     fit_verbose=0
     if (verbose):
