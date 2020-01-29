@@ -6,7 +6,7 @@ This project is a subproject from a bigger and older project called CAI and is s
 '''
 
 setup(name='cai',
-      version='0.0.4',
+      version='0.0.5',
       description='K-CAI NEURAL API',
       long_description=long_description,
       author='Joao Paulo Schwarz Schuler',
@@ -14,6 +14,8 @@ setup(name='cai',
       install_requires=['Keras>=2.2.5',
                         'pandas>=0.22.0',
                         'scikit-image>=0.15.0',
+                        'opencv-python>=4.1.2.30', 
+                        'scikit-learn>=0.22.1'
                         'numpy'],
       classifiers=[
           'Intended Audience :: Developers',
