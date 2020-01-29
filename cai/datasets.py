@@ -2,31 +2,69 @@
 """
 from skimage import color as skimage_color
 import numpy as np
+import cv2
 import keras
 from keras.datasets import cifar10,  fashion_mnist,  mnist
+from keras.preprocessing.image import img_to_array
 import cai.util
 import os
 import urllib.request
 import scipy.io
+import zipfile
+import requests
+from sklearn.model_selection import train_test_split
 
-# cifar10 labels
-labels = np.array([
-    'airplane',
-    'automobile',
-    'bird',
-    'cat',
-    'deer',
-    'dog',
-    'frog',
-    'horse',
-    'ship',
-    'truck'])
-    
+class img_folder_dataset:
+    def __init__(self, pbasefolder,  test_size=0.1,  Verbose=False, sizex=256,  sizey=256):
+        self.basefolder = pbasefolder
+        self.verbose = Verbose
+        self.test_size = test_size
+        self.sizex = sizex
+        self.sizey = sizey
+    def load_data(self):
+        image_list, label_list = [], []
+        folder_list = os.listdir(f"{self.basefolder}/")
+        folder_list.sort()
+        label_id = 0
+        for folder in folder_list:
+            img_folder_name = f"{self.basefolder}/{folder}/"
+            if self.verbose: print('Loading '+img_folder_name)
+            img_list = os.listdir(img_folder_name)
+            for img_file in img_list:
+                absolute_file_name = img_folder_name+'/'+img_file;
+                #print('File:'+absolute_file_name)
+                if absolute_file_name.lower().endswith('.jpg'):                
+                    aimage =  img_to_array(cv2.resize(cv2.imread(absolute_file_name),  tuple((self.sizex, self.sizey))), dtype='int8')
+                    #print(aimage.shape)
+                    image_list.append(aimage)
+                    label_list.append(label_id)
+                    # Debug only: break
+            label_id = label_id + 1
+        #label_binarizer = LabelBinarizer()
+        #bin_labels = label_binarizer.fit_transform(label_list)
+        #print(image_list)
+        image_list = np.array(image_list, dtype='int8')
+        label_list = np.array(label_list,  dtype='int16')
+        x_train, x_test, y_train, y_test = train_test_split(image_list, label_list, test_size=self.test_size, random_state = 17)
+        return (np.array(x_train), np.array(y_train)), (np.array(x_test), np.array(y_test))
+
 def print_cifar10_result(result):
     """Prints CIFAR-10 result into a readable format.
     # Arguments
         result: 10 elements float array
     """
+    # cifar10 labels
+    labels = np.array([
+        'airplane',
+        'automobile',
+        'bird',
+        'cat',
+        'deer',
+        'dog',
+        'frog',
+        'horse',
+        'ship',
+        'truck'])
     for n in range(9):
         print("[{}] : {}%".format(labels[n], round(result[0][n]*100,2)))
 
@@ -104,6 +142,34 @@ def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
         y_test: array with testing labels.
     """
     return load_dataset(cifar10, lab=False,  verbose=False,  bipolar=True)
+    
+def download_file(remote_url,  local_file):
+    r = requests.get(remote_url, stream = True) 
+    with open(local_file,"wb") as local_wb: 
+        for chunk in r.iter_content(chunk_size=1024*1024): 
+             # writing one chunk at a time to local file 
+             if chunk: 
+                 local_wb.write(chunk)
+
+def unzip_file(local_zip_file, expected_folder_name):
+    with zipfile.ZipFile(local_zip_file, 'r') as zip_ref:
+        zip_ref.extractall(expected_folder_name)    
+    
+def download_zip_and_extract(url_zip_file, local_zip_file, expected_folder_name, Verbose=True):
+    """Downloads (if required) and extracts a zip file. 
+    # Arguments
+        url_zip_file: remote zip file.
+        local_zip_file: local zip file.
+        expected_folder_name: where to deploy extracted files.
+        Verbose: boolean value.
+    """
+    if not os.path.isfile(local_zip_file):
+        if Verbose: print('Downloading: ', url_zip_file, ' to ', local_zip_file)
+        download_file(url_zip_file,  local_zip_file)
+    if not os.path.isdir(expected_folder_name):
+        os.mkdir(expected_folder_name)
+        if Verbose: print('Decompressing into: ', expected_folder_name)
+        unzip_file(local_zip_file, expected_folder_name)
 
 def load_hyperspectral_matlab_image(ImgUrl, ClassUrl, ImgProperty, ClassProperty, LocalBaseName, Verbose=True):
   """Downloads (if required) and loads hyperspectral image from matlab file.
