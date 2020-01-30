@@ -15,7 +15,7 @@ import requests
 from sklearn.model_selection import train_test_split
 
 class img_folder_dataset:
-    def __init__(self, pbasefolder,  test_size=0.1,  Verbose=False, sizex=256,  sizey=256):
+    def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256):
         self.basefolder = pbasefolder
         self.verbose = Verbose
         self.test_size = test_size
@@ -40,8 +40,6 @@ class img_folder_dataset:
                     label_list.append(label_id)
                     # Debug only: break
             label_id = label_id + 1
-        #label_binarizer = LabelBinarizer()
-        #bin_labels = label_binarizer.fit_transform(label_list)
         #print(image_list)
         image_list = np.array(image_list, dtype='int8')
         label_list = np.array(label_list,  dtype='int16')
@@ -88,8 +86,8 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
     class_cnt = np.max(y_train) + 1
     y_train = keras.utils.to_categorical(y_train, class_cnt)
     y_test = keras.utils.to_categorical(y_test, class_cnt)
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
+    x_train = x_train.astype('float16')
+    x_test = x_test.astype('float16')
     if (lab):
         if (verbose):
             print("Converting RGB to LAB.")
