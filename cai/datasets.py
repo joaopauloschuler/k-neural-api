@@ -15,18 +15,21 @@ import requests
 from sklearn.model_selection import train_test_split
 
 class img_folder_dataset:
-    def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256):
+    def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  max_samples_per_class=0):
         self.basefolder = pbasefolder
         self.verbose = Verbose
         self.test_size = test_size
         self.sizex = sizex
         self.sizey = sizey
+        self.max_samples_per_class = max_samples_per_class
     def load_data(self):
         image_list, label_list = [], []
         folder_list = os.listdir(f"{self.basefolder}/")
         folder_list.sort()
         label_id = 0
+        #folder_list.remove('Background_without_leaves')
         for folder in folder_list:
+            cnt_per_class = 0
             img_folder_name = f"{self.basefolder}/{folder}/"
             if self.verbose: print('Loading '+img_folder_name)
             img_list = os.listdir(img_folder_name)
@@ -38,7 +41,8 @@ class img_folder_dataset:
                     #print(aimage.shape)
                     image_list.append(aimage)
                     label_list.append(label_id)
-                    # Debug only: break
+                    cnt_per_class = cnt_per_class + 1
+                    if (self.max_samples_per_class>0 and cnt_per_class >= self.max_samples_per_class): break
             label_id = label_id + 1
         #print(image_list)
         image_list = np.array(image_list, dtype='int8')
