@@ -381,7 +381,8 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
     fit_verbose=0
     if (verbose):
         fit_verbose=2
-    
+   
+    gc.collect()
     fit_result = model.fit_generator(
         datagen.flow(x_train, y_train, batch_size=batch_size),
         epochs=epochs,
@@ -402,6 +403,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
             keras.callbacks.CSVLogger(csv_name, append=False, separator=';')  
         ]
     )
+    gc.collect()
     return fit_result,  model_name,  csv_name    
     
 def train_model_on_cifar10(model,  base_model_name, plrscheduler,  batch_size = 64, epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True):
