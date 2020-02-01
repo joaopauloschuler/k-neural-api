@@ -14,6 +14,7 @@ import zipfile
 import requests
 from sklearn.model_selection import train_test_split
 import gc
+import multiprocessing
 
 class img_folder_dataset:
     def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  
@@ -390,6 +391,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         validation_steps=batches_per_validation,
         validation_data=(x_test, y_test),
         verbose=fit_verbose,
+        workers=multiprocessing.cpu_count(), 
         callbacks=[
             keras.callbacks.LearningRateScheduler(plrscheduler),
             keras.callbacks.ModelCheckpoint(
