@@ -13,15 +13,18 @@ import scipy.io
 import zipfile
 import requests
 from sklearn.model_selection import train_test_split
+import gc
 
 class img_folder_dataset:
-    def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  max_samples_per_class=0):
+    def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  
+        max_samples_per_class=0,  folder_starts_with=''):
         self.basefolder = pbasefolder
         self.verbose = Verbose
         self.test_size = test_size
         self.sizex = sizex
         self.sizey = sizey
         self.max_samples_per_class = max_samples_per_class
+        self.folder_starts_with = folder_starts_with
     def load_data(self):
         image_list, label_list = [], []
         folder_list = os.listdir(f"{self.basefolder}/")
@@ -29,23 +32,24 @@ class img_folder_dataset:
         label_id = 0
         #folder_list.remove('Background_without_leaves')
         for folder in folder_list:
-            cnt_per_class = 0
-            img_folder_name = f"{self.basefolder}/{folder}/"
-            if self.verbose: print('Loading '+img_folder_name)
-            img_list = os.listdir(img_folder_name)
-            for img_file in img_list:
-                absolute_file_name = img_folder_name+'/'+img_file;
-                #print('File:'+absolute_file_name)
-                if absolute_file_name.lower().endswith('.jpg'):                
-                    aimage =  img_to_array(cv2.resize(cv2.imread(absolute_file_name),  tuple((self.sizex, self.sizey))), dtype='int8')
-                    #print(aimage.shape)
-                    image_list.append(aimage)
-                    label_list.append(label_id)
-                    cnt_per_class = cnt_per_class + 1
-                    if (self.max_samples_per_class>0 and cnt_per_class >= self.max_samples_per_class): break
-            label_id = label_id + 1
+            if (len(self.folder_starts_with)==0 or folder.startswith(self.folder_starts_with)): 
+                cnt_per_class = 0
+                img_folder_name = f"{self.basefolder}/{folder}/"
+                if self.verbose: print('Loading '+img_folder_name)
+                img_list = os.listdir(img_folder_name)
+                for img_file in img_list:
+                    absolute_file_name = img_folder_name+'/'+img_file;
+                    #print('File:'+absolute_file_name)
+                    if absolute_file_name.lower().endswith('.jpg'):                
+                        aimage =  img_to_array(cv2.resize(cv2.imread(absolute_file_name),  tuple((self.sizex, self.sizey))), dtype='int16')
+                        #print(aimage.shape)
+                        image_list.append(aimage)
+                        label_list.append(label_id)
+                        cnt_per_class = cnt_per_class + 1
+                        if (self.max_samples_per_class>0 and cnt_per_class >= self.max_samples_per_class): break
+                label_id = label_id + 1
         #print(image_list)
-        image_list = np.array(image_list, dtype='int8')
+        image_list = np.array(image_list, dtype='int16')
         label_list = np.array(label_list,  dtype='int16')
         x_train, x_test, y_train, y_test = train_test_split(image_list, label_list, test_size=self.test_size, random_state = 17)
         return (np.array(x_train), np.array(y_train)), (np.array(x_test), np.array(y_test))
@@ -92,6 +96,10 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
     y_test = keras.utils.to_categorical(y_test, class_cnt)
     x_train = x_train.astype('float16')
     x_test = x_test.astype('float16')
+    if (verbose):
+        for channel in range(0, x_train.shape[3]):
+            sub_matrix = x_train[:,:,:,channel]
+            print('Original channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
     if (lab):
         if (verbose):
             print("Converting RGB to LAB.")
@@ -357,6 +365,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         csv_name: string with CSV file name showing training progress.
     """
     x_train, y_train, x_test, y_test = load_dataset(dataset, verbose=verbose, lab=lab,  bipolar=bipolar)
+    gc.collect()
 
     batches_per_epoch = int(x_train.shape[0]/batch_size)
     batches_per_validation = int(x_test.shape[0]/batch_size)    
