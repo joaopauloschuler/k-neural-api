@@ -20,7 +20,7 @@ def plant_leaf(pinput_shape, num_classes,  l2_decay=0.0, dropout_drop_rate=0.2, 
     last_tensor = keras.layers.Activation('relu')(last_tensor)
     last_tensor = keras.layers.MaxPooling2D(2, strides=2)(last_tensor)
     
-    last_tensor = keras.layers.Conv2D(16, (3, 3), padding='valid',
+    last_tensor = keras.layers.Conv2D(8, (3, 3), padding='valid',
         input_shape=pinput_shape, 
         kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
     if (has_batch_norm): last_tensor = keras.layers.BatchNormalization(axis=3, epsilon=1.001e-5)(last_tensor)
