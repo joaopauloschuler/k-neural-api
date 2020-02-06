@@ -16,6 +16,54 @@ from sklearn.model_selection import train_test_split
 import gc
 import multiprocessing
 
+def rgb2lab(r, g, b):
+    r /= 255
+    g /= 255
+    b /= 255
+
+    if (r > 0.04045):
+        r = pow((r + 0.055) / 1.055, 2.4)
+    else:
+        r = r / 12.92
+
+    if (g > 0.04045):
+        g = pow((g + 0.055) / 1.055, 2.4)
+    else:
+        g = g / 12.92
+
+    if (b > 0.04045):
+        b = pow((b + 0.055) / 1.055,  2.4)
+    else:
+        b = b / 12.92
+
+    x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+    y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
+    z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+
+    if (x > 0.008856):
+        x = pow(x,  (1/3))
+    else:
+        x = (7.787 * x) + 16/116
+
+    if (y > 0.008856):
+        y = pow(y, 1/3)
+    else:
+        y = (7.787 * y) + 16/116
+
+    if (z > 0.008856):
+        z = pow(z, 1/3)
+    else:
+        z = (7.787 * z) + 16/116
+
+    l  = (116 * y) - 16
+    a  = 500 * (x - y)
+    bb = 200 * (y - z)
+    return l, a, bb
+
+def rgb2lab_a(aRGB):
+    l,  a,  bb = rgb2lab(aRGB[0], aRGB[1], aRGB[2])
+    return [l,  a,  bb]
+
 class img_folder_dataset:
     def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  
         max_samples_per_class=0,  folder_starts_with=''):
@@ -106,8 +154,10 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
             print("Converting RGB to LAB.")
         x_train /= 255
         x_test /= 255
-        x_train = skimage_color.rgb2lab(x_train)
-        x_test = skimage_color.rgb2lab(x_test)
+        x_train[:,:,:,0:3] = rgb2lab_a(x_train[:,:,:,0:3])
+        gc.collect()
+        x_test[:,:,:,0:3] = rgb2lab_a(x_test[:,:,:,0:3])
+        gc.collect()
         if (bipolar):
             # JP prefers bipolar input [-2,+2]
             x_train[:,:,:,0:3] /= [25, 50, 50]
@@ -134,6 +184,7 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
         img_rows, img_cols = 28, 28    
         x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
         x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+    gc.collect()
     if (verbose):
         for channel in range(0, x_train.shape[3]):
             sub_matrix = x_train[:,:,:,channel]
