@@ -1,6 +1,5 @@
 """K-CAI data set functions.
 """
-from skimage import color as skimage_color
 import numpy as np
 import cv2
 import keras
@@ -17,6 +16,12 @@ import gc
 import multiprocessing
 
 def rgb2lab(r, g, b):
+    """Converts RGB values to LAB.
+    # Arguments
+        r: input is an integer in [0, 255]. Returns L value in [0..100].
+        g: input is an integer in [0, 255]. Returns A value in [0..200].
+        b: input is an integer in [0, 255]. Returns B value in [0..200].
+    """
     r /= 255
     g /= 255
     b /= 255
@@ -36,12 +41,12 @@ def rgb2lab(r, g, b):
     else:
         b = b / 12.92
 
-    x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
-    y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
-    z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+    x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047
+    y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000
+    z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883
 
     if (x > 0.008856):
-        x = pow(x,  (1/3))
+        x = pow(x,  1/3)
     else:
         x = (7.787 * x) + 16/116
 
@@ -60,9 +65,31 @@ def rgb2lab(r, g, b):
     bb = 200 * (y - z)
     return l, a, bb
 
-def rgb2lab_a(aRGB):
-    l,  a,  bb = rgb2lab(aRGB[0], aRGB[1], aRGB[2])
-    return [l,  a,  bb]
+def rgb2lab_a(aRGB,  verbose=True):
+    # l,  a,  bb = rgb2lab(10, 100, 200)
+    # print(l, ' ',a,'', bb) # 43.28446956103366   15.309887260315291  -58.42936763053621
+    #print (aRGB.shape)
+    #print(len(aRGB))
+    #print(len(aRGB[0]))
+    #print(len(aRGB[0][0]))
+    #print(len(aRGB[0][0][0]))
+    
+    imgLen = len(aRGB)
+    xLen = len(aRGB[0])
+    yLen = len(aRGB[0][0])
+    
+    for img in range(imgLen):
+        if verbose and (img % 1000 == 0):
+            print(img, ' images converted to lab.')
+        for x in range(xLen):
+            for y in range(yLen):
+                r = aRGB[img][x][y][0]
+                g =aRGB[img][x][y][1]
+                b =aRGB[img][x][y][2]
+                l,  a,  bb = rgb2lab(r, g, b)
+                aRGB[img][x][y][0] = l
+                aRGB[img][x][y][1] = a
+                aRGB[img][x][y][2] = bb
 
 class img_folder_dataset:
     def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  
@@ -152,11 +179,10 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
     if (lab):
         if (verbose):
             print("Converting RGB to LAB.")
-        x_train /= 255
-        x_test /= 255
-        x_train[:,:,:,0:3] = rgb2lab_a(x_train[:,:,:,0:3])
-        gc.collect()
-        x_test[:,:,:,0:3] = rgb2lab_a(x_test[:,:,:,0:3])
+        #x_train /= 255
+        #x_test /= 255
+        rgb2lab_a(x_train,  verbose)
+        rgb2lab_a(x_test,  verbose)
         gc.collect()
         if (bipolar):
             # JP prefers bipolar input [-2,+2]
@@ -203,7 +229,7 @@ def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
         x_test: array with testing images.
         y_test: array with testing labels.
     """
-    return load_dataset(cifar10, lab=False,  verbose=False,  bipolar=True)
+    return load_dataset(cifar10, lab=lab,  verbose=verbose,  bipolar=bipolar)
     
 def download_file(remote_url,  local_file):
     r = requests.get(remote_url, stream = True) 
