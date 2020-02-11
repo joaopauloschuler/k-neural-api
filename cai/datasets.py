@@ -150,7 +150,7 @@ def print_cifar10_result(result):
     for n in range(9):
         print("[{}] : {}%".format(labels[n], round(result[0][n]*100,2)))
 
-def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
+def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_name=''):
     """Loads a dataset into memory.
     # Arguments
         dataset: object capable of loading the dataset.
@@ -179,22 +179,31 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True):
     if (lab):
         if (verbose):
             print("Converting RGB to LAB.")
-        #x_train /= 255
-        #x_test /= 255
-        rgb2lab_a(x_train,  verbose)
-        rgb2lab_a(x_test,  verbose)
-        gc.collect()
-        if (bipolar):
-            # JP prefers bipolar input [-2,+2]
-            x_train[:,:,:,0:3] /= [25, 50, 50]
-            x_train[:,:,:,0] -= 2
-            x_test[:,:,:,0:3] /= [25, 50, 50]
-            x_test[:,:,:,0] -= 2
+        # LAB datasets are cached
+        cachefilename = 'cache-lab-'+base_model_name+'-'+str(x_train.shape[0])+'-'+str(x_train.shape[1])+'-'+str(x_train.shape[2])+'.npz'
+        if not os.path.isfile(cachefilename):            
+            #x_train /= 255
+            #x_test /= 255
+            rgb2lab_a(x_train,  verbose)
+            rgb2lab_a(x_test,  verbose)
+            gc.collect()
+            if (bipolar):
+                # JP prefers bipolar input [-2,+2]
+                x_train[:,:,:,0:3] /= [25, 50, 50]
+                x_train[:,:,:,0] -= 2
+                x_test[:,:,:,0:3] /= [25, 50, 50]
+                x_test[:,:,:,0] -= 2
+            else:
+                x_train[:,:,:,0:3] /= [100, 200, 200]
+                x_train[:,:,:,1:3] += 0.5
+                x_test[:,:,:,0:3] /= [100, 200, 200]
+                x_test[:,:,:,1:3] += 0.5
+            np.savez_compressed(cachefilename, a=x_train,  b=x_test)
         else:
-            x_train[:,:,:,0:3] /= [100, 200, 200]
-            x_train[:,:,:,1:3] += 0.5
-            x_test[:,:,:,0:3] /= [100, 200, 200]
-            x_test[:,:,:,1:3] += 0.5            
+            loaded = np.load(cachefilename)
+            x_train = loaded['a']
+            x_test = loaded['b']
+        gc.collect()
     else:
         if (verbose):
             print("Loading RGB.")
@@ -443,7 +452,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         model_name: h5 file name with best model.
         csv_name: string with CSV file name showing training progress.
     """
-    x_train, y_train, x_test, y_test = load_dataset(dataset, verbose=verbose, lab=lab,  bipolar=bipolar)
+    x_train, y_train, x_test, y_test = load_dataset(dataset, verbose=verbose, lab=lab,  bipolar=bipolar, base_model_name=base_model_name)
     gc.collect()
 
     batches_per_epoch = int(x_train.shape[0]/batch_size)
