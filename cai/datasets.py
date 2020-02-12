@@ -180,7 +180,7 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
         if (verbose):
             print("Converting RGB to LAB.")
         # LAB datasets are cached
-        cachefilename = 'cache-lab-'+base_model_name+'-'+str(x_train.shape[0])+'-'+str(x_train.shape[1])+'-'+str(x_train.shape[2])+'.npz'
+        cachefilename = 'cache-lab-'+base_model_name+'-'+str(x_train.shape[1])+'-'+str(x_train.shape[2])+'.npz'
         if not os.path.isfile(cachefilename):            
             #x_train /= 255
             #x_test /= 255
@@ -238,7 +238,7 @@ def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
         x_test: array with testing images.
         y_test: array with testing labels.
     """
-    return load_dataset(cifar10, lab=lab,  verbose=verbose,  bipolar=bipolar)
+    return load_dataset(cifar10, lab=lab,  verbose=verbose,  bipolar=bipolar,  base_model_name='cifar10')
     
 def download_file(remote_url,  local_file):
     r = requests.get(remote_url, stream = True) 
