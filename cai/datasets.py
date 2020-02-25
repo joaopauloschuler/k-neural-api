@@ -12,6 +12,7 @@ import scipy.io
 import zipfile
 import requests
 from sklearn.model_selection import train_test_split
+from skimage import color as skimage_color
 import gc
 import multiprocessing
 
@@ -91,6 +92,16 @@ def rgb2lab_a(aRGB,  verbose=True):
                 aRGB[img][x][y][1] = a
                 aRGB[img][x][y][2] = bb
 
+def skimage_rgb2lab_a(aRGB,  verbose=True):    
+    imgLen = len(aRGB)
+    for img in range(imgLen):
+        aRGB[img] = skimage_color.rgb2lab(aRGB[img])
+        if (img % 1000 == 0):
+          gc.collect()  
+          if verbose:
+            print(img, ' images converted to lab.')
+    gc.collect()
+            
 class img_folder_dataset:
     def __init__(self, pbasefolder,  test_size=0.06,  Verbose=False, sizex=256,  sizey=256,  
         max_samples_per_class=0,  folder_starts_with=''):
@@ -182,10 +193,10 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
         # LAB datasets are cached
         cachefilename = 'cache-lab-'+base_model_name+'-'+str(x_train.shape[1])+'-'+str(x_train.shape[2])+'.npz'
         if not os.path.isfile(cachefilename):            
-            #x_train /= 255
-            #x_test /= 255
-            rgb2lab_a(x_train,  verbose)
-            rgb2lab_a(x_test,  verbose)
+            x_train /= 255
+            x_test /= 255
+            skimage_rgb2lab_a(x_train,  verbose)
+            skimage_rgb2lab_a(x_test,  verbose)
             gc.collect()
             if (bipolar):
                 # JP prefers bipolar input [-2,+2]
@@ -198,7 +209,7 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
                 x_train[:,:,:,1:3] += 0.5
                 x_test[:,:,:,0:3] /= [100, 200, 200]
                 x_test[:,:,:,1:3] += 0.5
-            np.savez_compressed(cachefilename, a=x_train,  b=x_test)
+            #np.savez_compressed(cachefilename, a=x_train,  b=x_test)
         else:
             loaded = np.load(cachefilename)
             x_train = loaded['a']
