@@ -124,11 +124,9 @@ def two_path_inception_v3(include_top=True,
                 l_ratio=0.5,
                 ab_ratio=0.5,
                 max_mix_idx=10, 
+                model_name='two_path_inception_v3', 
                 **kwargs):
-    """Instantiates the Inception v3 architecture.
-    Optionally loads weights pre-trained on ImageNet.
-    Note that the data format convention used by the model is
-    the one specified in your Keras config at `~/.keras/keras.json`.
+    """Instantiates the Inception v3 architecture with 2 paths options.
     # Arguments
         include_top: whether to include the fully-connected
             layer at the top of the network.
@@ -156,29 +154,25 @@ def two_path_inception_v3(include_top=True,
         classes: optional number of classes to classify images
             into, only to be specified if `include_top` is True, and
             if no `weights` argument is specified.
+        two_paths_first_block: when true, starts with 2 paths for 
+            the first 3 convolutions.
+        two_paths_second_block: when true, another 2 convolutions
+            are done in two paths.
+        l_ratio: proportion dedicated to light.
+        ab_ratio: proportion dedicated to color.
+        max_mix_idx: last "mixed layer" index. You can create smaller
+            architectures with this parameter.
+        model_name: model name 
     # Returns
         A Keras model instance.
     # Raises
         ValueError: in case of invalid argument for `weights`,
             or invalid input shape.
     """
-    #global backend, layers, models, keras_utils
-    #backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
-
-#    if not (weights in {'imagenet', None} or os.path.exists(weights)):
-#        raise ValueError('The `weights` argument should be either '
-#                         '`None` (random initialization), `imagenet` '
-#                         '(pre-training on ImageNet), '
-#                         'or the path to the weights file to be loaded.')
-
-#    if weights == 'imagenet' and include_top and classes != 1000:
-#        raise ValueError('If using `weights` as `"imagenet"` with `include_top`'
-#                         ' as true, `classes` should be 1000')
-
     # Determine proper input shape
     input_shape = _obtain_input_shape(
         input_shape,
-        default_size=299,
+        default_size=224,
         min_size=75,
         data_format=keras.backend.image_data_format(),
         require_flatten=include_top,
@@ -438,6 +432,57 @@ def two_path_inception_v3(include_top=True,
 
     inputs = img_input
     # Create model.
-    model = keras.models.Model(inputs, x, name='two_path_inception_v5')
+    model = keras.models.Model(inputs, x, name=model_name)
+    return model
 
+def compiled_two_path_inception_v3(
+    input_shape=(224,224,3),
+    classes=1000, 
+    two_paths_first_block=False,
+    two_paths_second_block=False,
+    l_ratio=0.5,
+    ab_ratio=0.5,
+    max_mix_idx=10, 
+    model_name='two_path_inception_v3'
+    ):
+    """Returns a compiled two-paths inception v3.
+    # Arguments
+        input_shape: optional shape tuple
+        classes: optional number of classes to classify images
+            into.
+        two_paths_first_block: when true, starts with 2 paths for 
+            the first 3 convolutions.
+        two_paths_second_block: when true, another 2 convolutions
+            are done in two paths.
+        l_ratio: proportion dedicated to light.
+        ab_ratio: proportion dedicated to color.
+        max_mix_idx: last "mixed layer" index. You can create smaller
+            architectures with this parameter.
+        model_name: model name 
+    # Returns
+        A Keras model instance.
+    # Raises
+        ValueError: in case of invalid argument for `weights`,
+            or invalid input shape.
+    """
+    base_model = cai.models.two_path_inception_v3(
+        include_top=False,
+        weights=None,
+        input_shape=input_shape,
+        pooling=None,
+        two_paths_first_block=two_paths_first_block,
+        two_paths_second_block=two_paths_second_block,
+        l_ratio=l_ratio,
+        ab_ratio=ab_ratio,
+        max_mix_idx=max_mix_idx, 
+        model_name=model_name
+    )
+    x = base_model.output
+    x = keras.layers.GlobalAveragePooling2D()(x)
+    x = keras.layers.Dense(38, name='preprediction')(x)
+    predictions = keras.layers.Activation('softmax',name='prediction')(x)
+    model = Model(inputs=base_model.input, outputs=predictions)
+    model.compile(loss='categorical_crossentropy',
+    optimizer="sgd",
+    metrics=['accuracy','top_k_categorical_accuracy'])
     return model
