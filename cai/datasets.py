@@ -13,6 +13,7 @@ import zipfile
 import requests
 from sklearn.model_selection import train_test_split
 from skimage import color as skimage_color
+import skimage.filters
 import gc
 import multiprocessing
 
@@ -100,6 +101,37 @@ def skimage_rgb2lab_a(aRGB,  verbose=True):
           gc.collect()  
           if verbose:
             print(img, ' images converted to lab.')
+    gc.collect()
+    
+def skimage_blur(aImages, sigma=1.0, truncate=3.5, verbose=True):    
+    imgLen = len(aImages)
+    for img in range(imgLen):
+        aImages[img] = np.array(skimage.filters.gaussian(
+            np.array(aImages[img], dtype='float32'), 
+            sigma=(sigma, sigma), truncate=truncate, multichannel=True), dtype='float16')
+        if (img % 1000 == 0):
+          gc.collect()  
+          if verbose:
+            print(img, ' images blurred.')
+    gc.collect()
+    
+def salt_pepper(aImages, salt_pepper_num, salt_value=2.0, pepper_value=-2.0, verbose=True):    
+    imgLen = len(aImages)
+    for img in range(imgLen):
+        current_image = aImages[img]
+        row_count, col_count, _ = current_image.shape
+        for i in range(salt_pepper_num):
+            row = np.random.randint(0, row_count)
+            col = np.random.randint(0, col_count)
+            current_image[row, col, :] = salt_value
+            row = np.random.randint(0, row_count)
+            col = np.random.randint(0, col_count)
+            current_image[row, col, :] = pepper_value
+        aImages[img] = current_image
+        if (img % 1000 == 0):
+          gc.collect()  
+          if verbose:
+            print(img, ' salted.')
     gc.collect()
             
 class img_folder_dataset:
