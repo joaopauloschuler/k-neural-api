@@ -98,8 +98,8 @@ def skimage_rgb2lab_a(aRGB,  verbose=True):
     for img in range(imgLen):
         aRGB[img] = skimage_color.rgb2lab(aRGB[img])
         if (img % 1000 == 0):
-          gc.collect()  
-          if verbose:
+          gc.collect()
+          if verbose and (img>0):
             print(img, ' images converted to lab.')
     gc.collect()
     
