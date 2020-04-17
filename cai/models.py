@@ -2,10 +2,11 @@ import cai.layers
 import keras
 import keras.backend
 import keras.layers
-keras.utils
+import keras.utils
 from keras_applications.imagenet_utils import _obtain_input_shape
 from keras.models import Model
 from keras.models import model_from_json
+import numpy as np
 
 def save_model(model, base_name):
     """Saves a model with its weights.
@@ -486,3 +487,20 @@ def compiled_two_path_inception_v3(
     optimizer="sgd",
     metrics=['accuracy','top_k_categorical_accuracy'])
     return model
+
+def PartialModelPredict(aInput, pModel, pOutputLayerName, hasGlobalAvg = False):
+  """Creates a partial model up to the layer name defined in pOutputLayerName and run it
+  with aInput.  
+  # Arguments
+    aInput: array with Input elements.
+    pModel: original model.
+    pOutputLayerName: last layer in the partial model.
+    hasGlobalAvg: when True, adds a global average pooling at the end. 
+  """  
+  inputs = pModel.input
+  outputs = pModel.get_layer(pOutputLayerName).output
+  if (hasGlobalAvg):
+    outputs = keras.layers.GlobalAveragePooling2D()(outputs)
+  IntermediateLayerModel = keras.Model(inputs=inputs, outputs=outputs)
+  layeroutput = np.array(IntermediateLayerModel.predict(x=aInput))
+  return layeroutput 
