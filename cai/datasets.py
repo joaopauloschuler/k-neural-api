@@ -16,6 +16,7 @@ from skimage import color as skimage_color
 import skimage.filters
 import gc
 import multiprocessing
+import math
 
 def rgb2lab(r, g, b):
     """Converts RGB values to LAB.
@@ -172,6 +173,35 @@ class img_folder_dataset:
         label_list = np.array(label_list,  dtype='int16')
         x_train, x_test, y_train, y_test = train_test_split(image_list, label_list, test_size=self.test_size, random_state = 17)
         return (np.array(x_train), np.array(y_train)), (np.array(x_test), np.array(y_test))
+
+def Create2DGaussian(SizeX, SizeY, DistScale=1, ResultScale=1, ResultBias=0):
+  """Creates a 2D array (SizeX,SizeY) gaussian distributions.
+  # Arguments
+    result: a 2D array.
+  """
+  rv = scipy.stats.norm()
+  s = np.empty((SizeX, SizeY), dtype='float32')
+  for i in range(SizeX):
+    for j in range(SizeY):
+      distance = math.sqrt((i-(SizeX/2))**2 + (j-(SizeY/2))**2)*DistScale
+      s[i][j] = rv.pdf(distance)*ResultScale + ResultBias
+  return s
+
+def Create2DGaussianWithChannels(SizeX, SizeY, DistScale=1, ResultScale=1, ResultBias=0, Channels=1):
+  """Creates a 3D array (SizeX,SizeY,Channels) with a 2D gaussian distribution. The very
+  same data is replicated accross all channels.
+  # Arguments
+    result: a 3D array.
+  """
+  rv = scipy.stats.norm()
+  s = np.empty((SizeX, SizeY, Channels), dtype='float32')
+  for i in range(SizeX):
+    for j in range(SizeY):
+      distance = math.sqrt((i-(SizeX/2))**2 + (j-(SizeY/2))**2)*DistScale
+      cellValue = rv.pdf(distance)*ResultScale + ResultBias
+      for k in range(Channels):
+        s[i][j][k] = cellValue
+  return s
 
 def print_cifar10_result(result):
     """Prints CIFAR-10 result into a readable format.
