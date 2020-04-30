@@ -2,6 +2,17 @@ import numpy as np
 import os
 from keras import backend
 from keras.preprocessing.image import ImageDataGenerator
+import csv
+
+def save_2d_array_as_csv(a, filename):
+    """This function saves a 2D array into the filename (second parameter)
+    # Arguments
+        a: 2D array
+        filename: string containing the filename of the CSV file to be saved.
+    """
+    with open(filename, "w+") as local_csv:
+        csvWriter = csv.writer(local_csv, delimiter=',')
+        csvWriter.writerows(a)
 
 def evaluate_model_print(model, x_test, y_test):
     """Evaluates a model and prints its result.
