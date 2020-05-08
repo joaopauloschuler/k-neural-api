@@ -214,7 +214,8 @@ def two_path_inception_v3(include_top=True,
       
       ab_branch = conv2d_bn(ab_branch, int(80*ab_ratio), 1, 1, padding='valid')
       ab_branch = conv2d_bn(ab_branch, int(192*ab_ratio), 3, 3, padding='valid')
-      ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)      
+      ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
+      x = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
     else:
       if two_paths_first_block:
         x = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
