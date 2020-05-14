@@ -3,20 +3,24 @@
 import numpy as np
 import cv2
 import keras
+from keras.utils import np_utils
+from keras.preprocessing.image import load_img, img_to_array
 from keras.datasets import cifar10,  fashion_mnist,  mnist
-from keras.preprocessing.image import img_to_array
 import cai.util
 import os
 import urllib.request
 import scipy.io
 import zipfile
 import requests
+from sklearn.utils import class_weight
 from sklearn.model_selection import train_test_split
 from skimage import color as skimage_color
 import skimage.filters
 import gc
+import glob
 import multiprocessing
 import math
+import random
 
 def rgb2lab(r, g, b):
     """Converts RGB values to LAB.
@@ -589,3 +593,126 @@ def train_model_on_cifar10(model,  base_model_name, plrscheduler,  batch_size = 
     return train_model_on_dataset(model=model, dataset=cifar10,  base_model_name=base_model_name, 
     plrscheduler=plrscheduler,  batch_size=batch_size, epochs=epochs, momentum=momentum, nesterov=nesterov, 
     verbose=verbose, lab=lab, bipolar=bipolar)
+    
+def load_images_from_folder(paths, target_size=(224,224)):
+    x=[]
+    for path in paths:
+      img = load_img(path, target_size=target_size)
+      img = img_to_array(img, dtype='float16')
+      x.append(img)
+    return np.array(x, dtype='float16')
+
+def load_images_from_folders(seed=None, root_dir=None, lab=False, 
+  verbose=True, bipolar=False, base_model_name='plant_leaf',
+  training_size=0.6, validation_size=0.2, test_size=0.2,
+  target_size=(224,224)):
+  if root_dir == None:
+    print("No root dir at load_images_from_folders")
+    return
+  random.seed(seed)
+  
+  classes = os.listdir(root_dir)
+  classes = sorted(classes)
+
+  classes_num = len(classes)
+  if (verbose):
+    print ("Loading ", classes_num, " classes.")
+
+  train_path = []
+  val_path = []
+  test_path = []
+
+  train_x,train_y = [],[]
+  val_x,val_y = [],[]
+  test_x,test_y =[],[]
+
+  #read path and categorize to three groups , 6,2,2
+  for i,_class in enumerate(classes):
+      paths = glob.glob(os.path.join(root_dir,_class,"*"))
+      paths = [n for n in paths if n.lower().endswith(".png") or n.lower().endswith(".jpg")]
+      random.shuffle(paths)
+      cat_total = len(paths)
+      train_path.extend(paths[:int(cat_total*training_size)])
+      train_y.extend([i]*int(cat_total*training_size))
+      val_path.extend(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))])
+      val_y.extend([i]*len(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))]))
+      test_path.extend(paths[int(cat_total*(training_size+validation_size)):])
+      test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):]))
+  
+  if (verbose):
+    print ("loading train images")
+  train_x = load_images_from_folder(train_path, target_size=target_size)
+  
+  if (verbose):
+    print ("loading validation images")
+  val_x = load_images_from_folder(val_path, target_size=target_size)
+
+  if (verbose):
+    print ("loading test images")
+  test_x = load_images_from_folder(test_path, target_size=target_size)
+
+  train_y = np.array(train_y)
+  val_y = np.array(val_y)
+  test_y = np.array(test_y)
+
+  if (lab):
+        if (verbose):
+          print("Converting RGB to LAB: ")
+        train_x /= 255
+        val_x /= 255
+        test_x /= 255
+        if (verbose):
+          print("Converting training.")
+        cai.datasets.skimage_rgb2lab_a(train_x,  verbose)
+        if (verbose):
+          print("Converting validation.")
+        cai.datasets.skimage_rgb2lab_a(val_x,  verbose)
+        if (verbose):
+          print("Converting test.")
+        cai.datasets.skimage_rgb2lab_a(test_x,  verbose)
+        gc.collect()
+        if (bipolar):
+          # JP prefers bipolar input [-2,+2]
+          train_x[:,:,:,0:3] /= [25, 50, 50]
+          train_x[:,:,:,0] -= 2
+          val_x[:,:,:,0:3] /= [25, 50, 50]
+          val_x[:,:,:,0] -= 2
+          test_x[:,:,:,0:3] /= [25, 50, 50]
+          test_x[:,:,:,0] -= 2
+        else:
+          train_x[:,:,:,0:3] /= [100, 200, 200]
+          train_x[:,:,:,1:3] += 0.5
+          val_x[:,:,:,0:3] /= [100, 200, 200]
+          val_x[:,:,:,1:3] += 0.5
+          test_x[:,:,:,0:3] /= [100, 200, 200]
+          test_x[:,:,:,1:3] += 0.5
+  else:
+        if (verbose):
+            print("Loading RGB.")
+        if (bipolar):
+            train_x /= 64
+            val_x /= 64
+            test_x /= 64
+            train_x -= 2
+            val_x -= 2
+            test_x -= 2
+        else:
+            train_x /= 255
+            val_x /= 255
+            test_x /= 255
+
+  if (verbose):
+        for channel in range(0, train_x.shape[3]):
+            sub_matrix = train_x[:,:,:,channel]
+            print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
+  #calculate class weight
+  classweight = class_weight.compute_class_weight('balanced', np.unique(train_y), train_y)
+
+  #convert to categorical
+  train_y = np_utils.to_categorical(train_y, classes_num)
+  val_y = np_utils.to_categorical(val_y, classes_num)
+  test_y = np_utils.to_categorical(test_y, classes_num)
+  if (verbose):
+    print("Loaded.")
+
+  return train_x,val_x,test_x,train_y,val_y,test_y,classweight,classes
