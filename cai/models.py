@@ -191,15 +191,15 @@ def two_path_inception_v3(include_top=True,
 
     if two_paths_first_block:
         l_branch = cai.layers.CopyChannels(0,1)(img_input)
-        l_branch = conv2d_bn(l_branch, int(32*l_ratio), 3, 3, strides=(2, 2), padding='valid')
-        l_branch = conv2d_bn(l_branch, int(32*l_ratio), 3, 3, padding='valid')
-        l_branch = conv2d_bn(l_branch, int(64*l_ratio), 3, 3)
+        l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
+        l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
+        l_branch = conv2d_bn(l_branch, int(round(64*l_ratio)), 3, 3)
         l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
 
         ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-        ab_branch = conv2d_bn(ab_branch, int(32*ab_ratio), 3, 3, strides=(2, 2), padding='valid')
-        ab_branch = conv2d_bn(ab_branch, int(32*ab_ratio), 3, 3, padding='valid')
-        ab_branch = conv2d_bn(ab_branch, int(64*ab_ratio), 3, 3)
+        ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+        ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
+        ab_branch = conv2d_bn(ab_branch, int(round(64*ab_ratio)), 3, 3)
         ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
     else:
         single_branch = conv2d_bn(img_input, 32, 3, 3, strides=(2, 2), padding='valid')
@@ -208,12 +208,12 @@ def two_path_inception_v3(include_top=True,
         single_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
 
     if (two_paths_second_block):
-      l_branch = conv2d_bn(l_branch, int(80*l_ratio), 1, 1, padding='valid')
-      l_branch = conv2d_bn(l_branch, int(192*l_ratio), 3, 3, padding='valid')
+      l_branch = conv2d_bn(l_branch, int(round(80*l_ratio)), 1, 1, padding='valid')
+      l_branch = conv2d_bn(l_branch, int(round(192*l_ratio)), 3, 3, padding='valid')
       l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
       
-      ab_branch = conv2d_bn(ab_branch, int(80*ab_ratio), 1, 1, padding='valid')
-      ab_branch = conv2d_bn(ab_branch, int(192*ab_ratio), 3, 3, padding='valid')
+      ab_branch = conv2d_bn(ab_branch, int(round(80*ab_ratio)), 1, 1, padding='valid')
+      ab_branch = conv2d_bn(ab_branch, int(round(192*ab_ratio)), 3, 3, padding='valid')
       ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
       x = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
     else:
