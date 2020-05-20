@@ -641,7 +641,8 @@ def load_images_from_folder(paths, target_size=(224,224)):
 def load_images_from_folders(seed=None, root_dir=None, lab=False, 
   verbose=True, bipolar=False, base_model_name='plant_leaf',
   training_size=0.6, validation_size=0.2, test_size=0.2,
-  target_size=(224,224)):
+  target_size=(224,224), 
+  has_training=True, has_validation=True, has_testing=True):
   if root_dir == None:
     print("No root dir at load_images_from_folders")
     return
@@ -675,17 +676,26 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
       test_path.extend(paths[int(cat_total*(training_size+validation_size)):])
       test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):]))
   
-  if (verbose):
-    print ("loading train images")
-  train_x = load_images_from_folder(train_path, target_size=target_size)
+  if has_training:
+      if (verbose):
+        print ("loading train images")
+      train_x = np.array(load_images_from_folder(train_path, target_size=target_size), dtype='float16')
+  else:
+      train_x = np.array([])
   
-  if (verbose):
-    print ("loading validation images")
-  val_x = load_images_from_folder(val_path, target_size=target_size)
+  if has_validation:
+      if (verbose):
+        print ("loading validation images")
+      val_x = np.array(load_images_from_folder(val_path, target_size=target_size), dtype='float16')
+  else:
+      val_x = np.array([])
 
-  if (verbose):
-    print ("loading test images")
-  test_x = load_images_from_folder(test_path, target_size=target_size)
+  if has_testing:
+      if (verbose):
+        print ("loading test images")
+      test_x = np.array(load_images_from_folder(test_path, target_size=target_size), dtype='float16')
+  else:
+      test_x = np.array([])
 
   train_y = np.array(train_y)
   val_y = np.array(val_y)
