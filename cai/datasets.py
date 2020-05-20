@@ -72,27 +72,29 @@ def rgb2lab(r, g, b):
     bb = 200 * (y - z)
     return l, a, bb
 
-def rotate(image, angle):
+def rotate(image, angle, dtype='float16'):
     """Rotates the input image by the angle. The input image can be a float16. It returns a float16 retuls.
     # Arguments
         image: numpy array.
         angle: 0 to 360 degrees.
+        dtype: output type.
     """
-    return np.array(cv2.warpAffine(np.array(image, dtype='float32'), cv2.getRotationMatrix2D( (image.shape[0] / 2 -0.5 , image.shape[1] / 2 -0.5 ) , angle, 1.0), (image.shape[0], image.shape[1]) ), dtype='float16')
+    return np.array(cv2.warpAffine(np.array(image, dtype='float32'), cv2.getRotationMatrix2D( (image.shape[0] / 2 -0.5 , image.shape[1] / 2 -0.5 ) , angle, 1.0), (image.shape[0], image.shape[1]) ), dtype=dtype)
 
-def motion_blur(image, size, angle):
+def motion_blur(image, size, angle, dtype='float16'):
     """Returns a float16 image with motion blurring. 
     # Arguments
         image: numpy array.
         size: motion size in pixels
         angle: motion angle 0 to 360 degrees.
+        dtype: output type.
     """
     k = np.zeros((size, size), dtype='float32')
     k[ (size-1)// 2 , :] = np.ones(size, dtype='float32')
     k = rotate(k, angle)
     k = np.array(k / np.sum(k), dtype='float32')        
     image = np.array(image, dtype='float32')
-    return np.array(cv2.filter2D(image, -1, k), dtype='float16') 
+    return np.array(cv2.filter2D(image, -1, k), dtype=dtype) 
 
 def rgb2lab_a(aRGB,  verbose=True):
     """Converts an array with RGB images to LAB. This function is memory efficient and slow. Consider using skimage_rgb2lab_a.
@@ -630,13 +632,19 @@ def train_model_on_cifar10(model,  base_model_name, plrscheduler,  batch_size = 
     plrscheduler=plrscheduler,  batch_size=batch_size, epochs=epochs, momentum=momentum, nesterov=nesterov, 
     verbose=verbose, lab=lab, bipolar=bipolar)
     
-def load_images_from_folder(paths, target_size=(224,224)):
+def load_images_from_files(file_names, target_size=(224,224),  dtype='float16'):
+    """Creates an array with images from an array with file names.
+    # Arguments
+        file_names: array with file names.
+        target_size: output image size.
+        dtype: output type.
+    """
     x=[]
-    for path in paths:
-      img = load_img(path, target_size=target_size)
+    for file_name in file_names:
+      img = load_img(file_name, target_size=target_size)
       img = img_to_array(img, dtype='float16')
       x.append(img)
-    return np.array(x, dtype='float16')
+    return np.array(x, dtype=dtype)
 
 def load_images_from_folders(seed=None, root_dir=None, lab=False, 
   verbose=True, bipolar=False, base_model_name='plant_leaf',
@@ -679,21 +687,21 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_training:
       if (verbose):
         print ("loading train images")
-      train_x = np.array(load_images_from_folder(train_path, target_size=target_size), dtype='float16')
+      train_x = np.array(load_images_from_files(train_path, target_size=target_size), dtype='float16')
   else:
       train_x = np.array([])
   
   if has_validation:
       if (verbose):
         print ("loading validation images")
-      val_x = np.array(load_images_from_folder(val_path, target_size=target_size), dtype='float16')
+      val_x = np.array(load_images_from_files(val_path, target_size=target_size), dtype='float16')
   else:
       val_x = np.array([])
 
   if has_testing:
       if (verbose):
         print ("loading test images")
-      test_x = np.array(load_images_from_folder(test_path, target_size=target_size), dtype='float16')
+      test_x = np.array(load_images_from_files(test_path, target_size=target_size), dtype='float16')
   else:
       test_x = np.array([])
 
@@ -747,12 +755,16 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
             val_x /= 255
             test_x /= 255
 
-  if (verbose):
+  if (verbose and has_training):
         for channel in range(0, train_x.shape[3]):
             sub_matrix = train_x[:,:,:,channel]
             print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
-  #calculate class weight
-  classweight = class_weight.compute_class_weight('balanced', np.unique(train_y), train_y)
+  
+  if has_training:
+      #calculate class weight
+      classweight = class_weight.compute_class_weight('balanced', np.unique(train_y), train_y)
+  else:
+      classweight = None
 
   #convert to categorical
   train_y = np_utils.to_categorical(train_y, classes_num)
