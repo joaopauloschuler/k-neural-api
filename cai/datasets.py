@@ -72,7 +72,34 @@ def rgb2lab(r, g, b):
     bb = 200 * (y - z)
     return l, a, bb
 
+def rotate(image, angle):
+    """Rotates the input image by the angle. The input image can be a float16. It returns a float16 retuls.
+    # Arguments
+        image: numpy array.
+        angle: 0 to 360 degrees.
+    """
+    return np.array(cv2.warpAffine(np.array(image, dtype='float32'), cv2.getRotationMatrix2D( (image.shape[0] / 2 -0.5 , image.shape[1] / 2 -0.5 ) , angle, 1.0), (image.shape[0], image.shape[1]) ), dtype='float16')
+
+def motion_blur(image, size, angle):
+    """Returns a float16 image with motion blurring. 
+    # Arguments
+        image: numpy array.
+        size: motion size in pixels
+        angle: motion angle 0 to 360 degrees.
+    """
+    k = np.zeros((size, size), dtype='float32')
+    k[ (size-1)// 2 , :] = np.ones(size, dtype='float32')
+    k = rotate(k, angle)
+    k = np.array(k / np.sum(k), dtype='float32')        
+    image = np.array(image, dtype='float32')
+    return np.array(cv2.filter2D(image, -1, k), dtype='float16') 
+
 def rgb2lab_a(aRGB,  verbose=True):
+    """Converts an array with RGB images to LAB. This function is memory efficient and slow. Consider using skimage_rgb2lab_a.
+    # Arguments
+        aRGB: array with RGB images.
+        verbose: when True prints progress.
+    """
     # l,  a,  bb = rgb2lab(10, 100, 200)
     # print(l, ' ',a,'', bb) # 43.28446956103366   15.309887260315291  -58.42936763053621
     #print (aRGB.shape)
@@ -99,6 +126,11 @@ def rgb2lab_a(aRGB,  verbose=True):
                 aRGB[img][x][y][2] = bb
 
 def skimage_rgb2lab_a(aRGB,  verbose=True):    
+    """Converts an array with RGB images to LAB. This function is memory efficient and FAST.
+    # Arguments
+        aRGB: array with RGB images.
+        verbose: when True prints progress.
+    """
     imgLen = len(aRGB)
     for img in range(imgLen):
         aRGB[img] = skimage_color.rgb2lab(aRGB[img])
@@ -109,6 +141,8 @@ def skimage_rgb2lab_a(aRGB,  verbose=True):
     gc.collect()
     
 def skimage_blur(aImages, sigma=1.0, truncate=3.5, verbose=True):    
+    """Applies blurring to an array of images.
+    """
     imgLen = len(aImages)
     for img in range(imgLen):
         aImages[img] = np.array(skimage.filters.gaussian(
@@ -121,6 +155,8 @@ def skimage_blur(aImages, sigma=1.0, truncate=3.5, verbose=True):
     gc.collect()
     
 def salt_pepper(aImages, salt_pepper_num, salt_value=2.0, pepper_value=-2.0, verbose=True):    
+    """Applies salt and pepper to an array of images.
+    """
     imgLen = len(aImages)
     for img in range(imgLen):
         current_image = aImages[img]
