@@ -94,7 +94,24 @@ def motion_blur(image, size, angle, dtype='float16'):
     k = rotate(k, angle)
     k = np.array(k / np.sum(k), dtype='float32')        
     image = np.array(image, dtype='float32')
-    return np.array(cv2.filter2D(image, -1, k), dtype=dtype) 
+    return np.array(cv2.filter2D(image, -1, k), dtype=dtype)
+   
+def motion_blur_a(aImages, PixelsSize=10, dtype='float16', verbose=False):    
+    """Adds motion blurring at random angles to an array of images.
+    # Arguments
+        aImages: array with images.
+        PixelsSize: when True prints progress.
+        dtype: 
+        verbose: when true, prints progress.
+    """
+    imgLen = len(aImages)
+    for img in range(imgLen):
+        aImages[img] = motion_blur(image=aImages[img], size=PixelsSize, angle=random.randint(0, 180),  dtype=dtype)
+        if (img % 1000 == 0):
+          gc.collect()
+          if verbose and (img>0):
+            print(img, ' images processed.')
+    gc.collect()
 
 def rgb2lab_a(aRGB,  verbose=True):
     """Converts an array with RGB images to LAB. This function is memory efficient and slow. Consider using skimage_rgb2lab_a.
