@@ -6,7 +6,7 @@ This project is a subproject from a bigger and older project called CAI and is s
 '''
 
 setup(name='cai',
-      version='0.0.7',
+      version='0.0.8',
       description='K-CAI NEURAL API',
       long_description=long_description,
       author='Joao Paulo Schwarz Schuler',
