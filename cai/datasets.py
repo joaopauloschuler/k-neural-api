@@ -95,18 +95,41 @@ def motion_blur(image, size, angle, dtype='float16'):
     k = np.array(k / np.sum(k), dtype='float32')        
     image = np.array(image, dtype='float32')
     return np.array(cv2.filter2D(image, -1, k), dtype=dtype)
-   
-def motion_blur_a(aImages, PixelsSize=10, dtype='float16', verbose=False):    
-    """Adds motion blurring at random angles to an array of images.
+
+def occlusion(image,  startx,  starty,  lenx,  leny):
+    """Occludes the input image starting from (startx,  starty) with a block with len (lenx,  leny).
+    """
+    image[startx:startx+lenx, starty:starty+leny, :] = 0
+    
+def occlusion_a(aImages, pixels=10, verbose=False):
+    """Occludes portions of images with squared blocks of size (pixels,pixels) at random positions.
     # Arguments
         aImages: array with images.
-        PixelsSize: when True prints progress.
-        dtype: 
+        pixels: number of pixels used occlusion.
         verbose: when true, prints progress.
     """
     imgLen = len(aImages)
     for img in range(imgLen):
-        aImages[img] = motion_blur(image=aImages[img], size=PixelsSize, angle=random.randint(0, 180),  dtype=dtype)
+        startx = random.randint(0, aImages[img].shape[0]-pixels)
+        starty = random.randint(0, aImages[img].shape[1]-pixels)
+        occlusion(image=aImages[img], startx=startx,  starty=starty,  lenx=pixels,  leny=pixels)
+        if (img % 1000 == 0):
+          gc.collect()
+          if verbose and (img>0):
+            print(img, ' images processed.')
+    gc.collect()   
+   
+def motion_blur_a(aImages, pixels=10, dtype='float16', verbose=False):    
+    """Adds motion blurring at random angles to an array of images.
+    # Arguments
+        aImages: array with images.
+        pixels: number of pixels used for motion blurring.
+        dtype: output type.
+        verbose: when true, prints progress.
+    """
+    imgLen = len(aImages)
+    for img in range(imgLen):
+        aImages[img] = motion_blur(image=aImages[img], size=pixels, angle=random.randint(0, 180),  dtype=dtype)
         if (img % 1000 == 0):
           gc.collect()
           if verbose and (img>0):
