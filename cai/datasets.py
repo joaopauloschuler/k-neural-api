@@ -767,19 +767,25 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
         gc.collect()
         if (bipolar):
           # JP prefers bipolar input [-2,+2]
-          train_x[:,:,:,0:3] /= [25, 50, 50]
-          train_x[:,:,:,0] -= 2
-          val_x[:,:,:,0:3] /= [25, 50, 50]
-          val_x[:,:,:,0] -= 2
-          test_x[:,:,:,0:3] /= [25, 50, 50]
-          test_x[:,:,:,0] -= 2
+          if (has_training):
+              train_x[:,:,:,0:3] /= [25, 50, 50]
+              train_x[:,:,:,0] -= 2
+          if (has_validation):
+              val_x[:,:,:,0:3] /= [25, 50, 50]
+              val_x[:,:,:,0] -= 2
+          if (has_testing):
+              test_x[:,:,:,0:3] /= [25, 50, 50]
+              test_x[:,:,:,0] -= 2
         else:
-          train_x[:,:,:,0:3] /= [100, 200, 200]
-          train_x[:,:,:,1:3] += 0.5
-          val_x[:,:,:,0:3] /= [100, 200, 200]
-          val_x[:,:,:,1:3] += 0.5
-          test_x[:,:,:,0:3] /= [100, 200, 200]
-          test_x[:,:,:,1:3] += 0.5
+          if (has_training):
+              train_x[:,:,:,0:3] /= [100, 200, 200]
+              train_x[:,:,:,1:3] += 0.5
+          if (has_validation):
+              val_x[:,:,:,0:3] /= [100, 200, 200]
+              val_x[:,:,:,1:3] += 0.5
+          if (has_testing):
+              test_x[:,:,:,0:3] /= [100, 200, 200]
+              test_x[:,:,:,1:3] += 0.5
   else:
         if (verbose):
             print("Loading RGB.")
