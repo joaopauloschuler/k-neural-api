@@ -115,11 +115,13 @@ def conv2d_bn(x,
     x = keras.layers.Activation(activation=activation, name=name)(x)
     return x
 
-def two_path_inception_v3(include_top=True,
+def two_path_inception_v3(
+                include_top=True,
                 weights=None, #'two_paths_plant_leafs'
                 input_shape=None,
                 pooling=None,
                 classes=1000,
+                two_paths_partial_first_block=0,
                 two_paths_first_block=False,
                 two_paths_second_block=False,
                 l_ratio=0.5,
@@ -155,6 +157,9 @@ def two_path_inception_v3(include_top=True,
         classes: optional number of classes to classify images
             into, only to be specified if `include_top` is True, and
             if no `weights` argument is specified.
+        two_paths_partial_first_block: valid values are 1, 2 and 3. 1 means
+            only one two-paths convolution. 2 means 2 two-paths convolutions. 3 means
+            a full first two-path block. Other values mean nothing.
         two_paths_first_block: when true, starts with 2 paths for 
             the first 3 convolutions.
         two_paths_second_block: when true, another 2 convolutions
@@ -185,27 +190,66 @@ def two_path_inception_v3(include_top=True,
         channel_axis = 1
     else:
         channel_axis = 3
+    
+    if two_paths_partial_first_block==3:
+        two_paths_partial_first_block=0
+        two_paths_first_block=True
+        two_paths_second_block=False
 
     if (two_paths_second_block):
         two_paths_first_block=True
+    
+    include_first_block=True
+    if (two_paths_partial_first_block==1) or (two_paths_partial_first_block==2):
+        two_paths_second_block=False
+        two_paths_first_block=False
+        include_first_block=False
 
-    if two_paths_first_block:
-        l_branch = cai.layers.CopyChannels(0,1)(img_input)
-        l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
-        l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
-        l_branch = conv2d_bn(l_branch, int(round(64*l_ratio)), 3, 3)
-        l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
+        # Only 1 convolution with two-paths?
+        if (two_paths_partial_first_block==1):
+            l_branch = cai.layers.CopyChannels(0,1)(img_input)
+            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
 
-        ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-        ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
-        ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
-        ab_branch = conv2d_bn(ab_branch, int(round(64*ab_ratio)), 3, 3)
-        ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
-    else:
-        single_branch = conv2d_bn(img_input, 32, 3, 3, strides=(2, 2), padding='valid')
-        single_branch = conv2d_bn(single_branch, 32, 3, 3, padding='valid')
-        single_branch = conv2d_bn(single_branch, 64, 3, 3)
-        single_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
+            ab_branch = cai.layers.CopyChannels(1,2)(img_input)
+            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+
+            single_branch  = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
+            single_branch = conv2d_bn(single_branch, 32, 3, 3, padding='valid')
+            single_branch = conv2d_bn(single_branch, 64, 3, 3)
+            single_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
+
+        # Only 2 convolution with two-paths?
+        if (two_paths_partial_first_block==2):
+            l_branch = cai.layers.CopyChannels(0,1)(img_input)
+            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
+            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
+
+            ab_branch = cai.layers.CopyChannels(1,2)(img_input)
+            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
+
+            single_branch  = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
+            single_branch = conv2d_bn(single_branch, 64, 3, 3)
+            single_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
+
+    if include_first_block:
+        if two_paths_first_block:
+            l_branch = cai.layers.CopyChannels(0,1)(img_input)
+            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
+            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
+            l_branch = conv2d_bn(l_branch, int(round(64*l_ratio)), 3, 3)
+            l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
+
+            ab_branch = cai.layers.CopyChannels(1,2)(img_input)
+            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
+            ab_branch = conv2d_bn(ab_branch, int(round(64*ab_ratio)), 3, 3)
+            ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
+        else:
+            single_branch = conv2d_bn(img_input, 32, 3, 3, strides=(2, 2), padding='valid')
+            single_branch = conv2d_bn(single_branch, 32, 3, 3, padding='valid')
+            single_branch = conv2d_bn(single_branch, 64, 3, 3)
+            single_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
 
     if (two_paths_second_block):
       l_branch = conv2d_bn(l_branch, int(round(80*l_ratio)), 1, 1, padding='valid')
@@ -439,7 +483,8 @@ def two_path_inception_v3(include_top=True,
 
 def compiled_two_path_inception_v3(
     input_shape=(224,224,3),
-    classes=1000, 
+    classes=1000,
+    two_paths_partial_first_block=0,
     two_paths_first_block=False,
     two_paths_second_block=False,
     l_ratio=0.5,
@@ -450,8 +495,10 @@ def compiled_two_path_inception_v3(
     """Returns a compiled two-paths inception v3.
     # Arguments
         input_shape: optional shape tuple
-        classes: optional number of classes to classify images
-            into.
+        classes: number of classes to classify images into.
+        two_paths_partial_first_block: valid values are 1, 2 and 3. 1 means
+            only one two-paths convolution. 2 means 2 two-paths convolutions. 3 means
+            a full first two-path block. Other values mean nothing.
         two_paths_first_block: when true, starts with 2 paths for 
             the first 3 convolutions.
         two_paths_second_block: when true, another 2 convolutions
@@ -468,10 +515,12 @@ def compiled_two_path_inception_v3(
             or invalid input shape.
     """
     base_model = cai.models.two_path_inception_v3(
-        include_top=False,
+        include_top=False, # Has to be false to be compiled below.
         weights=None,
         input_shape=input_shape,
-        pooling=None,
+        pooling=None, # Has to be none to be compiled below.
+        classes=classes,
+        two_paths_partial_first_block=two_paths_partial_first_block,
         two_paths_first_block=two_paths_first_block,
         two_paths_second_block=two_paths_second_block,
         l_ratio=l_ratio,
@@ -481,7 +530,7 @@ def compiled_two_path_inception_v3(
     )
     x = base_model.output
     x = keras.layers.GlobalAveragePooling2D()(x)
-    x = keras.layers.Dense(38, name='preprediction')(x)
+    x = keras.layers.Dense(classes, name='preprediction')(x)
     predictions = keras.layers.Activation('softmax',name='prediction')(x)
     model = Model(inputs=base_model.input, outputs=predictions)
     model.compile(loss='categorical_crossentropy',
