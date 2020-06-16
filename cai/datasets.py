@@ -590,7 +590,7 @@ def create_image_generator_sliced_image():
 
 def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batch_size = 64, 
     epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True,  
-    datagen = cai.util.create_image_generator(),  monitor='val_acc'):
+    datagen = cai.util.create_image_generator(),  monitor='val_accuracy'):
     """Trains a given neural network model on a given dataset.
     # Arguments
         model: neural network model.
