@@ -721,12 +721,19 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
       paths = [n for n in paths if n.lower().endswith(".png") or n.lower().endswith(".jpg")]
       random.shuffle(paths)
       cat_total = len(paths)
-      train_path.extend(paths[:int(cat_total*training_size)])
-      train_y.extend([i]*int(cat_total*training_size))
-      val_path.extend(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))])
-      val_y.extend([i]*len(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))]))
-      test_path.extend(paths[int(cat_total*(training_size+validation_size)):])
-      test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):]))
+      if (training_size>0):
+        train_path.extend(paths[:int(cat_total*training_size)])
+        train_y.extend([i]*int(cat_total*training_size))
+      if (validation_size>0):
+        val_path.extend(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))])
+        val_y.extend([i]*len(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))]))
+      if (test_size>0):
+          if (training_size+validation_size+test_size>=1):
+            test_path.extend(paths[int(cat_total*(training_size+validation_size)):])
+            test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):]))
+          else:
+            test_path.extend(paths[int(cat_total*(training_size+validation_size)):int(cat_total*(training_size+validation_size+test_size))])
+            test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):int(cat_total*(training_size+validation_size+test_size))]))
   
   if has_training:
       if (verbose):
