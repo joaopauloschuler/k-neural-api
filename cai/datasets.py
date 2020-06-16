@@ -328,9 +328,11 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
     x_train = x_train.astype('float16')
     x_test = x_test.astype('float16')
     if (verbose):
-        for channel in range(0, x_train.shape[3]):
-            sub_matrix = x_train[:,:,:,channel]
-            print('Original channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
+        # Color Images?
+        if (len(x_train.shape) == 4):
+            for channel in range(0, x_train.shape[3]):
+                sub_matrix = x_train[:,:,:,channel]
+                print('Original channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
     if (lab):
         if (verbose):
             print("Converting RGB to LAB.")
@@ -376,9 +378,11 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
         x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
     gc.collect()
     if (verbose):
-        for channel in range(0, x_train.shape[3]):
-            sub_matrix = x_train[:,:,:,channel]
-            print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
+        # Color Images?
+        if (len(x_train.shape) == 4):
+            for channel in range(0, x_train.shape[3]):
+                sub_matrix = x_train[:,:,:,channel]
+                print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
     return x_train, y_train, x_test, y_test
 
 def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
