@@ -1,9 +1,9 @@
 import cai.layers
 from tensorflow import keras
-import tensorflow.keras.backend
-import tensorflow.keras.layers
-import tensorflow.keras.utils
-from tensorflow.keras_applications.imagenet_utils import _obtain_input_shape
+#import tensorflow.keras.backend
+#import tensorflow.keras.layers
+#import tensorflow.keras.utils
+#from tensorflow.keras.applications.imagenet_utils import _obtain_input_shape
 from tensorflow.keras.models import Model
 from tensorflow.keras.models import model_from_json
 import numpy as np
@@ -118,7 +118,7 @@ def conv2d_bn(x,
 def two_path_inception_v3(
                 include_top=True,
                 weights=None, #'two_paths_plant_leafs'
-                input_shape=None,
+                input_shape=(224,224,3),
                 pooling=None,
                 classes=1000,
                 two_paths_partial_first_block=0,
@@ -175,15 +175,6 @@ def two_path_inception_v3(
         ValueError: in case of invalid argument for `weights`,
             or invalid input shape.
     """
-    # Determine proper input shape
-    input_shape = _obtain_input_shape(
-        input_shape,
-        default_size=224,
-        min_size=75,
-        data_format=keras.backend.image_data_format(),
-        require_flatten=include_top,
-        weights=weights)
-
     img_input = keras.layers.Input(shape=input_shape)
 
     if keras.backend.image_data_format() == 'channels_first':
