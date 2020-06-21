@@ -1,11 +1,11 @@
 import cai.layers
-import keras
-import keras.backend
-import keras.layers
-import keras.utils
-from keras_applications.imagenet_utils import _obtain_input_shape
-from keras.models import Model
-from keras.models import model_from_json
+from tensorflow import keras
+import tensorflow.keras.backend
+import tensorflow.keras.layers
+import tensorflow.keras.utils
+from tensorflow.keras_applications.imagenet_utils import _obtain_input_shape
+from tensorflow.keras.models import Model
+from tensorflow.keras.models import model_from_json
 import numpy as np
 
 def save_model(model, base_name):

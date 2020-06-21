@@ -1,13 +1,12 @@
 """Functions to create DenseNet architectures.
 https://arxiv.org/abs/1608.06993
 """
-
-import keras
-from keras import backend
+from tensorflow import keras
+from tensorflow.keras import backend
 import cai.datasets
 import cai.layers
-from keras.models import Model
-from keras.datasets import cifar10
+from tensorflow.keras.models import Model
+from tensorflow.keras.datasets import cifar10
 
 def lrscheduler(epoch):
     """Default DenseNet Learning Rate Scheduler.

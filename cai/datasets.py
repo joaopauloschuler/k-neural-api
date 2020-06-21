@@ -2,10 +2,9 @@
 """
 import numpy as np
 import cv2
-import keras
-from keras.utils import np_utils
-from keras.preprocessing.image import load_img, img_to_array
-from keras.datasets import cifar10,  fashion_mnist,  mnist
+from tensorflow import keras
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.datasets import cifar10,  fashion_mnist,  mnist
 import cai.util
 import os
 import urllib.request
@@ -647,7 +646,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
                 save_best_only=True, 
                 save_weights_only=False, 
                 mode='max', 
-                period=1),
+                save_freq='epoch'),
             keras.callbacks.CSVLogger(csv_name, append=False, separator=';')  
         ]
     )
@@ -824,9 +823,9 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
       classweight = None
 
   #convert to categorical
-  train_y = np_utils.to_categorical(train_y, classes_num)
-  val_y = np_utils.to_categorical(val_y, classes_num)
-  test_y = np_utils.to_categorical(test_y, classes_num)
+  train_y = keras.utils.to_categorical(train_y, classes_num)
+  val_y = keras.utils.to_categorical(val_y, classes_num)
+  test_y = keras.utils.to_categorical(test_y, classes_num)
   if (verbose):
     print("Loaded.")
 
