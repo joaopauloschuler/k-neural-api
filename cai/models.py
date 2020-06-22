@@ -136,13 +136,8 @@ def two_path_inception_v3(
         weights: one of `None` (random initialization),
               'imagenet' (pre-training on ImageNet),
               or the path to the weights file to be loaded.
-        input_shape: optional shape tuple, only to be specified
-            if `include_top` is False (otherwise the input shape
-            has to be `(299, 299, 3)` (with `channels_last` data format)
-            or `(3, 299, 299)` (with `channels_first` data format).
-            It should have exactly 3 inputs channels,
-            and width and height should be no smaller than 75.
-            E.g. `(150, 150, 3)` would be one valid value.
+        input_shape: mandatory input shape. Common values are 
+            (299, 299, 3) and (224, 224, 3).
         pooling: Optional pooling mode for feature extraction
             when `include_top` is `False`.
             - `None` means that the output of the model will be
@@ -186,6 +181,11 @@ def two_path_inception_v3(
         two_paths_partial_first_block=0
         two_paths_first_block=True
         two_paths_second_block=False
+
+    if two_paths_partial_first_block>3:
+        two_paths_partial_first_block=0
+        two_paths_first_block=True
+        two_paths_second_block=True
 
     if (two_paths_second_block):
         two_paths_first_block=True
@@ -245,12 +245,12 @@ def two_path_inception_v3(
     if (two_paths_second_block):
       l_branch = conv2d_bn(l_branch, int(round(80*l_ratio)), 1, 1, padding='valid')
       l_branch = conv2d_bn(l_branch, int(round(192*l_ratio)), 3, 3, padding='valid')
-      l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
       
       ab_branch = conv2d_bn(ab_branch, int(round(80*ab_ratio)), 1, 1, padding='valid')
       ab_branch = conv2d_bn(ab_branch, int(round(192*ab_ratio)), 3, 3, padding='valid')
-      ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
       x = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
+      x = conv2d_bn(x, 192, 1, 1, padding='valid')
+      x = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(x)
     else:
       if two_paths_first_block:
         x = keras.layers.Concatenate(axis=channel_axis, name='concat')([l_branch, ab_branch])
@@ -485,7 +485,8 @@ def compiled_two_path_inception_v3(
     ):
     """Returns a compiled two-paths inception v3.
     # Arguments
-        input_shape: optional shape tuple
+        input_shape: mandatory input shape. Common values are 
+            (299, 299, 3) and (224, 224, 3).
         classes: number of classes to classify images into.
         two_paths_partial_first_block: valid values are 1, 2 and 3. 1 means
             only one two-paths convolution. 2 means 2 two-paths convolutions. 3 means
