@@ -14,6 +14,35 @@ def save_2d_array_as_csv(a, filename):
         csvWriter = csv.writer(local_csv, delimiter=',')
         csvWriter.writerows(a)
 
+    """Transforms a 3D array into a 2D array. Channels are placed side by side in a new array.
+    # Arguments
+        aImage: array
+        NumRows: number of rows in the new array.
+        NumCols: number of cols in the new array.
+        ForceCellMax: all slices are normalized with MAX = 1.
+    """
+def slice_3d_into_2d(aImage, NumRows, NumCols, ForceCellMax = False):
+  SizeX = aImage.shape[0]
+  SizeY = aImage.shape[1]
+  Depth = aImage.shape[2]
+  NewSizeX = SizeX * NumCols
+  NewSizeY = SizeY * NumRows
+  aResult = np.zeros(shape=(NewSizeX, NewSizeY))
+  # print(aResult.shape)
+  for depthCnt in range(Depth):
+    PosX = depthCnt % NumCols
+    PosY = int(depthCnt / NumCols)
+    # print(PosX,' ',PosY,' ',PosX*SizeX,' ',PosY*SizeY)
+    if ForceCellMax:
+      Slice = aImage[:,:,depthCnt]
+      SliceMax = Slice.max()
+      if SliceMax > 0:
+        Slice /= SliceMax
+      aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += Slice
+    else:
+      aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += aImage[:,:,depthCnt]
+  return aResult
+
 def evaluate_model_print(model, x_test, y_test):
     """Evaluates a model and prints its result.
     """
