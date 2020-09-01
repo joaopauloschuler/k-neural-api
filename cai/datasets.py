@@ -694,10 +694,12 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   training_size=0.6, validation_size=0.2, test_size=0.2,
   target_size=(224,224), 
   has_training=True, has_validation=True, has_testing=True):
-  if root_dir == None:
+  if root_dir is None:
     print("No root dir at load_images_from_folders")
     return
-  random.seed(seed)
+
+  if seed is not None:
+    random.seed(seed)
   
   classes = os.listdir(root_dir)
   classes = sorted(classes)
@@ -714,19 +716,19 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   val_x,val_y = [],[]
   test_x,test_y =[],[]
 
-  #read path and categorize to three groups , 6,2,2
+  #read path and categorize to three groups: training, validation and testing. 
   for i,_class in enumerate(classes):
       paths = glob.glob(os.path.join(root_dir,_class,"*"))
-      paths = [n for n in paths if n.lower().endswith(".png") or n.lower().endswith(".jpg")]
+      paths = [n for n in paths if n.lower().endswith(".png") or n.lower().endswith(".jpg") or n.lower().endswith(".jpeg")]
       random.shuffle(paths)
       cat_total = len(paths)
-      if (training_size>0):
+      if (training_size > 0):
         train_path.extend(paths[:int(cat_total*training_size)])
         train_y.extend([i]*int(cat_total*training_size))
-      if (validation_size>0):
+      if (validation_size > 0):
         val_path.extend(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))])
         val_y.extend([i]*len(paths[int(cat_total*training_size):int(cat_total*(training_size+validation_size))]))
-      if (test_size>0):
+      if (test_size > 0):
           if (training_size+validation_size+test_size>=1):
             test_path.extend(paths[int(cat_total*(training_size+validation_size)):])
             test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):]))
@@ -737,21 +739,27 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_training:
       if (verbose):
         print ("loading train images")
-      train_x = np.array(load_images_from_files(train_path, target_size=target_size), dtype='float16')
+      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size), dtype='float16')
+      if (verbose):
+        print ("train shape is:", train_x.shape)
   else:
       train_x = np.array([])
   
   if has_validation:
       if (verbose):
         print ("loading validation images")
-      val_x = np.array(load_images_from_files(val_path, target_size=target_size), dtype='float16')
+      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size), dtype='float16')
+      if (verbose):
+        print ("validation shape is:", val_x.shape)
   else:
       val_x = np.array([])
 
   if has_testing:
       if (verbose):
         print ("loading test images")
-      test_x = np.array(load_images_from_files(test_path, target_size=target_size), dtype='float16')
+      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size), dtype='float16')
+      if (verbose):
+        print ("test shape is:", test_x.shape)
   else:
       test_x = np.array([])
 
