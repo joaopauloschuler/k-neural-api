@@ -14,14 +14,14 @@ def save_2d_array_as_csv(a, filename):
         csvWriter = csv.writer(local_csv, delimiter=',')
         csvWriter.writerows(a)
 
-    """Transforms a 3D array into a 2D array. Channels are placed side by side in a new array.
-    # Arguments
+def slice_3d_into_2d(aImage, NumRows, NumCols, ForceCellMax = False):
+  """Transforms a 3D array into a 2D array. Channels are placed side by side in a new array.
+  # Arguments
         aImage: array
         NumRows: number of rows in the new array.
         NumCols: number of cols in the new array.
         ForceCellMax: all slices are normalized with MAX = 1.
-    """
-def slice_3d_into_2d(aImage, NumRows, NumCols, ForceCellMax = False):
+  """
   SizeX = aImage.shape[0]
   SizeY = aImage.shape[1]
   Depth = aImage.shape[2]
@@ -41,6 +41,48 @@ def slice_3d_into_2d(aImage, NumRows, NumCols, ForceCellMax = False):
       aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += Slice
     else:
       aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += aImage[:,:,depthCnt]
+  return aResult
+  
+def slice_4d_into_2d(aImage, ForceColMax = False, ForceRowMax = False, ForceCellMax = False):
+  """Transforms a 4D array into a 2D array. Channels are placed side by side in a new array.
+  # Arguments
+        aImage: array
+        ForceColMax: scales according to column max.
+        ForceRowMax: scales according to row max.
+        ForceCellMax: scales according to the cell (slice).
+  """
+  Images = aImage.shape[0] 
+  SizeX = aImage.shape[1]
+  SizeY = aImage.shape[2]
+  Depth = aImage.shape[3]
+  NewSizeX = SizeX * Depth
+  NewSizeY = SizeY * Images
+  aResult = np.zeros(shape=(NewSizeX, NewSizeY))
+  #print('aImage:', aImage.shape)
+  for depthCnt in range(Depth):
+    if ForceRowMax:
+      SliceMin = 0 # aImage[:, :, :, depthCnt].min()
+      SliceMax = aImage[:, :, :, depthCnt].max()-SliceMin
+    for imgCnt in range(Images):
+      PosX = depthCnt
+      PosY = imgCnt
+      #print(PosX,' ',PosY,' ',PosX*SizeX,' ',PosY*SizeY)
+      Slice = np.copy(aImage[imgCnt, :, :, depthCnt])
+      if ForceColMax:
+          SliceMin = 0 # aImage[:, :, :, depthCnt].min()
+          SliceMax = aImage[imgCnt, :, :, :].max()-SliceMin
+
+      if ForceCellMax:
+          SliceMin = 0 #Slice.min()
+          SliceMax = Slice.max()-SliceMin
+            #print(PosX,' ',PosY,' ',PosX*SizeX,' ',PosY*SizeY,' ',SliceMax)
+
+      #print(PosX,' ',PosY,':','Min:', np.amin(Slice), 'Max:', np.amax(Slice), 'Slice Min:',SliceMin,'Slice Max:',SliceMax)
+      if ForceRowMax or ForceColMax or ForceCellMax:
+        Slice -= SliceMin
+        if SliceMax > 0:
+            Slice /= SliceMax        
+      aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += Slice
   return aResult
 
 def evaluate_model_print(model, x_test, y_test):
