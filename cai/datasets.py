@@ -675,6 +675,20 @@ def train_model_on_cifar10(model,  base_model_name, plrscheduler,  batch_size = 
     plrscheduler=plrscheduler,  batch_size=batch_size, epochs=epochs, momentum=momentum, nesterov=nesterov, 
     verbose=verbose, lab=lab, bipolar=bipolar)
     
+def load_image_file_names_from_folder(img_folder_name):
+    """Creates an array with images file names from an input folder name.
+    # Arguments
+        img_folder_name: folder name from where file names will be collected.
+    """
+    img_list = os.listdir(img_folder_name)
+    output_img_list = []
+    for img_file in img_list:
+        absolute_file_name = img_folder_name+'/'+img_file
+        absolute_file_name_lower = absolute_file_name.lower()
+        if absolute_file_name_lower.endswith('.jpg') or absolute_file_name_lower.endswith('.jepg') or absolute_file_name_lower.endswith('.png'):
+            output_img_list.append(absolute_file_name)
+    return output_img_list
+
 def load_images_from_files(file_names, target_size=(224,224),  dtype='float16'):
     """Creates an array with images from an array with file names.
     # Arguments
