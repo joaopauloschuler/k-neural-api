@@ -545,4 +545,25 @@ def PartialModelPredict(aInput, pModel, pOutputLayerName, hasGlobalAvg = False):
     outputs = keras.layers.GlobalAveragePooling2D()(outputs)
   IntermediateLayerModel = keras.Model(inputs=inputs, outputs=outputs)
   layeroutput = np.array(IntermediateLayerModel.predict(x=aInput))
-  return layeroutput 
+  return layeroutput
+
+def calculate_heat_map_from_dense_and_avgpool(aInput, target_class, pModel, pOutputLayerName, pDenseLayerName):
+  """Creates a heatmap from a model that has a global avg pool followed by a dense layer.  
+  # Arguments
+    aInput: array with Input elements.
+    pModel: original model.
+    pOutputLayerName: last layer before the global avg pool.
+    pDenseLayerName: dense layer found probably before a softmax.
+  """
+  localImageArray = []
+  localImageArray.append(aInput)
+  localImageArray = np.array(localImageArray)
+  class_weights = pModel.get_layer(pDenseLayerName).get_weights()[0]
+  conv_output = cai.models.PartialModelPredict(localImageArray, pModel, pOutputLayerName)[0]
+  cam = np.zeros(dtype = np.float32, shape = conv_output.shape[0:2])
+  #print(cam.shape)
+  #print(type(conv_output[:, :, 0]))
+  #print(conv_output[:, :, 0].shape)
+  for i, w in enumerate(class_weights[:, target_class]):
+    cam += w * conv_output[:, :, i]
+  return cam
