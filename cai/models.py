@@ -1,4 +1,5 @@
 import cai.layers
+import cai.util
 from tensorflow import keras
 #import tensorflow.keras.backend
 #import tensorflow.keras.layers
@@ -566,4 +567,8 @@ def calculate_heat_map_from_dense_and_avgpool(aInput, target_class, pModel, pOut
   #print(conv_output[:, :, 0].shape)
   for i, w in enumerate(class_weights[:, target_class]):
     cam += w * conv_output[:, :, i]
+  cam = cai.util.relu(cam)
+  max_cam = np.max(cam)
+  if max_cam > 0:
+      cam = cam / max_cam 
   return cam

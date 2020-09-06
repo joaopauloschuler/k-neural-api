@@ -181,3 +181,12 @@ def create_image_generator(
         data_format=data_format,
         # fraction of images reserved for validation (strictly between 0 and 1)
         validation_split=validation_split)
+
+def relu(adata):   
+    """Calculates the rectifier linear unit.
+    # Arguments
+        adata: a floating point array.
+    # Returns
+        a floating point array.
+    """
+    return np.maximum(0, adata)
