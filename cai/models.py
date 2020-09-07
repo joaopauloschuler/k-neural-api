@@ -561,14 +561,14 @@ def calculate_heat_map_from_dense_and_avgpool(aInput, target_class, pModel, pOut
   localImageArray = np.array(localImageArray)
   class_weights = pModel.get_layer(pDenseLayerName).get_weights()[0]
   conv_output = cai.models.PartialModelPredict(localImageArray, pModel, pOutputLayerName)[0]
-  cam = np.zeros(dtype = np.float32, shape = conv_output.shape[0:2])
-  #print(cam.shape)
+  a_heatmap_result = np.zeros(dtype = np.float32, shape = conv_output.shape[0:2])
+  #print(a_heatmap_result.shape)
   #print(type(conv_output[:, :, 0]))
   #print(conv_output[:, :, 0].shape)
   for i, w in enumerate(class_weights[:, target_class]):
-    cam += w * conv_output[:, :, i]
-  cam = cai.util.relu(cam)
-  max_cam = np.max(cam)
-  if max_cam > 0:
-      cam = cam / max_cam 
-  return cam
+    a_heatmap_result += w * conv_output[:, :, i]
+  a_heatmap_result = cai.util.relu(a_heatmap_result)
+  max_heatmap_result = np.max(a_heatmap_result)
+  if max_heatmap_result > 0:
+      a_heatmap_result = a_heatmap_result / max_heatmap_result 
+  return a_heatmap_result
