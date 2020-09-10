@@ -47,8 +47,28 @@ The following image shows a car (input sample), its heatmap and both added toget
 <p><img src="docs/cai-heatmap.png"></img></p>
 These are activation map examples:
 <p><img src="docs/cai-activations.png"></img></p>
+Activation maps above have been created with a code similar to this:
+
+```
+conv_output = cai.models.PartialModelPredict(InputImage, model, 'layer_name', False)
+...
+activation_maps = cai.util.slice_3d_into_2d(aImage=conv_output[0], NumRows=8, NumCols=8, ForceCellMax=True);
+...
+plt.imshow(activation_maps, interpolation='nearest', aspect='equal')
+```
+
 These are filter examples:
+
 <p><img src="docs/cai-filters.png"></img></p>
+
+Above image has been created with a code similar to this:
+
+```
+weights = model.get_layer('layer_name').get_weights()[0]
+neuron_patterns = cai.util.show_neuronal_patterns(weights, NumRows = 8, NumCols = 8, ForceCellMax = True)
+...
+plt.imshow(neuron_patterns, interpolation='nearest', aspect='equal')
+```
 
 ### PyDoc
 After installing K-CAI, you can find documentation with:
