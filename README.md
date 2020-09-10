@@ -44,7 +44,15 @@ Some recommended introductory source code examples are:
 * [Experiment your own DenseNet Architecture](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb): this example allows you to experiment your own DenseNet settings. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb)
 * [Heatmap and Activation Map Examples with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb): this example shows how you can quickly display heatmap, activation maps and first layer filters/patterns.
 The following image shows a car (input sample), its heatmap and both added together.
+
 <p><img src="docs/cai-heatmap.png"></img></p>
+
+Heatmaps can be produced following this example:
+
+```
+heat_map = cai.models.calculate_heat_map_from_dense_and_avgpool(InputImage, image_class, model, pOutputLayerName='last_conv_layer', pDenseLayerName='dense')
+```
+
 These are activation map examples:
 <p><img src="docs/cai-activations.png"></img></p>
 Activation maps above have been created with a code similar to this:
