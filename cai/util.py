@@ -43,6 +43,37 @@ def slice_3d_into_2d(aImage, NumRows, NumCols, ForceCellMax = False):
       aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += aImage[:,:,depthCnt]
   return aResult
 
+def slice_3d_into_2d_cl(aImage, NumRows, NumCols, ForceCellMax = False):
+  """Transforms a 3D array into a 2D array.
+    This function assumes that Cells are placed the in the 3 Last dimension.
+    Channels are placed side by side in a new array.
+  # Arguments
+        aImage: array
+        NumRows: number of rows in the new array.
+        NumCols: number of cols in the new array.
+        ForceCellMax: all slices are normalized with MAX = 1.
+  """
+  SizeX = aImage.shape[1]
+  SizeY = aImage.shape[2]
+  Depth = aImage.shape[0]
+  NewSizeX = SizeX * NumCols
+  NewSizeY = SizeY * NumRows
+  aResult = np.zeros(shape=(NewSizeX, NewSizeY))
+  # print(aResult.shape)
+  for depthCnt in range(Depth):
+    PosX = depthCnt % NumCols
+    PosY = int(depthCnt / NumCols)
+    # print(PosX,' ',PosY,' ',PosX*SizeX,' ',PosY*SizeY)
+    if ForceCellMax:
+      Slice = aImage[depthCnt,:,:]
+      SliceMax = Slice.max()
+      if SliceMax > 0:
+        Slice /= SliceMax
+      aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += Slice
+    else:
+      aResult[PosX*SizeX:(PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY] += aImage[depthCnt,:,:]
+  return aResult
+
 def slice_4d_into_3d(aImage, NumRows, NumCols, ForceCellMax = False):
   """Transforms a 4D array into a 2D array. Slices are placed side by side in a new array.
   # Arguments
