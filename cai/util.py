@@ -325,3 +325,21 @@ def relu(adata):
         a floating point array.
     """
     return np.maximum(0, adata)
+
+def reverse_sort(arraydata):  
+  """Does a revert sort.
+  # Arguments
+        arraydata: input array
+  """
+  return np.array(list(reversed(np.sort(arraydata))))
+
+def get_class_position(pclass, predictions):
+  """Identifies the position of the class in the predictions array. When 
+  get_class_position returns 0, it means that the prediction is correct.
+  # Arguments
+        pclass: is an integer number identifying the class.
+        predictions: array with predictions per class.
+  """
+  predicted_probability = predictions[pclass]
+  predictions_sorted = reverse_sort(predictions)
+  return np.where(predictions_sorted == predicted_probability)[0][0]
