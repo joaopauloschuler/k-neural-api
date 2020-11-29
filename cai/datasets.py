@@ -556,7 +556,7 @@ def create_pixel_array_from_3D_image(Image):
   return aResultImage
 
 def create_3D_image_from_pixel_array(PixelArray, SizeX, SizeY, Depth=3):
-  """Creates a pixel array (possibly created with create_pixel_array_from_3D_image) from a 3D image.
+  """Creates a 3D image from a pixel array (possibly created via create_pixel_array_from_3D_image).
   # Arguments
     PixelArray: array of pixels.
     SizeX: integer
