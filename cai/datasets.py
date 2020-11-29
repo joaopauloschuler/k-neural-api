@@ -555,6 +555,19 @@ def create_pixel_array_from_3D_image(Image):
   aResultImage = Image.reshape(SizeX * SizeY, Channels)
   return aResultImage
 
+def create_3D_image_from_pixel_array(PixelArray, SizeX, SizeY, Depth=3):
+  """Creates a pixel array (possibly created with create_pixel_array_from_3D_image) from a 3D image.
+  # Arguments
+    PixelArray: array of pixels.
+    SizeX: integer
+    SizeY: integer
+    Depth: integer
+  # Returns
+    aResultImage: 3D Array.
+  """
+  aResultImage = PixelArray.reshape(SizeX, SizeY, Depth)
+  return aResultImage
+
 def create_image_generator_sliced_image():
     """ image generator for sliced images (pixel classification) """
     datagen = keras.preprocessing.image.ImageDataGenerator(
