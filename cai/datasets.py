@@ -541,6 +541,24 @@ def slice_image(Image, PixelClasses, NewImageSize=5):
   aResultClasses = keras.utils.to_categorical(aResultClasses, NumClasses)
   
   return np.array(aResultImg), aResultClasses
+  
+def slice_images(Images, NewImageSize=3):
+  """Creates an array of small images from an array of images.
+  # Arguments
+    Images: array with input image.
+    NewImageSize: new image size as NewImageSize x NewImageSize pixels.
+  # Returns
+    aResultImg: array of images.
+    aResultClasses: array of classes.
+  """
+  ImageCount = Images.shape[0]
+  MaxX = Images.shape[1] - NewImageSize
+  MaxY = Images.shape[2] - NewImageSize
+  aResultImg = [ Images[ImagePos, X:X+NewImageSize, Y:Y+NewImageSize, :]                
+    for ImagePos in range(0, ImageCount)
+      for X in range(0, MaxX)
+        for Y in range(0, MaxY) ]
+  return np.array(aResultImg)
 
 def create_pixel_array_from_3D_image(Image):
   """Creates a pixel array from a 3D image.
@@ -554,6 +572,20 @@ def create_pixel_array_from_3D_image(Image):
   Channels = Image.shape[2]
   aResultImage = Image.reshape(SizeX * SizeY, Channels)
   return aResultImage
+
+def create_pixel_array_from_3D_images(Images):
+  """Creates a pixel array from an array of 3D images (a 4D input is expected).
+  # Arguments
+    Images: array with input images.
+  # Returns
+    aResult: array of pixels.
+  """
+  ImageCount = Images.shape[0]  
+  SizeX = Images.shape[1]
+  SizeY = Images.shape[2]
+  Channels = Images.shape[3]
+  aResult = Images.reshape(ImageCount * SizeX * SizeY, Channels)
+  return np.array(aResult)
 
 def create_3D_image_from_pixel_array(PixelArray, SizeX, SizeY, Depth=3):
   """Creates a 3D image from a pixel array (possibly created via create_pixel_array_from_3D_image).
