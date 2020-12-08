@@ -178,6 +178,40 @@ def show_neuronal_patterns(aWeights, NumRows, NumCols, ForceCellMax = False):
       aResult[PosX + PosX*SizeX:PosX + (PosX+1)*SizeX, PosY + PosY*SizeY:PosY + (PosY+1)*SizeY, :] += aWeights[:, :, :, NeuronsCnt]
   return aResult
   
+def show_neuronal_patterns_nf(aWeights, NumRows, NumCols, ForceCellMax = False):
+  """Show first layer patterns. Neurons are placed in the first dimention. This function does a similar job to show_neuronal_patterns.
+  # Arguments
+        aImage: array
+        NumRows: number of rows in the new array.
+        NumCols: number of cols in the new array.
+        ForceCellMax: all slices are normalized with MAX = 1.
+  """
+  Neurons = aWeights.shape[0]
+  SizeX = aWeights.shape[1]
+  SizeY = aWeights.shape[2]
+  Depth = aWeights.shape[3]
+  NewSizeX = SizeX * NumCols + NumCols - 1
+  NewSizeY = SizeY * NumRows + NumRows - 1
+  aResult = np.zeros(shape=(NewSizeX, NewSizeY, Depth))
+  # print(aResult.shape)
+  for NeuronsCnt in range(Neurons):
+    PosX = NeuronsCnt % NumCols
+    PosY = int(NeuronsCnt / NumCols)
+    # print(PosX,' ',PosY,' ',PosX + PosX*SizeX,' ',PosX + (PosX+1)*SizeX)
+    # print(PosX,' ',PosY,' ',SizeX,' ',SizeY,' ',Depth)
+    if ForceCellMax:
+      Slice = aWeights[NeuronsCnt, :, :, :]
+      # print(Slice.shape)
+      # print(aResult[PosX + PosX*SizeX:PosX + (PosX+1)*SizeX, PosY*SizeY:(PosY+1)*SizeY, :].shape)
+      Slice = Slice - Slice.min()
+      SliceMax = Slice.max()
+      if SliceMax > 0:
+        Slice /= SliceMax
+      aResult[PosX + PosX*SizeX:PosX + (PosX+1)*SizeX, PosY + PosY*SizeY:PosY + (PosY+1)*SizeY, :] += Slice
+    else:
+      aResult[PosX + PosX*SizeX:PosX + (PosX+1)*SizeX, PosY + PosY*SizeY:PosY + (PosY+1)*SizeY, :] += aWeights[NeuronsCnt, :, :, :]
+  return aResult
+  
 def slice_4d_into_2d(aImage, ForceColMax = False, ForceRowMax = False, ForceCellMax = False):
   """Transforms a 4D array into a 2D array. Channels are placed side by side in a new array.
   # Arguments
