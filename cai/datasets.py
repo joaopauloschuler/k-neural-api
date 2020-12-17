@@ -667,7 +667,8 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
     model.compile(
         loss='categorical_crossentropy',
         optimizer=opt,
-        metrics=[monitor])
+        # compilation does't work with val_accuracy
+        metrics=['accuracy'])
     
     fit_verbose=0
     if (verbose):
