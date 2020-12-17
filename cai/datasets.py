@@ -692,8 +692,9 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
                 save_best_only=True, 
                 save_weights_only=False, 
                 mode='max', 
-                save_freq='epoch'),
-            keras.callbacks.CSVLogger(csv_name, append=False, separator=';')  
+                save_freq='epoch')
+            # CSV crashes on TF 2.2 on the first epoch.
+            # keras.callbacks.CSVLogger(csv_name, append=False, separator=';')  
         ]
     )
     gc.collect()
