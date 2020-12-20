@@ -531,6 +531,20 @@ def compiled_two_path_inception_v3(
     metrics=['accuracy','top_k_categorical_accuracy'])
     return model
 
+def CreatePartialModel(aInput, pModel, pOutputLayerName, hasGlobalAvg=False):
+  """Creates a partial model up to the layer name defined in pOutputLayerName.
+  # Arguments
+    aInput: array with Input elements.
+    pModel: original model.
+    pOutputLayerName: last layer in the partial model.
+    hasGlobalAvg: when True, adds a global average pooling at the end.
+  """
+  inputs = pModel.input
+  outputs = pModel.get_layer(pOutputLayerName).output
+  if (hasGlobalAvg):
+    outputs = keras.layers.GlobalAveragePooling2D()(outputs)
+  return keras.Model(inputs=inputs, outputs=outputs)
+
 def PartialModelPredict(aInput, pModel, pOutputLayerName, hasGlobalAvg=False, pBatchSize=32):
   """Creates a partial model up to the layer name defined in pOutputLayerName and run it
   with aInput.  
@@ -546,6 +560,7 @@ def PartialModelPredict(aInput, pModel, pOutputLayerName, hasGlobalAvg=False, pB
     outputs = keras.layers.GlobalAveragePooling2D()(outputs)
   IntermediateLayerModel = keras.Model(inputs=inputs, outputs=outputs)
   layeroutput = np.array(IntermediateLayerModel.predict(x=aInput, batch_size=pBatchSize))
+  IntermediateLayerModel = 0
   return layeroutput
 
 def calculate_heat_map_from_dense_and_avgpool(aInput, target_class, pModel, pOutputLayerName, pDenseLayerName):
