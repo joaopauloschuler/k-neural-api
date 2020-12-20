@@ -71,8 +71,8 @@ def rgb2lab(r, g, b):
     bb = 200 * (y - z)
     return l, a, bb
 
-def rotate(image, angle, dtype='float16'):
-    """Rotates the input image by the angle. The input image can be a float16. It returns a float16 retuls.
+def rotate(image, angle, dtype='float32'):
+    """Rotates the input image by the angle.
     # Arguments
         image: numpy array.
         angle: 0 to 360 degrees.
@@ -80,8 +80,8 @@ def rotate(image, angle, dtype='float16'):
     """
     return np.array(cv2.warpAffine(np.array(image, dtype='float32'), cv2.getRotationMatrix2D( (image.shape[0] / 2 -0.5 , image.shape[1] / 2 -0.5 ) , angle, 1.0), (image.shape[0], image.shape[1]) ), dtype=dtype)
 
-def motion_blur(image, size, angle, dtype='float16'):
-    """Returns a float16 image with motion blurring. 
+def motion_blur(image, size, angle, dtype='float32'):
+    """Returns an image with motion blurring. 
     # Arguments
         image: numpy array.
         size: motion size in pixels
@@ -118,7 +118,7 @@ def occlusion_a(aImages, pixels=10, verbose=False):
             print(img, ' images processed.')
     gc.collect()   
    
-def motion_blur_a(aImages, pixels=10, dtype='float16', verbose=False):    
+def motion_blur_a(aImages, pixels=10, dtype='float32', verbose=False):    
     """Adds motion blurring at random angles to an array of images.
     # Arguments
         aImages: array with images.
@@ -188,14 +188,14 @@ def skimage_blur(aImages, sigma=1.0, truncate=3.5, verbose=True):
     for img in range(imgLen):
         aImages[img] = np.array(skimage.filters.gaussian(
             np.array(aImages[img], dtype='float32'), 
-            sigma=(sigma, sigma), truncate=truncate, multichannel=True), dtype='float16')
+            sigma=(sigma, sigma), truncate=truncate, multichannel=True), dtype='float32')
         if (img % 1000 == 0):
           gc.collect()  
           if verbose:
             print(img, ' images blurred.')
     gc.collect()
     
-def salt_pepper(aImages, salt_pepper_num, salt_value=2.0, pepper_value=-2.0, verbose=True):    
+def salt_pepper(aImages, salt_pepper_num, salt_value=2.0, pepper_value=-2.0, verbose=True):
     """Applies salt and pepper to an array of images.
     """
     imgLen = len(aImages)
@@ -324,8 +324,8 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
     class_cnt = np.max(y_train) + 1
     y_train = keras.utils.to_categorical(y_train, class_cnt)
     y_test = keras.utils.to_categorical(y_test, class_cnt)
-    x_train = x_train.astype('float16')
-    x_test = x_test.astype('float16')
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
     if (verbose):
         # Color Images?
         if (len(x_train.shape) == 4):
@@ -736,7 +736,7 @@ def load_image_file_names_from_folder(img_folder_name):
             output_img_list.append(absolute_file_name)
     return output_img_list
 
-def load_images_from_files(file_names, target_size=(224,224),  dtype='float16'):
+def load_images_from_files(file_names, target_size=(224,224),  dtype='float32'):
     """Creates an array with images from an array with file names.
     # Arguments
         file_names: array with file names.
@@ -746,7 +746,7 @@ def load_images_from_files(file_names, target_size=(224,224),  dtype='float16'):
     x=[]
     for file_name in file_names:
       img = load_img(file_name, target_size=target_size)
-      img = img_to_array(img, dtype='float16')
+      img = img_to_array(img, dtype='float32')
       x.append(img)
     return np.array(x, dtype=dtype)
 
@@ -800,7 +800,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_training:
       if (verbose):
         print ("loading train images")
-      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size), dtype='float16')
+      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size), dtype='float32')
       if (verbose):
         print ("train shape is:", train_x.shape)
   else:
@@ -809,7 +809,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_validation:
       if (verbose):
         print ("loading validation images")
-      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size), dtype='float16')
+      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size), dtype='float32')
       if (verbose):
         print ("validation shape is:", val_x.shape)
   else:
@@ -818,7 +818,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_testing:
       if (verbose):
         print ("loading test images")
-      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size), dtype='float16')
+      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size), dtype='float32')
       if (verbose):
         print ("test shape is:", test_x.shape)
   else:
