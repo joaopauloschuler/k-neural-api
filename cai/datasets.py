@@ -634,7 +634,7 @@ def create_image_generator_sliced_image():
 
 def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batch_size = 64, 
     epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True,  
-    datagen = cai.util.create_image_generator(),  monitor='val_accuracy'):
+    datagen = cai.util.create_image_generator(),  monitor='val_accuracy',   use_multiprocessing=False):
     """Trains a given neural network model on a given dataset.
     # Arguments
         model: neural network model.
@@ -655,11 +655,11 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         model_name: h5 file name with best model.
         csv_name: string with CSV file name showing training progress.
     """
-    x_train, y_train, x_test, y_test = load_dataset(dataset, verbose=verbose, lab=lab,  bipolar=bipolar, base_model_name=base_model_name)
+    x_train, y_train, x_test, y_test = cai.datasets.load_dataset(dataset, verbose=verbose, lab=lab,  bipolar=bipolar, base_model_name=base_model_name)
     gc.collect()
 
-    batches_per_epoch = int(x_train.shape[0]/batch_size)
-    batches_per_validation = int(x_test.shape[0]/batch_size)    
+    batches_per_epoch = np.floor(x_train.shape[0]/batch_size)
+    batches_per_validation = np.floor(x_test.shape[0]/batch_size)    
     model_name = base_model_name+'.h5'
     csv_name = base_model_name+'.csv'
     opt = keras.optimizers.SGD(lr=0.1, momentum=momentum, nesterov=nesterov)
@@ -675,14 +675,12 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
         fit_verbose=2
    
     gc.collect()
-    fit_result = model.fit_generator(
-        datagen.flow(x_train, y_train, batch_size=batch_size),
+
+    fit_result = model.fit(
+        x = datagen.flow(x_train, y_train, batch_size=batch_size),
+        batch_size=batch_size,
         epochs=epochs,
-        steps_per_epoch=batches_per_epoch,
-        validation_steps=batches_per_validation,
-        validation_data=(x_test, y_test),
         verbose=fit_verbose,
-        workers=multiprocessing.cpu_count(), 
         callbacks=[
             keras.callbacks.LearningRateScheduler(plrscheduler),
             keras.callbacks.ModelCheckpoint(
@@ -695,11 +693,16 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
                 save_freq='epoch')
             # CSV crashes on TF 2.2 on the first epoch.
             # keras.callbacks.CSVLogger(csv_name, append=False, separator=';')  
-        ]
+        ],
+        steps_per_epoch=batches_per_epoch,
+        validation_steps=batches_per_validation,
+        validation_data=(x_test, y_test),
+        workers=multiprocessing.cpu_count(),
+        use_multiprocessing=use_multiprocessing
     )
     gc.collect()
-    return fit_result,  model_name,  csv_name    
-    
+    return fit_result,  model_name,  csv_name
+
 def train_model_on_cifar10(model,  base_model_name, plrscheduler,  batch_size = 64, epochs = 300, momentum=0.9, nesterov=True, verbose=False,  lab=False,  bipolar=True):
     """Trains a given neural network model on a given dataset.
     # Arguments
