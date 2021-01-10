@@ -6,12 +6,12 @@ This project is a subproject from a bigger and older project called CAI and is s
 '''
 
 setup(name='cai',
-      version='0.1.2',
+      version='0.1.3',
       description='K-CAI NEURAL API',
       long_description=long_description,
       author='Joao Paulo Schwarz Schuler',
       url='https://github.com/joaopauloschuler/k-neural-api',
-      install_requires=['tensorflow>=2.2.0',
+      install_requires=[ # 'tensorflow>=2.2.0', # leaving this as a require sometimes replaces tensorflow
                         'pandas>=0.22.0',
                         'scikit-image>=0.15.0',
                         'opencv-python>=4.1.2.30', 
