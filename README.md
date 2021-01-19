@@ -79,7 +79,18 @@ neuron_patterns = cai.util.show_neuronal_patterns(weights, NumRows = 8, NumCols 
 ...
 plt.imshow(neuron_patterns, interpolation='nearest', aspect='equal')
 ```
-
+### Gradient Ascent & Deep Dream
+With **cai.gradientascent.run_gradient_ascent_octaves**, you can easily run gradient ascent to create Deep Dream like images:
+```
+base_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
+pmodel = cai.models.CreatePartialModel(base_model, 'mixed3')
+new_img = cai.gradientascent.run_gradient_ascent_octaves(img=original_img, partial_model=pmodel, low_range=-4, high_range=1)
+plt.figure(figsize = (16, 16))
+plt.imshow(new_img, interpolation='nearest', aspect='equal')
+plt.show()
+```
+<p><img src="docs/park-ga.jpg"></img>
+</p>
 ### PyDoc
 After installing K-CAI, you can find documentation with:
 ```
