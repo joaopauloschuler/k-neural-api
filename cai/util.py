@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import tensorflow
 from tensorflow.keras import backend
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import csv
@@ -282,12 +283,39 @@ def get_model_parameter_counts(model):
     non_trainable_count = int(np.sum([backend.count_params(p) for p in set(model.non_trainable_weights)]))
     return trainable_count, non_trainable_count 
 
-def preprocess(img):
-    """Transforms an image from [0,255] interval into bipolar [-2,+2] interval.
+def preprocess(img,  bipolar=True, tfcons=False):
+    """If Bipolar, transforms an image from [0,255] interval into bipolar [-2,+2] interval.
     """
-    # JP prefers bipolar input [-2,+2]
-    img /= 64
-    img -= 2
+    if (bipolar):
+        # JP prefers bipolar input [-2,+2]
+        img /= 64
+        img -= 2
+    else:
+        img /= 255
+    if (tfcons): img = tensorflow.constant(np.array(img))
+
+def preprocess_cp(img,  bipolar=True, tfcons=False):
+    """Same as preprocess but returning a copy of the value."""
+    img_result = np.copy(img)
+    preprocess(img_result,  bipolar=bipolar,  tfcons=tfcons)
+    return img_result
+
+def deprocess(img,  bipolar=True, tfcast=False):
+    """Opposite process from preprocess.
+    """
+    if (bipolar):
+        img += 2
+        img *= 64
+    else:
+        img *= 255
+    if (tfcast): img = tensorflow.cast(img, tensorflow.uint8)
+    
+def deprocess_cp(img,  bipolar=True, tfcast=False):
+    """Opposite process from preprocess_cp.
+    """
+    img_result = np.copy(img)
+    deprocess_cp(img_result,  bipolar=bipolar,  tfcast=tfcast)
+    return img_result
 
 # This is the default CAI Image generator with data augmentation
 def create_image_generator(
