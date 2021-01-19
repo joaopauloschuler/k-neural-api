@@ -65,12 +65,12 @@ def run_gradient_ascent(img, partial_model, steps=100, step_size=0.01):
     loss, img = ga(img, run_steps, tf.constant(step_size))
   return img
 
-def run_gradient_ascent_octaves(img, partial_model, steps=50, step_size=0.01, octave_scale=1.3, low_range=-2, up_range=3):
+def run_gradient_ascent_octaves(img, partial_model, steps=50, step_size=0.01, octave_scale=1.3, low_range=-2, high_range=3):
   img = tf.constant(np.array(img))
   base_shape = tf.shape(img)[:-1]
   float_base_shape = tf.cast(base_shape, tf.float32)
 
-  for n in range(low_range, up_range):
+  for n in range(low_range, high_range):
     new_shape = tf.cast(float_base_shape*(octave_scale**n), tf.int32)
     img = tf.image.resize(img, new_shape).numpy()
     img = run_gradient_ascent(img=img, partial_model=partial_model, steps=steps, step_size=step_size)
