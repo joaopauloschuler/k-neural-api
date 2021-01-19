@@ -89,8 +89,11 @@ plt.figure(figsize = (16, 16))
 plt.imshow(new_img, interpolation='nearest', aspect='equal')
 plt.show()
 ```
-<p><img src="docs/park-ga.jpg"></img>
-</p>
+<p><img src="docs/park-ga.jpg"></img></p>
+
+Above image was generated from:
+
+<p><img src="https://github.com/joaopauloschuler/neural-api/blob/master/docs/park.jpg?raw=true" width=714px></img></p>
 
 ### PyDoc
 After installing K-CAI, you can find documentation with:
