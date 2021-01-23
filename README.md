@@ -34,6 +34,7 @@ else:
 * `cai.datasets.load_hyperspectral_matlab_image`: downloads (if required) and loads hyperspectral image from a matlab file. This function has been tested with [AVIRIS](http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes) and ROSIS sensor data stored as a matlab files.
 * `cai.models.calculate_heat_map_from_dense_and_avgpool`: calculates a class activation mapping (CAM) inspired on the paper [Learning Deep Features for Discriminative Localization](https://arxiv.org/abs/1512.04150) (see example below).
 * `cai.util.show_neuronal_patterns`: creates an array for visualizing first layer neuronal filters/patterns (see example below).
+* `cai.gradientascent.run_gradient_ascent_octaves`: allows visualizing patterns recognized by inner neuronal layers. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb).
 
 ## Documentation
 The documentation is composed by **examples** and **PyDoc**.
