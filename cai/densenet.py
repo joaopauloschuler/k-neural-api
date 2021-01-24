@@ -229,16 +229,16 @@ def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, co
 
     if (deep_two_paths):
       start       = last_tensor
-      x2          = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition1a')
+      x2          = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition1a', dropout_rate=dropout_rate)
       x2          = densenet_block(x2, blocks, half_growth, half_bottleneck, l2_decay, name='dn2a', dropout_rate=dropout_rate)
-      last_tensor = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition1b')
+      last_tensor = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition1b', dropout_rate=dropout_rate)
       last_tensor = densenet_block(last_tensor, blocks, half_growth, half_bottleneck, l2_decay, name='dnb', dropout_rate=dropout_rate)
       last_tensor = keras.layers.Concatenate(axis=bn_axis, name='concat2')([last_tensor, x2])
 
       start       = last_tensor
-      x2          = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition2a')
+      x2          = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition2a', dropout_rate=dropout_rate)
       x2          = densenet_block(x2, blocks, half_growth, half_bottleneck, l2_decay, name='dn2a', dropout_rate=dropout_rate)
-      last_tensor = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition2b')
+      last_tensor = densenet_transition_block_paths(start, compression/2, l2_decay, name='dntransition2b', dropout_rate=dropout_rate)
       last_tensor = densenet_block(last_tensor, blocks, half_growth, half_bottleneck, l2_decay, name='dnb', dropout_rate=dropout_rate)
       last_tensor = keras.layers.Concatenate(axis=bn_axis, name='concat3')([last_tensor, x2])
       last_tensor = keras.layers.Conv2D(int(keras.backend.int_shape(last_tensor)[bn_axis]), 1,
