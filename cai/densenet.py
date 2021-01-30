@@ -195,7 +195,7 @@ def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compr
     return Model(inputs = [img_input], outputs = [last_tensor])
     
 def big_densenet(pinput_shape, blocks=[6, 12, 24, 16], growth_rate=12, bottleneck=48, compression=0.5,
-    l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0):
+    l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0,  first_stride=(2, 2),  first_shape=(7, 7)):
     """Builds a simple densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
@@ -212,7 +212,7 @@ def big_densenet(pinput_shape, blocks=[6, 12, 24, 16], growth_rate=12, bottlenec
     bn_axis = 3
     img_input = keras.layers.Input(shape=pinput_shape)
 
-    last_tensor = keras.layers.Conv2D(64, (7, 7), strides=(2, 2), use_bias=False, name='c1')(img_input)
+    last_tensor = keras.layers.Conv2D(64, first_shape, strides=first_stride, use_bias=False, name='c1')(img_input)
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn1')(last_tensor)
     last_tensor = keras.layers.Activation('relu', name='relu1')(last_tensor)
     last_tensor = keras.layers.ZeroPadding2D(padding=((1, 1), (1, 1)))(last_tensor)
@@ -248,7 +248,7 @@ def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, co
     """Builds a two-paths optimized densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
-        blocks: integer number with densenet number of blocks.
+        blocks:  integer number with densenet number of blocks.
         growth_rate: integer number with the number of channels added at each convolution.
         bottleneck: integer. This is the number of bottleneck output channels.
         compression: compression rate at transition blocks.
@@ -298,6 +298,69 @@ def two_paths_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, co
       last_tensor = cai.densenet.densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn2', dropout_rate=dropout_rate)
       last_tensor = cai.densenet.densenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate)
       last_tensor = cai.densenet.densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn3', dropout_rate=dropout_rate)
+
+    last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
+
+    last_tensor = keras.layers.Activation('relu', name='relu')(last_tensor)
+    if (extra_compression):
+        last_tensor = keras.layers.Conv2D(int(keras.backend.int_shape(last_tensor)[bn_axis] * compression), 1,
+            use_bias=False,
+            kernel_regularizer=keras.regularizers.l2(l2_decay), activation='relu')(last_tensor)
+    
+    last_tensor = keras.layers.GlobalAveragePooling2D(name='last_avg_pool')(last_tensor)
+    last_tensor = keras.layers.Dense(num_classes, activation='softmax', name='softmax')(last_tensor)            
+    return Model(inputs = [img_input], outputs = [last_tensor])
+
+def two_paths_big_densenet(pinput_shape, blocks=[6, 12, 24, 16], growth_rate=12, bottleneck=48, compression=0.5,
+    l2_decay=0.000001, num_classes=10, extra_compression=False, deep_two_paths=False,
+    dropout_rate=0.0,  first_stride=(2, 2),  first_shape=(7, 7)):
+    """Builds a two-paths optimized densenet model from input to end.
+    # Arguments
+        pinput_shape: array with input shape.
+        blocks: 4 elements array with densenet number of blocks.
+        growth_rate: integer number with the number of channels added at each convolution.
+        bottleneck: integer. This is the number of bottleneck output channels.
+        compression: compression rate at transition blocks.
+        l2_decay: float.
+        num_classes: integer number with the number of classes to be classified.
+        extra_compression: an extra compression might increase accuracy.
+    # Returns
+        a two paths densenet model.
+    """
+    bn_axis = 3
+    half_growth = int(growth_rate/2)
+    half_bottleneck = int(bottleneck/2)
+    half_compression = compression/2
+    img_input = keras.layers.Input(shape=pinput_shape)
+    last_tensor = cai.layers.CopyChannels(0,1)(img_input)
+    last_tensor = keras.layers.Conv2D(32, first_shape, strides=first_stride, use_bias=False, kernel_regularizer=keras.regularizers.l2(l2_decay),  name='c_l')(img_input)
+
+    x2 = cai.layers.CopyChannels(1,2)(img_input)
+    x2 = keras.layers.Conv2D(32, first_shape, strides=first_stride, use_bias=False, kernel_regularizer=keras.regularizers.l2(l2_decay),  name='c_ab')(x2)
+    last_tensor = keras.layers.Concatenate(axis=bn_axis, name='concat')([last_tensor, x2])
+
+    last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn1')(last_tensor)
+    last_tensor = keras.layers.Activation('relu', name='relu1')(last_tensor)
+    last_tensor = keras.layers.ZeroPadding2D(padding=((1, 1), (1, 1)))(last_tensor)
+    last_tensor = keras.layers.MaxPooling2D(3, strides=(2, 2), name='pool1')(last_tensor)
+
+    if (deep_two_paths):
+      cnt = 0
+      for block in blocks:
+          start       = last_tensor
+          x2          = densenet_transition_block_paths(start, half_compression, l2_decay, name='dntransition'+str(cnt)+'a', dropout_rate=dropout_rate)
+          x2          = densenet_block(x2, block, half_growth, half_bottleneck, l2_decay, name='dn'+str(cnt)+'a', dropout_rate=dropout_rate)
+          last_tensor = densenet_transition_block_paths(start, half_compression, l2_decay, name='dntransition'+str(cnt)+'b', dropout_rate=dropout_rate)
+          last_tensor = densenet_block(last_tensor, block, half_growth, half_bottleneck, l2_decay, name='dn'+str(cnt)+'b', dropout_rate=dropout_rate)
+          last_tensor = keras.layers.Concatenate(axis=bn_axis, name='concat'+str(cnt))([last_tensor, x2])
+          cnt = cnt + 1
+      if (dropout_rate>0): last_tensor = keras.layers.Dropout(dropout_rate)(last_tensor)
+    else:
+      cnt = 0
+      for block in blocks:
+          last_tensor = cai.densenet.densenet_transition_block(last_tensor, compression, l2_decay, name='dntransition'+str(cnt), dropout_rate=dropout_rate)
+          last_tensor = cai.densenet.densenet_block(last_tensor, block, growth_rate, bottleneck, l2_decay, name='dn'+str(cnt), dropout_rate=dropout_rate)
+          cnt = cnt + 1
 
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
 
