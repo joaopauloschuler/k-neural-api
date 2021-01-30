@@ -211,9 +211,13 @@ def big_densenet(pinput_shape, blocks=[6, 12, 24, 16], growth_rate=12, bottlenec
     """
     bn_axis = 3
     img_input = keras.layers.Input(shape=pinput_shape)
-    last_tensor = keras.layers.Conv2D(64, (3, 3), padding='same',
-                     input_shape=pinput_shape, 
-                     kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
+
+    last_tensor = keras.layers.Conv2D(64, (7, 7), strides=(2, 2), use_bias=False, name='c1')(img_input)
+    last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn1')(last_tensor)
+    last_tensor = keras.layers.Activation('relu', name='relu1')(last_tensor)
+    last_tensor = keras.layers.ZeroPadding2D(padding=((1, 1), (1, 1)))(last_tensor)
+    last_tensor = keras.layers.MaxPooling2D(3, strides=(2, 2), name='pool1')(last_tensor)
+  
     last_tensor = densenet_block(last_tensor, blocks[0], growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate)
     last_tensor = densenet_transition_block(last_tensor, compression, l2_decay, name='dntransition1', dropout_rate=dropout_rate)
     
@@ -225,8 +229,7 @@ def big_densenet(pinput_shape, blocks=[6, 12, 24, 16], growth_rate=12, bottlenec
     
     last_tensor = densenet_block(last_tensor, blocks[3], growth_rate, bottleneck, l2_decay, name='dn4', dropout_rate=dropout_rate)
     
-    last_tensor = keras.layers.BatchNormalization(
-        axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
+    last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
     last_tensor = keras.layers.Activation('relu', name='relu')(last_tensor)
     if (extra_compression):
         last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
