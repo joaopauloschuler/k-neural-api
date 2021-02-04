@@ -243,10 +243,8 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
 def create_inception_v3_two_path_mixed_layer(x,  id,  name='',  channel_axis=3,  compression=0.5):
     if name=='':
         name='mixed'
-    a = create_inception_path(last_tensor=x,  compression=compression,  channel_axis=channel_axis, name=name+'_ta')
-    b = create_inception_path(last_tensor=x,  compression=compression,  channel_axis=channel_axis, name=name+'_tb')
-    a = create_inception_v3_mixed_layer(a,  id=id,  name=name+'a', compression=compression)
-    b = create_inception_v3_mixed_layer(b,  id=id,  name=name+'b', compression=compression)
+    a = create_inception_v3_mixed_layer(x,  id=id,  name=name+'a', compression=compression)
+    b = create_inception_v3_mixed_layer(x,  id=id,  name=name+'b', compression=compression)
     return keras.layers.Concatenate(axis=channel_axis, name=name)([a, b])
 
 def two_path_inception_v3(
@@ -259,6 +257,7 @@ def two_path_inception_v3(
                 two_paths_first_block=False,
                 two_paths_second_block=False,
                 deep_two_paths=False,
+                deep_two_paths_compression=0.57,
                 l_ratio=0.5,
                 ab_ratio=0.5,
                 max_mix_idx=10, 
@@ -294,6 +293,8 @@ def two_path_inception_v3(
             the first 3 convolutions.
         two_paths_second_block: when true, another 2 convolutions
             are done in two paths.
+        deep_two_paths: when true, creates a complete two-path architecture.
+        deep_two_paths_compression: how much each path should be compressed.
         l_ratio: proportion dedicated to light.
         ab_ratio: proportion dedicated to color.
         max_mix_idx: last "mixed layer" index. You can create smaller
@@ -397,9 +398,9 @@ def two_path_inception_v3(
     if max_mix_idx >= 0:
         for id_layer in range(max_mix_idx+1):
             if (deep_two_paths):
-                x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis)
+                x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis,  compression=deep_two_paths_compression)
             else:
-                x = create_inception_v3_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis,  compression=1)
+                x = create_inception_v3_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis)
     
     if include_top:
         # Classification block
@@ -434,6 +435,67 @@ def create_paths(last_tensor, compression, l2_decay, dropout_rate=0.0):
     last_tensor = keras.layers.MaxPooling2D(2, strides=2)(last_tensor)
     return last_tensor
 
+def compiled_full_two_path_inception_v3(
+    input_shape=(224,224,3),
+    classes=1000,
+    max_mix_idx=10, 
+    model_name='two_path_inception_v3'):
+    """Returns a compiled full two-paths inception v3.
+    # Arguments
+        input_shape: mandatory input shape. Common values are 
+            (299, 299, 3) and (224, 224, 3).
+        classes: number of classes to classify images into.
+        max_mix_idx: last "mixed layer" index. You can create smaller
+            architectures with this parameter.
+        model_name: model name 
+    # Returns
+        A Keras model instance.
+    # Raises
+        ValueError: in case of invalid argument for `weights`,
+            or invalid input shape.
+    """
+    return compiled_two_path_inception_v3(
+        input_shape=input_shape,
+        classes=classes,
+        two_paths_partial_first_block=0,
+        two_paths_first_block=True,
+        two_paths_second_block=True,
+        deep_two_paths=True,
+        deep_two_paths_compression=0.57,
+        max_mix_idx=max_mix_idx, 
+        model_name='deep_two_path_inception_v3'
+    )
+    
+def compiled_inception_v3(
+    input_shape=(224,224,3),
+    classes=1000,
+    max_mix_idx=10, 
+    model_name='two_path_inception_v3'):
+    """Returns a compiled two-paths inception v3.
+    # Arguments
+        input_shape: mandatory input shape. Common values are 
+            (299, 299, 3) and (224, 224, 3).
+        classes: number of classes to classify images into.
+        max_mix_idx: last "mixed layer" index. You can create smaller
+            architectures with this parameter.
+        model_name: model name 
+    # Returns
+        A Keras model instance.
+    # Raises
+        ValueError: in case of invalid argument for `weights`,
+            or invalid input shape.
+    """
+    return compiled_two_path_inception_v3(
+        input_shape=input_shape,
+        classes=classes,
+        two_paths_partial_first_block=0,
+        two_paths_first_block=False,
+        two_paths_second_block=False,
+        deep_two_paths=False,
+        max_mix_idx=max_mix_idx, 
+        model_name='two_path_inception_v3'
+    )
+
 def compiled_two_path_inception_v3(
     input_shape=(224,224,3),
     classes=1000,
@@ -441,6 +503,7 @@ def compiled_two_path_inception_v3(
     two_paths_first_block=False,
     two_paths_second_block=False,
     deep_two_paths=False,
+    deep_two_paths_compression=0.57,
     l_ratio=0.5,
     ab_ratio=0.5,
     max_mix_idx=10, 
@@ -458,6 +521,8 @@ def compiled_two_path_inception_v3(
             the first 3 convolutions.
         two_paths_second_block: when true, another 2 convolutions
             are done in two paths.
+        deep_two_paths: when true, creates a complete two-path architecture.
+        deep_two_paths_compression: how much each path should be compressed.
         l_ratio: proportion dedicated to light.
         ab_ratio: proportion dedicated to color.
         max_mix_idx: last "mixed layer" index. You can create smaller
@@ -479,6 +544,7 @@ def compiled_two_path_inception_v3(
         two_paths_first_block=two_paths_first_block,
         two_paths_second_block=two_paths_second_block,
         deep_two_paths=deep_two_paths,
+        deep_two_paths_compression=deep_two_paths_compression,
         l_ratio=l_ratio,
         ab_ratio=ab_ratio,
         max_mix_idx=max_mix_idx, 
