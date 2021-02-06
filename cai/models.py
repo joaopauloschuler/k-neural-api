@@ -116,11 +116,11 @@ def conv2d_bn(x,
     x = keras.layers.Activation(activation=activation, name=name)(x)
     return x
 
-def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, compression=1):
+def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck_compression=1,  compression=1):
     if id == 0:
             # mixed 0: 35 x 35 x 256
-            branch1x1 = conv2d_bn(x, int(compression*64), 1, 1)
-            branch5x5 = conv2d_bn(x, int(compression*48), 1, 1)
+            branch1x1 = conv2d_bn(x, int(bottleneck_compression*64), 1, 1)
+            branch5x5 = conv2d_bn(x, int(bottleneck_compression*48), 1, 1)
             branch5x5 = conv2d_bn(branch5x5, int(compression*64), 5, 5)
             branch3x3dbl = conv2d_bn(x, int(compression*64), 1, 1)
             branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
@@ -128,37 +128,37 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, compressio
             branch_pool = keras.layers.AveragePooling2D((3, 3),
                                                   strides=(1, 1),
                                                   padding='same')(x)
-            branch_pool = conv2d_bn(branch_pool, 32, 1, 1)
+            branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*32), 1, 1)
             x = keras.layers.concatenate([branch1x1, branch5x5, branch3x3dbl, branch_pool], axis=channel_axis, name=name)
     
     if id == 1:
         # mixed 1: 35 x 35 x 288
-        branch1x1 = conv2d_bn(x, int(compression*64), 1, 1)
-        branch5x5 = conv2d_bn(x, int(compression*48), 1, 1)
+        branch1x1 = conv2d_bn(x, int(bottleneck_compression*64), 1, 1)
+        branch5x5 = conv2d_bn(x, int(bottleneck_compression*48), 1, 1)
         branch5x5 = conv2d_bn(branch5x5, int(compression*64), 5, 5)
         branch3x3dbl = conv2d_bn(x, int(compression*64), 1, 1)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
         branch_pool = keras.layers.AveragePooling2D((3, 3), strides=(1, 1), padding='same')(x)
-        branch_pool = conv2d_bn(branch_pool, int(compression*64), 1, 1)
+        branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*64), 1, 1)
         x = keras.layers.concatenate( [branch1x1, branch5x5, branch3x3dbl, branch_pool], axis=channel_axis, name=name)
 
     if id == 2:
         # mixed 2: 35 x 35 x 288
-        branch1x1 = conv2d_bn(x, int(compression*64), 1, 1)
-        branch5x5 = conv2d_bn(x, int(compression*48), 1, 1)
+        branch1x1 = conv2d_bn(x, int(bottleneck_compression*64), 1, 1)
+        branch5x5 = conv2d_bn(x, int(bottleneck_compression*48), 1, 1)
         branch5x5 = conv2d_bn(branch5x5, int(compression*64), 5, 5)
         branch3x3dbl = conv2d_bn(x, int(compression*64), 1, 1)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
         branch_pool = keras.layers.AveragePooling2D((3, 3), strides=(1, 1), padding='same')(x)
-        branch_pool = conv2d_bn(branch_pool, int(compression*64), 1, 1)
+        branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*64), 1, 1)
         x = keras.layers.concatenate( [branch1x1, branch5x5, branch3x3dbl, branch_pool], axis=channel_axis, name=name)
 
     if id == 3:
         # mixed 3: 17 x 17 x 768
-        branch3x3 = conv2d_bn(x, int(compression*384), 3, 3, strides=(2, 2), padding='valid')
-        branch3x3dbl = conv2d_bn(x, int(compression*64), 1, 1)
+        branch3x3 = conv2d_bn(x, int(bottleneck_compression*384), 3, 3, strides=(2, 2), padding='valid')
+        branch3x3dbl = conv2d_bn(x, int(bottleneck_compression*64), 1, 1)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3, strides=(2, 2), padding='valid')
         branch_pool = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(x)
@@ -166,37 +166,37 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, compressio
 
     if id == 4:
         # mixed 4: 17 x 17 x 768
-        branch1x1 = conv2d_bn(x, int(compression*192), 1, 1)
-        branch7x7 = conv2d_bn(x, int(compression*128), 1, 1)
+        branch1x1 = conv2d_bn(x, int(bottleneck_compression*192), 1, 1)
+        branch7x7 = conv2d_bn(x, int(bottleneck_compression*128), 1, 1)
         branch7x7 = conv2d_bn(branch7x7, int(compression*128), 1, 7)
         branch7x7 = conv2d_bn(branch7x7, int(compression*192), 7, 1)
-        branch7x7dbl = conv2d_bn(x, int(compression*128), 1, 1)
+        branch7x7dbl = conv2d_bn(x, int(bottleneck_compression*128), 1, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*128), 7, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*128), 1, 7)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*128), 7, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*192), 1, 7)
         branch_pool = keras.layers.AveragePooling2D((3, 3), strides=(1, 1), padding='same')(x)
-        branch_pool = conv2d_bn(branch_pool, int(compression*192), 1, 1)
+        branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*192), 1, 1)
         x = keras.layers.concatenate([branch1x1, branch7x7, branch7x7dbl, branch_pool], axis=channel_axis, name=name)
 
     if ((id == 5) or (id == 6)):
-        branch1x1 = conv2d_bn(x, int(compression*192), 1, 1)
-        branch7x7 = conv2d_bn(x, int(compression*160), 1, 1)
+        branch1x1 = conv2d_bn(x, int(bottleneck_compression*192), 1, 1)
+        branch7x7 = conv2d_bn(x, int(bottleneck_compression*160), 1, 1)
         branch7x7 = conv2d_bn(branch7x7, int(compression*160), 1, 7)
         branch7x7 = conv2d_bn(branch7x7, int(compression*192), 7, 1)
-        branch7x7dbl = conv2d_bn(x, int(compression*160), 1, 1)
+        branch7x7dbl = conv2d_bn(x, int(bottleneck_compression*160), 1, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*160), 7, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*160), 1, 7)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*160), 7, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*192), 1, 7)
         branch_pool = keras.layers.AveragePooling2D( (3, 3), strides=(1, 1), padding='same')(x)
-        branch_pool = conv2d_bn(branch_pool, int(compression*192), 1, 1)
+        branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*192), 1, 1)
         x = keras.layers.concatenate([branch1x1, branch7x7, branch7x7dbl, branch_pool], axis=channel_axis, name=name)
 
     if id == 7:
         # mixed 7: 17 x 17 x 768
-        branch1x1 = conv2d_bn(x, int(compression*192), 1, 1)
-        branch7x7 = conv2d_bn(x, int(compression*192), 1, 1)
+        branch1x1 = conv2d_bn(x, int(bottleneck_compression*192), 1, 1)
+        branch7x7 = conv2d_bn(x, int(bottleneck_compression*192), 1, 1)
         branch7x7 = conv2d_bn(branch7x7, int(compression*192), 1, 7)
         branch7x7 = conv2d_bn(branch7x7, int(compression*192), 7, 1)
         branch7x7dbl = conv2d_bn(x, int(compression*192), 1, 1)
@@ -205,14 +205,14 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, compressio
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*192), 7, 1)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*192), 1, 7)
         branch_pool = keras.layers.AveragePooling2D((3, 3), strides=(1, 1), padding='same')(x)
-        branch_pool = conv2d_bn(branch_pool, int(compression*192), 1, 1)
+        branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*192), 1, 1)
         x = keras.layers.concatenate([branch1x1, branch7x7, branch7x7dbl, branch_pool], axis=channel_axis, name=name)
 
     if id == 8:
         # mixed 8: 8 x 8 x 1280
-        branch3x3 = conv2d_bn(x, int(compression*192), 1, 1)
+        branch3x3 = conv2d_bn(x, int(bottleneck_compression*192), 1, 1)
         branch3x3 = conv2d_bn(branch3x3, int(compression*320), 3, 3, strides=(2, 2), padding='valid')
-        branch7x7x3 = conv2d_bn(x, int(compression*192), 1, 1)
+        branch7x7x3 = conv2d_bn(x, int(bottleneck_compression*192), 1, 1)
         branch7x7x3 = conv2d_bn(branch7x7x3, int(compression*192), 1, 7)
         branch7x7x3 = conv2d_bn(branch7x7x3, int(compression*192), 7, 1)
         branch7x7x3 = conv2d_bn(branch7x7x3, int(compression*192), 3, 3, strides=(2, 2), padding='valid')
@@ -221,18 +221,18 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, compressio
 
     if (id == 9) or (id==10):
         # mixed 9: 8 x 8 x 2048
-        branch1x1 = conv2d_bn(x, int(compression*320), 1, 1)
-        branch3x3 = conv2d_bn(x, int(compression*384), 1, 1)
+        branch1x1 = conv2d_bn(x, int(bottleneck_compression*320), 1, 1)
+        branch3x3 = conv2d_bn(x, int(bottleneck_compression*384), 1, 1)
         branch3x3_1 = conv2d_bn(branch3x3, int(compression*384), 1, 3)
         branch3x3_2 = conv2d_bn(branch3x3, int(compression*384), 3, 1)
         branch3x3 = keras.layers.concatenate([branch3x3_1, branch3x3_2], axis=channel_axis, name=name + 'a')
-        branch3x3dbl = conv2d_bn(x, int(compression*448), 1, 1)
+        branch3x3dbl = conv2d_bn(x, int(bottleneck_compression*448), 1, 1)
         branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*384), 3, 3)
         branch3x3dbl_1 = conv2d_bn(branch3x3dbl, int(compression*384), 1, 3)
         branch3x3dbl_2 = conv2d_bn(branch3x3dbl, int(compression*384), 3, 1)
         branch3x3dbl = keras.layers.concatenate([branch3x3dbl_1, branch3x3dbl_2], axis=channel_axis)
         branch_pool = keras.layers.AveragePooling2D((3, 3), strides=(1, 1), padding='same')(x)
-        branch_pool = conv2d_bn(branch_pool, int(compression*192), 1, 1)
+        branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*192), 1, 1)
         x = keras.layers.concatenate([branch1x1, branch3x3, branch3x3dbl, branch_pool], axis=channel_axis, name=name + 'b')
     return x
 
@@ -240,11 +240,11 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
     channel_count = int(keras.backend.int_shape(last_tensor)[channel_axis] * compression)
     return conv2d_bn(last_tensor, channel_count, 1, 1,  name=name)
     
-def create_inception_v3_two_path_mixed_layer(x,  id,  name='',  channel_axis=3,  compression=0.5):
+def create_inception_v3_two_path_mixed_layer(x,  id,  name='',  channel_axis=3,  bottleneck_compression=0.5,  compression=0.655):
     if name=='':
         name='mixed'
-    a = create_inception_v3_mixed_layer(x,  id=id,  name=name+'a', compression=compression)
-    b = create_inception_v3_mixed_layer(x,  id=id,  name=name+'b', compression=compression)
+    a = create_inception_v3_mixed_layer(x,  id=id,  name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
+    b = create_inception_v3_mixed_layer(x,  id=id,  name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
     return keras.layers.Concatenate(axis=channel_axis, name=name)([a, b])
 
 def two_path_inception_v3(
@@ -257,7 +257,8 @@ def two_path_inception_v3(
                 two_paths_first_block=False,
                 two_paths_second_block=False,
                 deep_two_paths=False,
-                deep_two_paths_compression=0.57,
+                deep_two_paths_compression=0.655,
+                deep_two_paths_bottleneck_compression=0.5,
                 l_ratio=0.5,
                 ab_ratio=0.5,
                 max_mix_idx=10, 
@@ -397,7 +398,7 @@ def two_path_inception_v3(
     if max_mix_idx >= 0:
         for id_layer in range(max_mix_idx+1):
             if (deep_two_paths):
-                x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis,  compression=deep_two_paths_compression)
+                x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis, bottleneck_compression=deep_two_paths_bottleneck_compression, compression=deep_two_paths_compression)
             else:
                 x = create_inception_v3_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis)
     
@@ -502,7 +503,8 @@ def compiled_two_path_inception_v3(
     two_paths_first_block=False,
     two_paths_second_block=False,
     deep_two_paths=False,
-    deep_two_paths_compression=0.57,
+    deep_two_paths_compression=0.655,
+    deep_two_paths_bottleneck_compression=0.5,
     l_ratio=0.5,
     ab_ratio=0.5,
     max_mix_idx=10, 
@@ -544,6 +546,7 @@ def compiled_two_path_inception_v3(
         two_paths_second_block=two_paths_second_block,
         deep_two_paths=deep_two_paths,
         deep_two_paths_compression=deep_two_paths_compression,
+        deep_two_paths_bottleneck_compression=deep_two_paths_bottleneck_compression,
         l_ratio=l_ratio,
         ab_ratio=ab_ratio,
         max_mix_idx=max_mix_idx, 
