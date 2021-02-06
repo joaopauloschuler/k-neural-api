@@ -461,7 +461,7 @@ def compiled_full_two_path_inception_v3(
         two_paths_first_block=True,
         two_paths_second_block=True,
         deep_two_paths=True,
-        deep_two_paths_compression=0.57,
+        deep_two_paths_compression=0.655,
         max_mix_idx=max_mix_idx, 
         model_name='deep_two_path_inception_v3'
     )
