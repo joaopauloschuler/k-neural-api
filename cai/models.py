@@ -557,9 +557,11 @@ def compiled_two_path_inception_v3(
     x = keras.layers.Dense(classes, name='preprediction')(x)
     predictions = keras.layers.Activation('softmax',name='prediction')(x)
     model = Model(inputs=base_model.input, outputs=predictions)
-    model.compile(loss='categorical_crossentropy',
-    optimizer="sgd",
-    metrics=['accuracy','top_k_categorical_accuracy'])
+    opt = keras.optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=opt,
+        metrics=['accuracy'])
     return model
 
 def CreatePartialModel(pModel, pOutputLayerName, hasGlobalAvg=False):
