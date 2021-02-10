@@ -239,12 +239,14 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck
 def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=None):
     channel_count = int(keras.backend.int_shape(last_tensor)[channel_axis] * compression)
     return conv2d_bn(last_tensor, channel_count, 1, 1,  name=name)
-    
-def create_inception_v3_two_path_mixed_layer(x,  id,  name='',  channel_axis=3,  bottleneck_compression=0.5,  compression=0.655):
+
+def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655):
     if name=='':
         name='mixed'
-    a = create_inception_v3_mixed_layer(x,  id=id,  name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
-    b = create_inception_v3_mixed_layer(x,  id=id,  name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
+    a = create_inception_path(last_tensor=x, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_ta')
+    b = create_inception_path(last_tensor=x, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_tb')
+    a = create_inception_v3_mixed_layer(a,  id=id, name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
+    b = create_inception_v3_mixed_layer(b,  id=id, name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
     return keras.layers.Concatenate(axis=channel_axis, name=name)([a, b])
 
 def two_path_inception_v3(
