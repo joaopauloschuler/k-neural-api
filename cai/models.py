@@ -263,7 +263,8 @@ def two_path_inception_v3(
                 deep_two_paths_bottleneck_compression=0.5,
                 l_ratio=0.5,
                 ab_ratio=0.5,
-                max_mix_idx=10, 
+                max_mix_idx=10,
+                max_mix_deep_two_paths_idx=-1,
                 model_name='two_path_inception_v3', 
                 **kwargs):
     """Instantiates the Inception v3 architecture with 2 paths options.
@@ -302,6 +303,7 @@ def two_path_inception_v3(
         ab_ratio: proportion dedicated to color.
         max_mix_idx: last "mixed layer" index. You can create smaller
             architectures with this parameter.
+        max_mix_deep_two_paths_idx: last "mixed layer" index with two-paths.
         model_name: model name 
     # Returns
         A Keras model instance.
@@ -310,6 +312,7 @@ def two_path_inception_v3(
             or invalid input shape.
     """
     img_input = keras.layers.Input(shape=input_shape)
+    if (deep_two_paths):  max_mix_deep_two_paths_idx = max_mix_idx
 
     if keras.backend.image_data_format() == 'channels_first':
         channel_axis = 1
@@ -399,7 +402,7 @@ def two_path_inception_v3(
 
     if max_mix_idx >= 0:
         for id_layer in range(max_mix_idx+1):
-            if (deep_two_paths):
+            if (max_mix_deep_two_paths_idx >= id_layer):
                 x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis, bottleneck_compression=deep_two_paths_bottleneck_compression, compression=deep_two_paths_compression)
             else:
                 x = create_inception_v3_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis)
@@ -509,7 +512,8 @@ def compiled_two_path_inception_v3(
     deep_two_paths_bottleneck_compression=0.5,
     l_ratio=0.5,
     ab_ratio=0.5,
-    max_mix_idx=10, 
+    max_mix_idx=10,
+    max_mix_deep_two_paths_idx=-1,
     model_name='two_path_inception_v3'
     ):
     """Returns a compiled two-paths inception v3.
@@ -530,6 +534,7 @@ def compiled_two_path_inception_v3(
         ab_ratio: proportion dedicated to color.
         max_mix_idx: last "mixed layer" index. You can create smaller
             architectures with this parameter.
+        max_mix_deep_two_paths_idx: last "mixed layer" index with two-paths.
         model_name: model name 
     # Returns
         A Keras model instance.
@@ -551,7 +556,8 @@ def compiled_two_path_inception_v3(
         deep_two_paths_bottleneck_compression=deep_two_paths_bottleneck_compression,
         l_ratio=l_ratio,
         ab_ratio=ab_ratio,
-        max_mix_idx=max_mix_idx, 
+        max_mix_idx=max_mix_idx,
+        max_mix_deep_two_paths_idx=max_mix_deep_two_paths_idx,
         model_name=model_name
     )
     x = base_model.output
