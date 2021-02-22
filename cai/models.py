@@ -79,7 +79,9 @@ def conv2d_bn(x,
               strides=(1, 1),
               name=None,
               use_bias=False,
-              activation='relu'):
+              activation='relu', 
+              has_batch_norm=True
+              ):
     """Utility function to apply conv + BN.
 
     # Arguments
@@ -92,6 +94,9 @@ def conv2d_bn(x,
         name: name of the ops; will become `name + '_conv'`
             for the convolution and `name + '_bn'` for the
             batch norm layer.
+        use_bias: True means that bias will be added,
+        activation: activation function. None means no activation function. 
+        has_batch_norm: True means that batch normalization is added.
 
     # Returns
         Output tensor after applying `Conv2D` and `BatchNormalization`.
@@ -112,8 +117,8 @@ def conv2d_bn(x,
         padding=padding,
         use_bias=use_bias,
         name=conv_name)(x)
-    x = keras.layers.BatchNormalization(axis=bn_axis, scale=False, name=bn_name)(x)
-    x = keras.layers.Activation(activation=activation, name=name)(x)
+    if (has_batch_norm): x = keras.layers.BatchNormalization(axis=bn_axis, scale=False, name=bn_name)(x)
+    if activation is not None: x = keras.layers.Activation(activation=activation, name=name)(x)
     return x
 
 def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck_compression=1,  compression=1):
@@ -236,15 +241,15 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck
         x = keras.layers.concatenate([branch1x1, branch3x3, branch3x3dbl, branch_pool], axis=channel_axis, name=name + 'b')
     return x
 
-def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=None):
+def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=None, activation='relu', has_batch_norm=True):
     channel_count = int(keras.backend.int_shape(last_tensor)[channel_axis] * compression)
-    return conv2d_bn(last_tensor, channel_count, 1, 1,  name=name)
+    return conv2d_bn(last_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm)
 
 def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655):
     if name=='':
         name='mixed'
-    a = create_inception_path(last_tensor=x, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_ta')
-    b = create_inception_path(last_tensor=x, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_tb')
+    a = create_inception_path(last_tensor=x, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_ta', activation=None, has_batch_norm=False)
+    b = create_inception_path(last_tensor=x, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_tb', activation=None, has_batch_norm=False)
     a = create_inception_v3_mixed_layer(a,  id=id, name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
     b = create_inception_v3_mixed_layer(b,  id=id, name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
     return keras.layers.Concatenate(axis=channel_axis, name=name)([a, b])
