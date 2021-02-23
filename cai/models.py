@@ -124,16 +124,14 @@ def conv2d_bn(x,
 def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck_compression=1,  compression=1):
     if id == 0:
             # mixed 0: 35 x 35 x 256
-            branch1x1 = conv2d_bn(x, int(bottleneck_compression*64), 1, 1)
-            branch5x5 = conv2d_bn(x, int(bottleneck_compression*48), 1, 1)
-            branch5x5 = conv2d_bn(branch5x5, int(compression*64), 5, 5)
-            branch3x3dbl = conv2d_bn(x, int(compression*64), 1, 1)
-            branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
-            branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3)
-            branch_pool = keras.layers.AveragePooling2D((3, 3),
-                                                  strides=(1, 1),
-                                                  padding='same')(x)
-            branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*32), 1, 1)
+            branch1x1 = conv2d_bn(x, int(bottleneck_compression*64), 1, 1, name=name + '_11a')
+            branch5x5 = conv2d_bn(x, int(bottleneck_compression*48), 1, 1, name=name + '_11b')
+            branch5x5 = conv2d_bn(branch5x5, int(compression*64), 5, 5, name=name + '_55b')
+            branch3x3dbl = conv2d_bn(x, int(compression*64), 1, 1, name=name + '_11c')
+            branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3, name=name + '_33c')
+            branch3x3dbl = conv2d_bn(branch3x3dbl, int(compression*96), 3, 3, name=name + '_33cc')
+            branch_pool = keras.layers.AveragePooling2D((3, 3),strides=(1, 1),padding='same', name=name + '_avg')(x)
+            branch_pool = conv2d_bn(branch_pool, int(bottleneck_compression*32), 1, 1, name=name + '_avg11')
             x = keras.layers.concatenate([branch1x1, branch5x5, branch3x3dbl, branch_pool], axis=channel_axis, name=name)
     
     if id == 1:
@@ -393,10 +391,12 @@ def two_path_inception_v3(
             x = single_branch
 
     if (two_paths_second_block):
-      l_branch = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid')
-      l_branch = conv2d_bn(l_branch, int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
-      ab_branch = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid')
+      l_branch    = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_ta', activation=None, has_batch_norm=False)
+      ab_branch = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_tb', activation=None, has_batch_norm=False)
+      
+      l_branch    = conv2d_bn(l_branch,    int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
       ab_branch = conv2d_bn(ab_branch, int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
+      
       x = keras.layers.Concatenate(axis=channel_axis, name='concat_second_block')([l_branch, ab_branch])
       x = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(x)
     else:
