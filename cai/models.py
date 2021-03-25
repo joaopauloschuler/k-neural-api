@@ -343,45 +343,72 @@ def two_path_inception_v3(
 
         # Only 1 convolution with two-paths?
         if (two_paths_partial_first_block==1):
-            l_branch = cai.layers.CopyChannels(0,1)(img_input)
-            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
+            if (l_ratio>0):
+                l_branch = cai.layers.CopyChannels(0,1)(img_input)
+                l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
 
-            ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+            if (ab_ratio>0):
+                ab_branch = cai.layers.CopyChannels(1,2)(img_input)
+                ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
 
-            single_branch  = keras.layers.Concatenate(axis=channel_axis, name='concat_partial_first_block1')([l_branch, ab_branch])
+            if (l_ratio>0):
+                if (ab_ratio>0):
+                    single_branch  = keras.layers.Concatenate(axis=channel_axis, name='concat_partial_first_block1')([l_branch, ab_branch])
+                else:
+                    single_branch = l_branch
+            else:
+                single_branch = ab_branch
+
             single_branch = conv2d_bn(single_branch, 32, 3, 3, padding='valid')
             single_branch = conv2d_bn(single_branch, 64, 3, 3)
             x = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
 
         # Only 2 convolution with two-paths?
         if (two_paths_partial_first_block==2):
-            l_branch = cai.layers.CopyChannels(0,1)(img_input)
-            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
-            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
+            if (l_ratio>0):
+                l_branch = cai.layers.CopyChannels(0,1)(img_input)
+                l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
+                l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
 
-            ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
-            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
+            if (ab_ratio>0):
+                ab_branch = cai.layers.CopyChannels(1,2)(img_input)
+                ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+                ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
 
-            single_branch = keras.layers.Concatenate(axis=channel_axis, name='concat_partial_first_block2')([l_branch, ab_branch])
+            if (l_ratio>0):
+                if (ab_ratio>0):
+                    single_branch = keras.layers.Concatenate(axis=channel_axis, name='concat_partial_first_block2')([l_branch, ab_branch])
+                else:
+                    single_branch = l_branch
+            else:
+                single_branch = ab_branch
+
             single_branch = conv2d_bn(single_branch, 64, 3, 3)
             x = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(single_branch)
 
     if include_first_block:
         if two_paths_first_block:
-            l_branch = cai.layers.CopyChannels(0,1)(img_input)
-            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
-            l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
-            l_branch = conv2d_bn(l_branch, int(round(64*l_ratio)), 3, 3)
-            l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
+            if (l_ratio>0):
+                l_branch = cai.layers.CopyChannels(0,1)(img_input)
+                l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, strides=(2, 2), padding='valid')
+                l_branch = conv2d_bn(l_branch, int(round(32*l_ratio)), 3, 3, padding='valid')
+                l_branch = conv2d_bn(l_branch, int(round(64*l_ratio)), 3, 3)
+                l_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(l_branch)
 
-            ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
-            ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
-            ab_branch = conv2d_bn(ab_branch, int(round(64*ab_ratio)), 3, 3)
-            ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
-            x = keras.layers.Concatenate(axis=channel_axis, name='concat_first_block')([l_branch, ab_branch])
+            if (ab_ratio>0):
+                ab_branch = cai.layers.CopyChannels(1,2)(img_input)
+                ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, strides=(2, 2), padding='valid')
+                ab_branch = conv2d_bn(ab_branch, int(round(32*ab_ratio)), 3, 3, padding='valid')
+                ab_branch = conv2d_bn(ab_branch, int(round(64*ab_ratio)), 3, 3)
+                ab_branch = keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(ab_branch)
+            
+            if (l_ratio>0):
+                if (ab_ratio>0):
+                    x = keras.layers.Concatenate(axis=channel_axis, name='concat_first_block')([l_branch, ab_branch])
+                else:
+                    x = l_branch
+            else:
+                x = ab_branch
         else:
             single_branch = conv2d_bn(img_input, 32, 3, 3, strides=(2, 2), padding='valid')
             single_branch = conv2d_bn(single_branch, 32, 3, 3, padding='valid')
