@@ -791,7 +791,7 @@ def load_images_from_files(file_names, target_size=(224,224),  dtype='float32', 
             local_rescale(img,  lab)
         img = add_padding_to_make_img_array_squared(img)
         if ((img.shape[0] != target_size[0]) or (img.shape[1] != target_size[1])):
-            img = cv2.resize(img, dsize=target_size, interpolation=cv2.INTER_CUBIC)
+            img = cv2.resize(img, dsize=target_size, interpolation=cv2.INTER_NEAREST)
       else:
         img = load_img(file_name, target_size=target_size)
         img = img_to_array(img, dtype='float32')
