@@ -739,7 +739,18 @@ def load_image_file_names_from_folder(img_folder_name):
             output_img_list.append(absolute_file_name)
     return output_img_list
 
-def load_images_from_files(file_names, target_size=(224,224),  dtype='float32'):
+def add_padding_to_make_img_array_squared(img):
+  sizex = img.shape[0]
+  sizey = img.shape[1]
+  if (sizex == sizey):
+    return img
+  else:
+    maxsize = np.max([sizex, sizey])
+    padx = (maxsize - sizex) // 2
+    pady = (maxsize - sizey) // 2
+    return np.pad(img, pad_width=((padx,padx),(pady,pady),(0,0)))
+
+def load_images_from_files(file_names, target_size=(224,224),  dtype='float32',  smart_resize=False):
     """Creates an array with images from an array with file names.
     # Arguments
         file_names: array with file names.
@@ -748,8 +759,15 @@ def load_images_from_files(file_names, target_size=(224,224),  dtype='float32'):
     """
     x=[]
     for file_name in file_names:
-      img = load_img(file_name, target_size=target_size)
-      img = img_to_array(img, dtype='float32')
+      if (smart_resize):
+        img = load_img(file_name)
+        img = img_to_array(img, dtype='float32')
+        img = add_padding_to_make_img_array_squared(img)
+        if ((img.shape[0] != target_size[0]) or (img.shape[1] != target_size[1])):
+            img = cv2.resize(img, dsize=target_size, interpolation=cv2.INTER_CUBIC)
+      else:
+        img = load_img(file_name, target_size=target_size)
+        img = img_to_array(img, dtype='float32')
       x.append(img)
     return np.array(x, dtype=dtype)
 
@@ -757,7 +775,8 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   verbose=True, bipolar=False, base_model_name='plant_leaf',
   training_size=0.6, validation_size=0.2, test_size=0.2,
   target_size=(224,224), 
-  has_training=True, has_validation=True, has_testing=True):
+  has_training=True, has_validation=True, has_testing=True, 
+  smart_resize=False):
   if root_dir is None:
     print("No root dir at load_images_from_folders")
     return
@@ -799,11 +818,14 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
           else:
             test_path.extend(paths[int(cat_total*(training_size+validation_size)):int(cat_total*(training_size+validation_size+test_size))])
             test_y.extend([i]*len(paths[int(cat_total*(training_size+validation_size)):int(cat_total*(training_size+validation_size+test_size))]))
+
+  if (verbose and smart_resize):
+      print ("smart resize is enabled.")
   
   if has_training:
       if (verbose):
         print ("loading train images")
-      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size), dtype='float32')
+      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size, smart_resize=smart_resize), dtype='float32')
       if (verbose):
         print ("train shape is:", train_x.shape)
   else:
@@ -812,7 +834,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_validation:
       if (verbose):
         print ("loading validation images")
-      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size), dtype='float32')
+      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size, smart_resize=smart_resize), dtype='float32')
       if (verbose):
         print ("validation shape is:", val_x.shape)
   else:
@@ -821,7 +843,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_testing:
       if (verbose):
         print ("loading test images")
-      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size), dtype='float32')
+      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size, smart_resize=smart_resize), dtype='float32')
       if (verbose):
         print ("test shape is:", test_x.shape)
   else:
