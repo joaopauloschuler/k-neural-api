@@ -750,7 +750,7 @@ def add_padding_to_make_img_array_squared(img):
     pady = (maxsize - sizey) // 2
     return np.pad(img, pad_width=((padx,padx),(pady,pady),(0,0)))
 
-def load_images_from_files(file_names, target_size=(224,224),  dtype='float32',  smart_resize=False,  lab=False):
+def load_images_from_files(file_names, target_size=(224,224),  dtype='float32',  smart_resize=False,  lab=False, rescale=False,  bipolar=False):
     """Creates an array with images from an array with file names.
     # Arguments
         file_names: array with file names.
@@ -759,6 +759,22 @@ def load_images_from_files(file_names, target_size=(224,224),  dtype='float32', 
         smart_resize: indicates if aspec ration should be kept adding padding.
         lab: indicates if LAB color encoding should be used.
     """
+    def local_rescale(img,  lab):
+        if (lab):
+            # JP prefers bipolar input [-2,+2]
+            if (bipolar):
+                img[:,:,0:3] /= [25, 50, 50]
+                img[:,:,0] -= 2
+            else:
+                img[:,:,0:3] /= [100, 200, 200]
+                img[:,:,1:3] += 0.5
+        else:
+            if (bipolar):
+                img /= 64
+                img -= 2
+            else:
+                img /= 255
+        
     x=[]
     cnt = 0
     for file_name in file_names:
@@ -771,6 +787,8 @@ def load_images_from_files(file_names, target_size=(224,224),  dtype='float32', 
         if (lab):
             img /= 255
             img = skimage_color.rgb2lab(img)
+        if(rescale):
+            local_rescale(img,  lab)
         img = add_padding_to_make_img_array_squared(img)
         if ((img.shape[0] != target_size[0]) or (img.shape[1] != target_size[1])):
             img = cv2.resize(img, dsize=target_size, interpolation=cv2.INTER_CUBIC)
@@ -780,6 +798,8 @@ def load_images_from_files(file_names, target_size=(224,224),  dtype='float32', 
         if (lab):
             img /= 255
             img = skimage_color.rgb2lab(img)
+        if(rescale):
+            local_rescale(img,  lab)
       x.append(img)
     return np.array(x, dtype=dtype)
 
@@ -837,7 +857,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_training:
       if (verbose):
         print ("loading train images")
-      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size, smart_resize=smart_resize,  lab=lab), dtype='float32')
+      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size, smart_resize=smart_resize, lab=lab, rescale=True), dtype='float32')
       if (verbose):
         print ("train shape is:", train_x.shape)
   else:
@@ -846,7 +866,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_validation:
       if (verbose):
         print ("loading validation images")
-      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size, smart_resize=smart_resize,  lab=lab), dtype='float32')
+      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size, smart_resize=smart_resize, lab=lab, rescale=True), dtype='float32')
       if (verbose):
         print ("validation shape is:", val_x.shape)
   else:
@@ -855,7 +875,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_testing:
       if (verbose):
         print ("loading test images")
-      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size, smart_resize=smart_resize,  lab=lab), dtype='float32')
+      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size, smart_resize=smart_resize, lab=lab, rescale=True), dtype='float32')
       if (verbose):
         print ("test shape is:", test_x.shape)
   else:
@@ -864,46 +884,6 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   train_y = np.array(train_y)
   val_y = np.array(val_y)
   test_y = np.array(test_y)
-
-  if (lab):
-        if (verbose):
-          print("Converting RGB to LAB: ")
-        gc.collect()
-        if (bipolar):
-          # JP prefers bipolar input [-2,+2]
-          if (has_training):
-              train_x[:,:,:,0:3] /= [25, 50, 50]
-              train_x[:,:,:,0] -= 2
-          if (has_validation):
-              val_x[:,:,:,0:3] /= [25, 50, 50]
-              val_x[:,:,:,0] -= 2
-          if (has_testing):
-              test_x[:,:,:,0:3] /= [25, 50, 50]
-              test_x[:,:,:,0] -= 2
-        else:
-          if (has_training):
-              train_x[:,:,:,0:3] /= [100, 200, 200]
-              train_x[:,:,:,1:3] += 0.5
-          if (has_validation):
-              val_x[:,:,:,0:3] /= [100, 200, 200]
-              val_x[:,:,:,1:3] += 0.5
-          if (has_testing):
-              test_x[:,:,:,0:3] /= [100, 200, 200]
-              test_x[:,:,:,1:3] += 0.5
-  else:
-        if (verbose):
-            print("Loading RGB.")
-        if (bipolar):
-            train_x /= 64
-            val_x /= 64
-            test_x /= 64
-            train_x -= 2
-            val_x -= 2
-            test_x -= 2
-        else:
-            train_x /= 255
-            val_x /= 255
-            test_x /= 255
 
   if (verbose and has_training):
         for channel in range(0, train_x.shape[3]):
