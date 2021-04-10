@@ -750,24 +750,36 @@ def add_padding_to_make_img_array_squared(img):
     pady = (maxsize - sizey) // 2
     return np.pad(img, pad_width=((padx,padx),(pady,pady),(0,0)))
 
-def load_images_from_files(file_names, target_size=(224,224),  dtype='float32',  smart_resize=False):
+def load_images_from_files(file_names, target_size=(224,224),  dtype='float32',  smart_resize=False,  lab=False):
     """Creates an array with images from an array with file names.
     # Arguments
         file_names: array with file names.
         target_size: output image size.
         dtype: output type.
+        smart_resize: indicates if aspec ration should be kept adding padding.
+        lab: indicates if LAB color encoding should be used.
     """
     x=[]
+    cnt = 0
     for file_name in file_names:
+      cnt = cnt + 1
+      if (cnt % 1000 == 0):
+          gc.collect()
       if (smart_resize):
         img = load_img(file_name)
         img = img_to_array(img, dtype='float32')
+        if (lab):
+            img /= 255
+            img = skimage_color.rgb2lab(img)
         img = add_padding_to_make_img_array_squared(img)
         if ((img.shape[0] != target_size[0]) or (img.shape[1] != target_size[1])):
             img = cv2.resize(img, dsize=target_size, interpolation=cv2.INTER_CUBIC)
       else:
         img = load_img(file_name, target_size=target_size)
         img = img_to_array(img, dtype='float32')
+        if (lab):
+            img /= 255
+            img = skimage_color.rgb2lab(img)
       x.append(img)
     return np.array(x, dtype=dtype)
 
@@ -825,7 +837,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_training:
       if (verbose):
         print ("loading train images")
-      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size, smart_resize=smart_resize), dtype='float32')
+      train_x = np.array(cai.datasets.load_images_from_files(train_path, target_size=target_size, smart_resize=smart_resize,  lab=lab), dtype='float32')
       if (verbose):
         print ("train shape is:", train_x.shape)
   else:
@@ -834,7 +846,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_validation:
       if (verbose):
         print ("loading validation images")
-      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size, smart_resize=smart_resize), dtype='float32')
+      val_x = np.array(cai.datasets.load_images_from_files(val_path, target_size=target_size, smart_resize=smart_resize,  lab=lab), dtype='float32')
       if (verbose):
         print ("validation shape is:", val_x.shape)
   else:
@@ -843,7 +855,7 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if has_testing:
       if (verbose):
         print ("loading test images")
-      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size, smart_resize=smart_resize), dtype='float32')
+      test_x = np.array(cai.datasets.load_images_from_files(test_path, target_size=target_size, smart_resize=smart_resize,  lab=lab), dtype='float32')
       if (verbose):
         print ("test shape is:", test_x.shape)
   else:
@@ -856,18 +868,6 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if (lab):
         if (verbose):
           print("Converting RGB to LAB: ")
-        train_x /= 255
-        val_x /= 255
-        test_x /= 255
-        if (verbose):
-          print("Converting training.")
-        cai.datasets.skimage_rgb2lab_a(train_x,  verbose)
-        if (verbose):
-          print("Converting validation.")
-        cai.datasets.skimage_rgb2lab_a(val_x,  verbose)
-        if (verbose):
-          print("Converting test.")
-        cai.datasets.skimage_rgb2lab_a(test_x,  verbose)
         gc.collect()
         if (bipolar):
           # JP prefers bipolar input [-2,+2]
