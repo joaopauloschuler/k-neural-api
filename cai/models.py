@@ -80,7 +80,8 @@ def conv2d_bn(x,
               name=None,
               use_bias=False,
               activation='relu', 
-              has_batch_norm=True
+              has_batch_norm=True, 
+              groups=0
               ):
     """Utility function to apply conv + BN.
 
@@ -97,6 +98,7 @@ def conv2d_bn(x,
         use_bias: True means that bias will be added,
         activation: activation function. None means no activation function. 
         has_batch_norm: True means that batch normalization is added.
+        groups: number of groups in the convolution
 
     # Returns
         Output tensor after applying `Conv2D` and `BatchNormalization`.
@@ -116,6 +118,7 @@ def conv2d_bn(x,
         strides=strides,
         padding=padding,
         use_bias=use_bias,
+        groups=groups, 
         name=conv_name)(x)
     if (has_batch_norm): x = keras.layers.BatchNormalization(axis=bn_axis, scale=False, name=bn_name)(x)
     if activation is not None: x = keras.layers.Activation(activation=activation, name=name)(x)
@@ -246,7 +249,7 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
         channel_count = channel_count + 1
     group_count = 0
     if (prev_layer_channel_count > 64):
-        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable= (prev_layer_channel_count//32) )
+        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = (prev_layer_channel_count//32) )
     return conv2d_bn(last_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
 
 def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655):
