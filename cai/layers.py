@@ -45,3 +45,30 @@ class ConcatNegation(keras.layers.Layer):
     def call(self, x):
         #return np.concatenate((x, -x), axis=3)
         return keras.layers.Concatenate(axis=3)([x, -x])
+
+class InterleaveChannels(keras.layers.Layer):
+    def __init__(self,
+                 step_size=2,
+                 **kwargs):
+        self.step_size=step_size
+        super(InterleaveChannels, self).__init__(**kwargs)
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[1], input_shape[2], input_shape[3])
+
+    def call(self, x):
+        return keras.layers.Concatenate(axis=3)(
+            [ x[:, :, :, shift_pos::self.step_size] for shift_pos in range(self.step_size) ]
+        )
+        # for self.step_size == 2, we would have:
+        #  return keras.layers.Concatenate(axis=3)([
+        #    x[:, :, :, 0::self.step_size],
+        #    x[:, :, :, 1::self.step_size]
+        #    ])
+
+    def get_config(self):
+        config = {
+            'step_size': self.step_size
+        }
+        base_config = super(InterleaveChannels, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
