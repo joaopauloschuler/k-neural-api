@@ -438,3 +438,18 @@ def get_class_position(pclass, predictions):
   predicted_probability = predictions[pclass]
   predictions_sorted = reverse_sort(predictions)
   return np.where(predictions_sorted == predicted_probability)[0][0]
+
+def get_max_acceptable_common_divisor(a, b, max_acceptable=1000000):
+  """
+  This is an inefficient max acceptable common divisor implementation to be improved.
+    # Arguments
+        a: is an integer.
+        b: is an integer.
+        max_acceptable: maximum acceptable common divisor.
+  """
+  divisor = min(a, b, max_acceptable)
+  while divisor > 0:
+      if a % divisor == 0 and b % divisor == 0:
+          return divisor
+          break
+      divisor -= 1
