@@ -256,7 +256,7 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
         if (has_inter_group_connections):
             output_group_size = channel_count // group_count
             output_tensor = cai.layers.InterleaveChannels(output_group_size,  name=name+'_group_interleaved')(output_tensor)
-            output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+            output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
     else:
         output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm)        
     return output_tensor
