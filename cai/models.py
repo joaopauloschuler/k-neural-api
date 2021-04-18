@@ -259,7 +259,7 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
             output_tensor = keras.layers.BatchNormalization(axis=channel_axis, scale=False, name=name+'_group_bn')(output_tensor)
             output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
             output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
-            output_tensor = keras.layers.Add([output_tensor, compression_tensor], name=name+'_group_concat')(output_tensor)
+            output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
         output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm)        
     return output_tensor
