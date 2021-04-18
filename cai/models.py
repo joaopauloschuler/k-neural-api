@@ -242,7 +242,8 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck
         x = keras.layers.concatenate([branch1x1, branch3x3, branch3x3dbl, branch_pool], axis=channel_axis, name=name)
     return x
 
-def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=None, activation='relu', has_batch_norm=True):
+def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_inter_group_connections=True):
+    output_tensor = last_tensor
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     channel_count = int(prev_layer_channel_count * compression)
     if (prev_layer_channel_count % 2 == 0) and (channel_count % 2 > 0):
@@ -250,7 +251,15 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
     group_count = 0
     if (prev_layer_channel_count > 64):
         group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = (prev_layer_channel_count//32) )
-    return conv2d_bn(last_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+        output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+        # Has connections linking groups
+        if (has_inter_group_connections):
+            output_group_size = channel_count // group_count
+            output_tensor = cai.layers.InterleaveChannels(output_group_size,  name=name+'_group_interleaved')(output_tensor)
+            output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+    else:
+        output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm)        
+    return output_tensor
 
 def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655):
     if name=='':
@@ -258,8 +267,8 @@ def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bot
     interleaved  = cai.layers.InterleaveChannels(2,  name=name+'_interleaved')(x)
     a = create_inception_path(last_tensor=interleaved, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_ta', activation=None, has_batch_norm=False)
     b = create_inception_path(last_tensor=interleaved, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_tb', activation=None, has_batch_norm=False)
-    a = create_inception_v3_mixed_layer(a,  id=id, name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
-    b = create_inception_v3_mixed_layer(b,  id=id, name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
+    a = create_inception_v3_mixed_layer(a, id=id, name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
+    b = create_inception_v3_mixed_layer(b, id=id, name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
     return keras.layers.Concatenate(axis=channel_axis, name=name)([a, b])
 
 def two_path_inception_v3(
