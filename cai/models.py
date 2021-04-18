@@ -251,14 +251,17 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
     group_count = 0
     if (prev_layer_channel_count > 64):
         group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = (prev_layer_channel_count//32) )
-        output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
-        # Has connections linking groups
+        output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+        # Has interconnected groups?
         if (has_inter_group_connections):
+            compression_tensor = output_tensor
             output_group_size = channel_count // group_count
-            output_tensor = cai.layers.InterleaveChannels(output_group_size,  name=name+'_group_interleaved')(output_tensor)
-            output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+            output_tensor = keras.layers.BatchNormalization(axis=channel_axis, scale=False, name=name+'_group_bn')(output_tensor)
+            output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
+            output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
+            output_tensor = keras.layers.Add([output_tensor, compression_tensor], name=+'_group_concat')(output_tensor)
     else:
-        output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1,  name=name, activation=activation, has_batch_norm=has_batch_norm)        
+        output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm)        
     return output_tensor
 
 def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655):
