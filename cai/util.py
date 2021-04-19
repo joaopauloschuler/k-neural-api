@@ -3,6 +3,7 @@ import os
 import tensorflow
 from tensorflow.keras import backend
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from skimage import color as skimage_color
 import csv
 
 def save_2d_array_as_csv(a, filename):
@@ -316,6 +317,22 @@ def deprocess_cp(img,  bipolar=True, tfcast=False):
     img_result = np.copy(img)
     deprocess_cp(img_result,  bipolar=bipolar,  tfcast=tfcast)
     return img_result
+
+def rgb2bipolar_lab(img):
+    """Transforms the input image into a bipolar (-2, +2) LAB image """
+    img /= 255
+    img = skimage_color.rgb2lab(img)
+    img[:,:,0:3] /= [25, 50, 50]
+    img[:,:,0] -= 2
+    return img
+
+def rgb2monopolar_lab(img):
+    """Transforms the input image into a monopolar (0, +1) LAB image """
+    img /= 255
+    img = skimage_color.rgb2lab(img)
+    img[:,:,0:3] /= [100, 200, 200]
+    img[:,:,1:3] += 0.5
+    return img
 
 # This is the default CAI Image generator with data augmentation
 def create_image_generator(
