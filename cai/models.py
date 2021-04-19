@@ -34,6 +34,12 @@ def load_model(base_name):
     model.load_weights(base_name+'.h5')
     return model
 
+def load_kereas_model(filename):
+    """
+    Loads a Keras model with CAI custom layers.
+    """
+    return keras.models.load_model(filename, custom_objects=cai.layers.GetClasses())
+
 def plant_leaf(pinput_shape, num_classes,  l2_decay=0.0, dropout_drop_rate=0.2, has_batch_norm=True):
     """Implements the architecture found on the paper: 
         Identification of plant leaf diseases using a nine-layer deep convolutional neural network.

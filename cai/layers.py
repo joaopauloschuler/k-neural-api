@@ -72,3 +72,15 @@ class InterleaveChannels(keras.layers.Layer):
         }
         base_config = super(InterleaveChannels, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+def GetClasses():
+    """
+    This function returns CAI layer classes.
+    """
+    return
+    {
+        'CopyChannels': CopyChannels,
+        'Negate': Negate,
+        'ConcatNegation': ConcatNegation,
+        'InterleaveChannels': InterleaveChannels
+    }
