@@ -262,7 +262,7 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
         if (has_inter_group_connections):
             compression_tensor = output_tensor
             output_group_size = channel_count // group_count
-            output_tensor = keras.layers.BatchNormalization(axis=channel_axis, scale=False, name=name+'_group_bn')(output_tensor)
+            # output_tensor = keras.layers.BatchNormalization(axis=channel_axis, scale=False, name=name+'_group_bn')(output_tensor)
             output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
             output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count)
             output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
@@ -270,12 +270,12 @@ def create_inception_path(last_tensor,  compression=0.5,  channel_axis=3,  name=
         output_tensor = conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm)        
     return output_tensor
 
-def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655):
+def create_inception_v3_two_path_mixed_layer(x, id, name='', channel_axis=3, bottleneck_compression=0.5, compression=0.655, has_batch_norm=False):
     if name=='':
         name='mixed'
     interleaved  = cai.layers.InterleaveChannels(2,  name=name+'_interleaved')(x)
-    a = create_inception_path(last_tensor=interleaved, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_ta', activation=None, has_batch_norm=False)
-    b = create_inception_path(last_tensor=interleaved, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_tb', activation=None, has_batch_norm=False)
+    a = create_inception_path(last_tensor=interleaved, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_ta', activation=None, has_batch_norm=has_batch_norm)
+    b = create_inception_path(last_tensor=interleaved, compression=bottleneck_compression, channel_axis=channel_axis, name=name+'_tb', activation=None, has_batch_norm=has_batch_norm)
     a = create_inception_v3_mixed_layer(a, id=id, name=name+'a', bottleneck_compression=bottleneck_compression, compression=compression)
     b = create_inception_v3_mixed_layer(b, id=id, name=name+'b', bottleneck_compression=bottleneck_compression, compression=compression)
     return keras.layers.Concatenate(axis=channel_axis, name=name)([a, b])
@@ -446,8 +446,8 @@ def two_path_inception_v3(
             x = single_branch
 
     if (two_paths_second_block):
-      l_branch    = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_ta', activation=None, has_batch_norm=False)
-      ab_branch = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_tb', activation=None, has_batch_norm=False)
+      l_branch    = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_ta', activation=None, has_batch_norm=True)
+      ab_branch = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_tb', activation=None, has_batch_norm=True)
       
       l_branch    = conv2d_bn(l_branch,    int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
       ab_branch = conv2d_bn(ab_branch, int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
@@ -463,7 +463,9 @@ def two_path_inception_v3(
     if max_mix_idx >= 0:
         for id_layer in range(max_mix_idx+1):
             if (max_mix_deep_two_paths_idx >= id_layer):
-                x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis, bottleneck_compression=deep_two_paths_bottleneck_compression, compression=deep_two_paths_compression)
+                x = create_inception_v3_two_path_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer),
+                    channel_axis=channel_axis, bottleneck_compression=deep_two_paths_bottleneck_compression, 
+                    compression=deep_two_paths_compression, has_batch_norm=True)
             else:
                 x = create_inception_v3_mixed_layer(x,  id=id_layer,  name='mixed'+str(id_layer), channel_axis=channel_axis)
     
