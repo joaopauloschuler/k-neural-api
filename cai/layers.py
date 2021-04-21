@@ -77,8 +77,7 @@ def GetClasses():
     """
     This function returns CAI layer classes.
     """
-    return
-    {
+    return {
         'CopyChannels': CopyChannels,
         'Negate': Negate,
         'ConcatNegation': ConcatNegation,
