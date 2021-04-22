@@ -446,10 +446,14 @@ def two_path_inception_v3(
             x = single_branch
 
     if (two_paths_second_block):
-      l_branch    = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_ta', activation=None, has_batch_norm=True)
-      ab_branch = conv2d_bn(x, int(round(80*deep_two_paths_compression)), 1, 1, padding='valid', name='second_block_tb', activation=None, has_batch_norm=True)
+      #l_branch    = conv2d_bn(x, int(round(80*deep_two_paths_bottleneck_compression)), 1, 1, padding='valid', name='second_block_ta', activation=None, has_batch_norm=True)
+      #ab_branch = conv2d_bn(x, int(round(80*deep_two_paths_bottleneck_compression)), 1, 1, padding='valid', name='second_block_tb', activation=None, has_batch_norm=True)
+      l_branch    = create_inception_path(last_tensor=x, compression=deep_two_paths_bottleneck_compression, channel_axis=channel_axis, name='second_block_ta', activation=None, has_batch_norm=True, has_inter_group_connections=True)
+      ab_branch = create_inception_path(last_tensor=x, compression=deep_two_paths_bottleneck_compression, channel_axis=channel_axis, name='second_block_tb', activation=None, has_batch_norm=True, has_inter_group_connections=True)
       
+      l_branch    = conv2d_bn(l_branch,    int(round(80 *deep_two_paths_compression)), 1, 1, padding='valid')
       l_branch    = conv2d_bn(l_branch,    int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
+      ab_branch = conv2d_bn(ab_branch, int(round(80 *deep_two_paths_compression)), 1, 1, padding='valid')
       ab_branch = conv2d_bn(ab_branch, int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
       
       x = keras.layers.Concatenate(axis=channel_axis, name='concat_second_block')([l_branch, ab_branch])
