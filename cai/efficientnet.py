@@ -48,41 +48,53 @@ from __future__ import print_function
 import os
 import math
 
-from . import correct_pad
-from . import get_submodules_from_kwargs
-from . import imagenet_utils
-from .imagenet_utils import decode_predictions
-from .imagenet_utils import _obtain_input_shape
-
+from keras.applications import imagenet_utils
+from keras.applications.imagenet_utils import _obtain_input_shape
 
 backend = None
 layers = None
 models = None
 keras_utils = None
 
+_KERAS_BACKEND = None
+_KERAS_LAYERS = None
+_KERAS_MODELS = None
+_KERAS_UTILS = None
 
-BASE_WEIGHTS_PATH = (
-    'https://github.com/Callidior/keras-applications/'
-    'releases/download/efficientnet/')
-WEIGHTS_HASHES = {
-    'b0': ('e9e877068bd0af75e0a36691e03c072c',
-           '345255ed8048c2f22c793070a9c1a130'),
-    'b1': ('8f83b9aecab222a9a2480219843049a1',
-           'b20160ab7b79b7a92897fcb33d52cc61'),
-    'b2': ('b6185fdcd190285d516936c09dceeaa4',
-           'c6e46333e8cddfa702f4d8b8b6340d70'),
-    'b3': ('b2db0f8aac7c553657abb2cb46dcbfbb',
-           'e0cf8654fad9d3625190e30d70d0c17d'),
-    'b4': ('ab314d28135fe552e2f9312b31da6926',
-           'b46702e4754d2022d62897e0618edc7b'),
-    'b5': ('8d60b903aff50b09c6acf8eaba098e09',
-           '0a839ac36e46552a881f2975aaab442f'),
-    'b6': ('a967457886eac4f5ab44139bdd827920',
-           '375a35c17ef70d46f9c664b03b4437f2'),
-    'b7': ('e964fd6e26e9a4c144bcb811f2a10f20',
-           'd55674cc46b805f4382d18bc08ed43c1')
-}
+def get_submodules_from_kwargs(kwargs):
+    backend = kwargs.get('backend', _KERAS_BACKEND)
+    layers = kwargs.get('layers', _KERAS_LAYERS)
+    models = kwargs.get('models', _KERAS_MODELS)
+    utils = kwargs.get('utils', _KERAS_UTILS)
+    for key in kwargs.keys():
+        if key not in ['backend', 'layers', 'models', 'utils']:
+            raise TypeError('Invalid keyword argument: %s', key)
+    return backend, layers, models, utils
 
+
+def correct_pad(backend, inputs, kernel_size):
+    """Returns a tuple for zero-padding for 2D convolution with downsampling.
+    # Arguments
+        input_size: An integer or tuple/list of 2 integers.
+        kernel_size: An integer or tuple/list of 2 integers.
+    # Returns
+        A tuple.
+    """
+    img_dim = 2 if backend.image_data_format() == 'channels_first' else 1
+    input_size = backend.int_shape(inputs)[img_dim:(img_dim + 2)]
+
+    if isinstance(kernel_size, int):
+        kernel_size = (kernel_size, kernel_size)
+
+    if input_size[0] is None:
+        adjust = (1, 1)
+    else:
+        adjust = (1 - input_size[0] % 2, 1 - input_size[1] % 2)
+
+    correct = (kernel_size[0] // 2, kernel_size[1] // 2)
+
+    return ((correct[0] - adjust[0], correct[0]),
+            (correct[1] - adjust[1], correct[1]))
 
 DEFAULT_BLOCKS_ARGS = [
     {'kernel_size': 3, 'repeats': 1, 'filters_in': 32, 'filters_out': 16,
@@ -408,23 +420,6 @@ def EfficientNet(width_coefficient,
 
     # Create model.
     model = models.Model(inputs, x, name=model_name)
-
-    # Load weights.
-    if weights == 'imagenet':
-        if include_top:
-            file_suff = '_weights_tf_dim_ordering_tf_kernels_autoaugment.h5'
-            file_hash = WEIGHTS_HASHES[model_name[-2:]][0]
-        else:
-            file_suff = '_weights_tf_dim_ordering_tf_kernels_autoaugment_notop.h5'
-            file_hash = WEIGHTS_HASHES[model_name[-2:]][1]
-        file_name = model_name + file_suff
-        weights_path = keras_utils.get_file(file_name,
-                                            BASE_WEIGHTS_PATH + file_name,
-                                            cache_subdir='models',
-                                            file_hash=file_hash)
-        model.load_weights(weights_path)
-    elif weights is not None:
-        model.load_weights(weights)
 
     return model
 
