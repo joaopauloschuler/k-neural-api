@@ -14,7 +14,7 @@ that occured earlier than the first commit in the present repository,
 please see the original Keras repository.
 
 The original file from above link was modified. Modifications can be tracked via 
-git commits at https://github.com/joaopauloschuler/k-neural-api/edit/master/cai/densenet.py.
+git commits at https://github.com/joaopauloschuler/k-neural-api/blob/master/cai/densenet.py.
 
 LICENSE
 
