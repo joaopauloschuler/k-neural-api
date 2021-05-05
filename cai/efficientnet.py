@@ -371,6 +371,19 @@ def EfficientNet(width_coefficient,
 
     return model
 
+def EfficientNetB0(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.0, 1.0, 224, 0.2,
+                        model_name='efficientnet-b0',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
 def kPointwiseConv2DType0(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True):
     return cai.models.conv2d_bn(last_tensor, filters, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)
 
@@ -404,6 +417,7 @@ def kPointwiseConv2DType2(last_tensor,  filters=32, channel_axis=3, name=None, a
         output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
         output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
+        print (group_count, prev_layer_channel_count,  output_group_size)
     else:
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)        
     return output_tensor
@@ -447,7 +461,7 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
         #                  name=name + 'expand_conv')(inputs)
         #x = layers.BatchNormalization(axis=bn_axis, name=name + 'expand_bn')(x)
         #x = layers.Activation(activation_fn, name=name + 'expand_activation')(x)
-        x = kPointwiseConv2D(last_tensor=inputs,  filters=filters, channel_axis=bn_axis,  name=name, activation=activation_fn, has_batch_norm=True, use_bias=False, kType=kType)
+        x = kPointwiseConv2D(last_tensor=inputs,  filters=filters, channel_axis=bn_axis,  name=name+'expand', activation=activation_fn, has_batch_norm=True, use_bias=False, kType=kType)
     else:
         x = inputs
 
@@ -475,25 +489,29 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
             se = layers.Reshape((filters, 1, 1), name=name + 'se_reshape')(se)
         else:
             se = layers.Reshape((1, 1, filters), name=name + 'se_reshape')(se)
-        se = layers.Conv2D(filters_se, 1,
-                           padding='same',
-                           activation=activation_fn,
-                           kernel_initializer=CONV_KERNEL_INITIALIZER,
-                           name=name + 'se_reduce')(se)
-        se = layers.Conv2D(filters, 1,
-                           padding='same',
-                           activation='sigmoid',
-                           kernel_initializer=CONV_KERNEL_INITIALIZER,
-                           name=name + 'se_expand')(se)
+        #se = layers.Conv2D(filters_se, 1,
+        #                   padding='same',
+        #                   activation=activation_fn,
+        #                   kernel_initializer=CONV_KERNEL_INITIALIZER,
+        #                   name=name + 'se_reduce')(se)
+        se = kPointwiseConv2D(last_tensor=se, filters=filters_se, channel_axis=bn_axis, name=name+'se_reduce', activation=activation_fn, has_batch_norm=False, use_bias=True, kType=kType)
+        #se = layers.Conv2D(filters, 1,
+        #                   padding='same',
+        #                   activation='sigmoid',
+        #                   kernel_initializer=CONV_KERNEL_INITIALIZER,
+        #                   name=name + 'se_expand')(se)
+        se = kPointwiseConv2D(last_tensor=se, filters=filters, channel_axis=bn_axis, name=name+'se_expand', activation='sigmoid', has_batch_norm=False, use_bias=True, kType=kType)
         x = layers.multiply([x, se], name=name + 'se_excite')
 
     # Output phase
-    x = layers.Conv2D(filters_out, 1,
-                      padding='same',
-                      use_bias=False,
-                      kernel_initializer=CONV_KERNEL_INITIALIZER,
-                      name=name + 'project_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, name=name + 'project_bn')(x)
+    #x = layers.Conv2D(filters_out, 1,
+    #                  padding='same',
+    #                  use_bias=False,
+    #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
+    #                  name=name + 'project_conv')(x)
+    # x = layers.BatchNormalization(axis=bn_axis, name=name + 'project_bn')(x)
+    x = kPointwiseConv2D(last_tensor=x, filters=filters_out, channel_axis=bn_axis, name=name+'project_conv', activation=None, has_batch_norm=True, use_bias=True, kType=kType)
+    
     if (id_skip is True and strides == 1 and filters_in == filters_out):
         if drop_rate > 0:
             x = layers.Dropout(drop_rate,
@@ -650,20 +668,6 @@ def kEfficientNet(width_coefficient,
     model = models.Model(inputs, x, name=model_name)
 
     return model
-
-
-def EfficientNetB0(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.0, 1.0, 224, 0.2,
-                        model_name='efficientnet-b0',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
 
 def kEfficientNetB0(include_top=True,
                    input_tensor=None,
