@@ -45,11 +45,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import math
 
 from keras.applications import imagenet_utils
-from keras.applications.imagenet_utils import _obtain_input_shape
 
 backend = None
 layers = None
@@ -80,7 +78,7 @@ def correct_pad(backend, inputs, kernel_size):
     # Returns
         A tuple.
     """
-    img_dim = 2 if backend.image_data_format() == 'channels_first' else 1
+    img_dim = 1 # 2 if backend.image_data_format() == 'channels_first' else 1
     input_size = backend.int_shape(inputs)[img_dim:(img_dim + 2)]
 
     if isinstance(kernel_size, int):
@@ -175,7 +173,7 @@ def block(inputs, activation_fn=swish, drop_rate=0., name='',
     # Returns
         output tensor for the block.
     """
-    bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = 3
 
     # Expansion phase
     filters = filters_in * expand_ratio
@@ -224,13 +222,6 @@ def block(inputs, activation_fn=swish, drop_rate=0., name='',
                            activation='sigmoid',
                            kernel_initializer=CONV_KERNEL_INITIALIZER,
                            name=name + 'se_expand')(se)
-        if backend.backend() == 'theano':
-            # For the Theano backend, we have to explicitly make
-            # the excitation weights broadcastable.
-            se = layers.Lambda(
-                lambda x: backend.pattern_broadcast(x, [True, True, True, False]),
-                output_shape=lambda input_shape: input_shape,
-                name=name + 'se_broadcast')(se)
         x = layers.multiply([x, se], name=name + 'se_excite')
 
     # Output phase
@@ -314,24 +305,6 @@ def EfficientNet(width_coefficient,
     global backend, layers, models, keras_utils
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
 
-    if not (weights in {'imagenet', None} or os.path.exists(weights)):
-        raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization), `imagenet` '
-                         '(pre-training on ImageNet), '
-                         'or the path to the weights file to be loaded.')
-
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as `"imagenet"` with `include_top`'
-                         ' as true, `classes` should be 1000')
-
-    # Determine proper input shape
-    input_shape = _obtain_input_shape(input_shape,
-                                      default_size=default_size,
-                                      min_size=32,
-                                      data_format=backend.image_data_format(),
-                                      require_flatten=include_top,
-                                      weights=weights)
-
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
     else:
@@ -340,7 +313,7 @@ def EfficientNet(width_coefficient,
         else:
             img_input = input_tensor
 
-    bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = 3
 
     def round_filters(filters, divisor=depth_divisor):
         """Round number of filters based on depth multiplier."""
