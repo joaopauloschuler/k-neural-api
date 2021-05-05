@@ -46,29 +46,11 @@ from __future__ import division
 from __future__ import print_function
 
 import math
-
-from keras.applications import imagenet_utils
-
-backend = None
-layers = None
-models = None
-keras_utils = None
-
-_KERAS_BACKEND = None
-_KERAS_LAYERS = None
-_KERAS_MODELS = None
-_KERAS_UTILS = None
-
-def get_submodules_from_kwargs(kwargs):
-    backend = kwargs.get('backend', _KERAS_BACKEND)
-    layers = kwargs.get('layers', _KERAS_LAYERS)
-    models = kwargs.get('models', _KERAS_MODELS)
-    utils = kwargs.get('utils', _KERAS_UTILS)
-    for key in kwargs.keys():
-        if key not in ['backend', 'layers', 'models', 'utils']:
-            raise TypeError('Invalid keyword argument: %s', key)
-    return backend, layers, models, utils
-
+from tensorflow.keras import layers
+from tensorflow.keras import backend
+from tensorflow.keras import models
+from tensorflow.keras import utils
+from tensorflow.keras.applications import imagenet_utils
 
 def correct_pad(backend, inputs, kernel_size):
     """Returns a tuple for zero-padding for 2D convolution with downsampling.
@@ -251,7 +233,6 @@ def EfficientNet(width_coefficient,
                  blocks_args=DEFAULT_BLOCKS_ARGS,
                  model_name='efficientnet',
                  include_top=True,
-                 weights='imagenet',
                  input_tensor=None,
                  input_shape=None,
                  pooling=None,
@@ -273,9 +254,6 @@ def EfficientNet(width_coefficient,
         model_name: string, model name.
         include_top: whether to include the fully-connected
             layer at the top of the network.
-        weights: one of `None` (random initialization),
-              'imagenet' (pre-training on ImageNet),
-              or the path to the weights file to be loaded.
         input_tensor: optional Keras tensor
             (i.e. output of `layers.Input()`)
             to use as image input for the model.
@@ -295,15 +273,11 @@ def EfficientNet(width_coefficient,
                 be applied.
         classes: optional number of classes to classify images
             into, only to be specified if `include_top` is True, and
-            if no `weights` argument is specified.
     # Returns
         A Keras model instance.
     # Raises
-        ValueError: in case of invalid argument for `weights`,
-            or invalid input shape.
+        ValueError: in case of invalid input shape.
     """
-    global backend, layers, models, keras_utils
-    backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
@@ -387,7 +361,7 @@ def EfficientNet(width_coefficient,
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
     if input_tensor is not None:
-        inputs = keras_utils.get_source_inputs(input_tensor)
+        inputs = utils.get_source_inputs(input_tensor)
     else:
         inputs = img_input
 
@@ -398,7 +372,6 @@ def EfficientNet(width_coefficient,
 
 
 def EfficientNetB0(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -406,14 +379,13 @@ def EfficientNetB0(include_top=True,
                    **kwargs):
     return EfficientNet(1.0, 1.0, 224, 0.2,
                         model_name='efficientnet-b0',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB1(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -421,14 +393,13 @@ def EfficientNetB1(include_top=True,
                    **kwargs):
     return EfficientNet(1.0, 1.1, 240, 0.2,
                         model_name='efficientnet-b1',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB2(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -436,14 +407,13 @@ def EfficientNetB2(include_top=True,
                    **kwargs):
     return EfficientNet(1.1, 1.2, 260, 0.3,
                         model_name='efficientnet-b2',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB3(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -451,14 +421,13 @@ def EfficientNetB3(include_top=True,
                    **kwargs):
     return EfficientNet(1.2, 1.4, 300, 0.3,
                         model_name='efficientnet-b3',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB4(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -466,14 +435,13 @@ def EfficientNetB4(include_top=True,
                    **kwargs):
     return EfficientNet(1.4, 1.8, 380, 0.4,
                         model_name='efficientnet-b4',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB5(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -481,14 +449,13 @@ def EfficientNetB5(include_top=True,
                    **kwargs):
     return EfficientNet(1.6, 2.2, 456, 0.4,
                         model_name='efficientnet-b5',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB6(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -496,14 +463,13 @@ def EfficientNetB6(include_top=True,
                    **kwargs):
     return EfficientNet(1.8, 2.6, 528, 0.5,
                         model_name='efficientnet-b6',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
 
 def EfficientNetB7(include_top=True,
-                   weights='imagenet',
                    input_tensor=None,
                    input_shape=None,
                    pooling=None,
@@ -511,7 +477,7 @@ def EfficientNetB7(include_top=True,
                    **kwargs):
     return EfficientNet(2.0, 3.1, 600, 0.5,
                         model_name='efficientnet-b7',
-                        include_top=include_top, weights=weights,
+                        include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         **kwargs)
