@@ -483,7 +483,7 @@ def EfficientNetB7(include_top=True,
                         **kwargs)
 
 def kPointwiseConv2DType0(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True):
-    return cai.models.conv2d_bn(last_tensor, filters, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)
+    return cai.models.conv2d_bn(last_tensor, filters, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, use_bias=use_bias)
 
 def kPointwiseConv2DType1(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True):
     output_tensor = last_tensor
@@ -494,9 +494,9 @@ def kPointwiseConv2DType1(last_tensor,  filters=32,  channel_axis=3,  name=None,
     group_count = 0
     if (prev_layer_channel_count > 64):
         group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = (prev_layer_channel_count//32) )
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
+        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
     else:
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)        
+        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, use_bias=use_bias)        
     return output_tensor
 
 def kPointwiseConv2DType2(last_tensor,  filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, use_bias=True):
@@ -509,16 +509,16 @@ def kPointwiseConv2DType2(last_tensor,  filters=32, channel_axis=3, name=None, a
     max_acceptable = max( (prev_layer_channel_count//32), (channel_count//32))
     if (max_acceptable > 1):
         group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = max_acceptable )
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
+        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
         compression_tensor = output_tensor
         output_group_size = channel_count // group_count
         output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
+        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
         output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
         #uncomment for debugging
         #print (group_count, prev_layer_channel_count,  output_group_size)
     else:
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)        
+        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, use_bias=use_bias)        
     return output_tensor
 
 def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True, kType=1):
@@ -735,13 +735,14 @@ def kEfficientNet(width_coefficient,
             b += 1
 
     # Build top
-    x = layers.Conv2D(round_filters(1280), 1,
-                      padding='same',
-                      use_bias=False,
-                      kernel_initializer=CONV_KERNEL_INITIALIZER,
-                      name='top_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
-    x = layers.Activation(activation_fn, name='top_activation')(x)
+    #x = layers.Conv2D(round_filters(1280), 1,
+    #                  padding='same',
+    #                  use_bias=False,
+    #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
+    #                  name='top_conv')(x)
+    #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
+    #x = layers.Activation(activation_fn, name='top_activation')(x)
+    x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
     if include_top:
         x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
         if dropout_rate > 0:
