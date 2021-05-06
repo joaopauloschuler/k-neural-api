@@ -492,8 +492,9 @@ def kPointwiseConv2DType1(last_tensor,  filters=32,  channel_axis=3,  name=None,
     if (prev_layer_channel_count % 2 == 0) and (channel_count % 2 > 0):
         channel_count = channel_count + 1
     group_count = 0
-    if (prev_layer_channel_count > 64):
-        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = (prev_layer_channel_count//32) )
+    max_acceptable = max( (prev_layer_channel_count//32), (channel_count//32))
+    if (max_acceptable > 1):
+        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = max_acceptable )
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
     else:
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, use_bias=use_bias)        
