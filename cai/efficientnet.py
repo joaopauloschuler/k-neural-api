@@ -488,39 +488,46 @@ def kPointwiseConv2DType0(last_tensor,  filters=32,  channel_axis=3,  name=None,
 def kPointwiseConv2DType1(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True):
     output_tensor = last_tensor
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    channel_count = filters
-    if (prev_layer_channel_count % 2 == 0) and (channel_count % 2 > 0):
-        channel_count = channel_count + 1
-    group_count = 0
-    max_acceptable = max( (prev_layer_channel_count//32), (channel_count//32))
-    if (max_acceptable > 1):
-        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = max_acceptable )
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
+    output_channel_count = filters
+    max_acceptable_divisor = (prev_layer_channel_count//16)
+    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
+    if group_count is None: group_count=1
+    output_group_size = output_channel_count // group_count
+    input_group_size = prev_layer_channel_count // group_count
+    if (group_count > 1):
+        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
+        if output_group_size > 1:
+          output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
     else:
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, use_bias=use_bias)        
+        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)        
     return output_tensor
 
-def kPointwiseConv2DType2(last_tensor,  filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, use_bias=True):
+def kPointwiseConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, use_bias=True):
     output_tensor = last_tensor
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    channel_count = filters
-    #if (prev_layer_channel_count % 2 == 0) and (channel_count % 2 > 0):
-    #    channel_count = channel_count + 1
-    group_count = 0
-    max_acceptable = max( (prev_layer_channel_count//32), (channel_count//32))
-    if (max_acceptable > 1):
-        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = max_acceptable )
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
+    output_channel_count = filters
+    max_acceptable_divisor = (prev_layer_channel_count//16)
+    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
+    if group_count is None: group_count=1
+    output_group_size = output_channel_count // group_count
+    input_group_size = prev_layer_channel_count // group_count
+    if (group_count>1):
+        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
         compression_tensor = output_tensor
-        output_group_size = channel_count // group_count
-        output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, groups=group_count, use_bias=use_bias)
-        output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
-        #uncomment for debugging
-        #print (group_count, prev_layer_channel_count,  output_group_size)
+        if output_group_size > 1:
+            output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
+        if (prev_layer_channel_count >= output_channel_count):
+            #print('Has intergroup')
+            output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
+            output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
-        output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=True, use_bias=use_bias)        
+        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)
     return output_tensor
+
 
 def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True, kType=1):
     if kType == 0:

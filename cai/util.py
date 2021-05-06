@@ -474,7 +474,7 @@ def get_max_acceptable_common_divisor(a, b, max_acceptable=1000000):
         b: is an integer.
         max_acceptable: maximum acceptable common divisor.
   """
-  divisor = min(a, b, max_acceptable)
+  divisor = max(1, min(a, b, max_acceptable))
   while divisor > 0:
       if a % divisor == 0 and b % divisor == 0:
           return divisor
