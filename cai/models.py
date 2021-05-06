@@ -86,7 +86,8 @@ def conv2d_bn(x,
               name=None,
               use_bias=False,
               activation='relu', 
-              has_batch_norm=True, 
+              has_batch_norm=True,
+              has_batch_scale=False,  
               groups=0
               ):
     """Utility function to apply conv + BN.
@@ -104,6 +105,7 @@ def conv2d_bn(x,
         use_bias: True means that bias will be added,
         activation: activation function. None means no activation function. 
         has_batch_norm: True means that batch normalization is added.
+        has_batch_scale: True means that scaling is added to batch norm.
         groups: number of groups in the convolution
 
     # Returns
@@ -126,7 +128,7 @@ def conv2d_bn(x,
         use_bias=use_bias,
         groups=groups, 
         name=conv_name)(x)
-    if (has_batch_norm): x = keras.layers.BatchNormalization(axis=bn_axis, scale=False, name=bn_name)(x)
+    if (has_batch_norm): x = keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
     if activation is not None: x = keras.layers.Activation(activation=activation, name=name)(x)
     return x
 

@@ -384,6 +384,104 @@ def EfficientNetB0(include_top=True,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
+
+def EfficientNetB1(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.0, 1.1, 240, 0.2,
+                        model_name='efficientnet-b1',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
+
+def EfficientNetB2(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.1, 1.2, 260, 0.3,
+                        model_name='efficientnet-b2',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
+
+def EfficientNetB3(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.2, 1.4, 300, 0.3,
+                        model_name='efficientnet-b3',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
+
+def EfficientNetB4(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.4, 1.8, 380, 0.4,
+                        model_name='efficientnet-b4',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
+
+def EfficientNetB5(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.6, 2.2, 456, 0.4,
+                        model_name='efficientnet-b5',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
+
+def EfficientNetB6(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(1.8, 2.6, 528, 0.5,
+                        model_name='efficientnet-b6',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
+
+def EfficientNetB7(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling=None,
+                   classes=1000,
+                   **kwargs):
+    return EfficientNet(2.0, 3.1, 600, 0.5,
+                        model_name='efficientnet-b7',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        **kwargs)
+
 def kPointwiseConv2DType0(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, use_bias=True):
     return cai.models.conv2d_bn(last_tensor, filters, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)
 
@@ -405,19 +503,20 @@ def kPointwiseConv2DType2(last_tensor,  filters=32, channel_axis=3, name=None, a
     output_tensor = last_tensor
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     channel_count = filters
-    if (prev_layer_channel_count % 2 == 0) and (channel_count % 2 > 0):
-        channel_count = channel_count + 1
+    #if (prev_layer_channel_count % 2 == 0) and (channel_count % 2 > 0):
+    #    channel_count = channel_count + 1
     group_count = 0
-    if (prev_layer_channel_count > 64):
-        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = (prev_layer_channel_count//32) )
+    max_acceptable = max( (prev_layer_channel_count//32), (channel_count//32))
+    if (max_acceptable > 1):
+        group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, channel_count, max_acceptable = max_acceptable )
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
         compression_tensor = output_tensor
         output_group_size = channel_count // group_count
-        # output_tensor = keras.layers.BatchNormalization(axis=channel_axis, scale=False, name=name+'_group_bn')(output_tensor)
         output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, groups=group_count, use_bias=use_bias)
         output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
-        print (group_count, prev_layer_channel_count,  output_group_size)
+        #uncomment for debugging
+        #print (group_count, prev_layer_channel_count,  output_group_size)
     else:
         output_tensor = cai.models.conv2d_bn(output_tensor, channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, use_bias=use_bias)        
     return output_tensor
@@ -461,7 +560,7 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
         #                  name=name + 'expand_conv')(inputs)
         #x = layers.BatchNormalization(axis=bn_axis, name=name + 'expand_bn')(x)
         #x = layers.Activation(activation_fn, name=name + 'expand_activation')(x)
-        x = kPointwiseConv2D(last_tensor=inputs,  filters=filters, channel_axis=bn_axis,  name=name+'expand', activation=activation_fn, has_batch_norm=True, use_bias=False, kType=kType)
+        x = kPointwiseConv2D(last_tensor=inputs, filters=filters, channel_axis=bn_axis, name=name+'expand', activation=activation_fn, has_batch_norm=True, use_bias=False, kType=kType)
     else:
         x = inputs
 
@@ -510,7 +609,7 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
     #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
     #                  name=name + 'project_conv')(x)
     # x = layers.BatchNormalization(axis=bn_axis, name=name + 'project_bn')(x)
-    x = kPointwiseConv2D(last_tensor=x, filters=filters_out, channel_axis=bn_axis, name=name+'project_conv', activation=None, has_batch_norm=True, use_bias=True, kType=kType)
+    x = kPointwiseConv2D(last_tensor=x, filters=filters_out, channel_axis=bn_axis, name=name+'project_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
     
     if (id_skip is True and strides == 1 and filters_in == filters_out):
         if drop_rate > 0:
@@ -676,110 +775,12 @@ def kEfficientNetB0(include_top=True,
                    classes=1000,
                    kType=1, 
                    **kwargs):
-    return EfficientNet(1.0, 1.0, 224, 0.2,
+    return kEfficientNet(1.0, 1.0, 224, 0.2,
                         model_name='efficientnet-b0',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         kType=kType,
-                        **kwargs)
-
-
-def EfficientNetB1(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.0, 1.1, 240, 0.2,
-                        model_name='efficientnet-b1',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
-
-
-def EfficientNetB2(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.1, 1.2, 260, 0.3,
-                        model_name='efficientnet-b2',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
-
-
-def EfficientNetB3(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.2, 1.4, 300, 0.3,
-                        model_name='efficientnet-b3',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
-
-
-def EfficientNetB4(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.4, 1.8, 380, 0.4,
-                        model_name='efficientnet-b4',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
-
-
-def EfficientNetB5(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.6, 2.2, 456, 0.4,
-                        model_name='efficientnet-b5',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
-
-
-def EfficientNetB6(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(1.8, 2.6, 528, 0.5,
-                        model_name='efficientnet-b6',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
-                        **kwargs)
-
-
-def EfficientNetB7(include_top=True,
-                   input_tensor=None,
-                   input_shape=None,
-                   pooling=None,
-                   classes=1000,
-                   **kwargs):
-    return EfficientNet(2.0, 3.1, 600, 0.5,
-                        model_name='efficientnet-b7',
-                        include_top=include_top,
-                        input_tensor=input_tensor, input_shape=input_shape,
-                        pooling=pooling, classes=classes,
                         **kwargs)
 
 
