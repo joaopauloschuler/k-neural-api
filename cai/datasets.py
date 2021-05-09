@@ -181,6 +181,20 @@ def skimage_rgb2lab_a(aRGB,  verbose=True):
             print(img, ' images converted to lab.')
     gc.collect()
     
+def cv2_resize_a(aImages, target_size=(64,64), interpolation=cv2.INTER_NEAREST, verbose=False):    
+    """Resizes an array of images.
+    """
+    imgLen = len(aImages)
+    outImg = []
+    for img in range(imgLen):
+        outImg.append(cv2.resize(aImages[img], dsize=target_size, interpolation=interpolation))
+        if (img % 1000 == 0):
+          gc.collect()  
+          if verbose:
+            print(img, ' images resized.')
+    gc.collect()
+    return np.array(outImg)
+    
 def skimage_blur(aImages, sigma=1.0, truncate=3.5, verbose=True):    
     """Applies blurring to an array of images.
     """
