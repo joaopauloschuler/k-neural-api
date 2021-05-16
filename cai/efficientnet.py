@@ -810,7 +810,9 @@ def kEfficientNetB0(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1, 
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.0, 1.0, 224, 0.2,
                         model_name='efficientnet-b0',
@@ -818,6 +820,8 @@ def kEfficientNetB0(include_top=True,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
                         kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 def kEfficientNetB1(include_top=True,
@@ -825,12 +829,18 @@ def kEfficientNetB1(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.0, 1.1, 240, 0.2,
                         model_name='efficientnet-b1',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -839,12 +849,18 @@ def kEfficientNetB2(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.1, 1.2, 260, 0.3,
                         model_name='efficientnet-b2',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -853,12 +869,18 @@ def kEfficientNetB3(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.2, 1.4, 300, 0.3,
                         model_name='efficientnet-b3',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -867,12 +889,18 @@ def kEfficientNetB4(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.4, 1.8, 380, 0.4,
                         model_name='efficientnet-b4',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -881,12 +909,18 @@ def kEfficientNetB5(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.6, 2.2, 456, 0.4,
                         model_name='efficientnet-b5',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -895,12 +929,18 @@ def kEfficientNetB6(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(1.8, 2.6, 528, 0.5,
                         model_name='efficientnet-b6',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -909,12 +949,18 @@ def kEfficientNetB7(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
+                   kType=1,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return kEfficientNet(2.0, 3.1, 600, 0.5,
                         model_name='efficientnet-b7',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
    
 
