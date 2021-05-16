@@ -78,7 +78,7 @@ def GlobalAverageMaxPooling2D(previous_layer,  name=None):
     Adds both global Average and Max poolings. This layers is known to speed up training.
     """
     if name is None: name='global_pool'
-    return keras.layers.Concatenate(axis=3)([
+    return keras.layers.Concatenate(axis=1)([
       keras.layers.GlobalAveragePooling2D(name=name+'_avg')(previous_layer),
       keras.layers.GlobalMaxPooling2D(name=name+'_max')(previous_layer)
     ])
