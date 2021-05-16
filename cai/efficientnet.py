@@ -528,6 +528,25 @@ def kPointwiseConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, ac
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return output_tensor
 
+def kPointwiseConv2DType3(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True):
+    """
+    Same as Type 1 but without interleaving.
+    """
+    output_tensor = last_tensor
+    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    output_channel_count = filters
+    max_acceptable_divisor = (prev_layer_channel_count//16)
+    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
+    if group_count is None: group_count=1
+    output_group_size = output_channel_count // group_count
+    input_group_size = prev_layer_channel_count // group_count
+    if (group_count > 1):
+        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
+    else:
+        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)        
+    return output_tensor
 
 def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=1):
     if kType == 0:
@@ -752,7 +771,12 @@ def kEfficientNet(width_coefficient,
     #x = layers.Activation(activation_fn, name='top_activation')(x)
     x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
     if include_top:
-        x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+        if pooling == 'avg':
+            x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+        elif pooling == 'max':
+            x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+        elif pooling == 'avgmax':
+            x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
         if dropout_rate > 0:
             x = layers.Dropout(dropout_rate, name='top_dropout')(x)
         x = layers.Dense(classes,
@@ -764,6 +788,8 @@ def kEfficientNet(width_coefficient,
             x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
         elif pooling == 'max':
             x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+        elif pooling == 'avgmax':
+            x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
@@ -780,7 +806,7 @@ def kEfficientNet(width_coefficient,
 def kEfficientNetB0(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    kType=1, 
                    **kwargs):
@@ -795,7 +821,7 @@ def kEfficientNetB0(include_top=True,
 def kEfficientNetB1(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(1.0, 1.1, 240, 0.2,
@@ -809,7 +835,7 @@ def kEfficientNetB1(include_top=True,
 def kEfficientNetB2(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(1.1, 1.2, 260, 0.3,
@@ -823,7 +849,7 @@ def kEfficientNetB2(include_top=True,
 def kEfficientNetB3(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(1.2, 1.4, 300, 0.3,
@@ -837,7 +863,7 @@ def kEfficientNetB3(include_top=True,
 def kEfficientNetB4(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(1.4, 1.8, 380, 0.4,
@@ -851,7 +877,7 @@ def kEfficientNetB4(include_top=True,
 def kEfficientNetB5(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(1.6, 2.2, 456, 0.4,
@@ -865,7 +891,7 @@ def kEfficientNetB5(include_top=True,
 def kEfficientNetB6(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(1.8, 2.6, 528, 0.5,
@@ -879,7 +905,7 @@ def kEfficientNetB6(include_top=True,
 def kEfficientNetB7(include_top=True,
                    input_tensor=None,
                    input_shape=None,
-                   pooling=None,
+                   pooling='avg',
                    classes=1000,
                    **kwargs):
     return kEfficientNet(2.0, 3.1, 600, 0.5,
