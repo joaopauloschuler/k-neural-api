@@ -650,7 +650,7 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
 
 def kEfficientNet(width_coefficient,
                  depth_coefficient,
-                 strip_stride_cnt=0,
+                 skip_stride_cnt=0,
                  dropout_rate=0.2,
                  drop_connect_rate=0.2,
                  depth_divisor=8,
@@ -671,7 +671,7 @@ def kEfficientNet(width_coefficient,
     # Arguments
         width_coefficient: float, scaling coefficient for network width.
         depth_coefficient: float, scaling coefficient for network depth.
-        strip_stride_cnt: number of layers to skip stride. Good for smalll images.
+        skip_stride_cnt: number of layers to skip stride. Good for smalll images.
         dropout_rate: float, dropout rate before final classifier layer.
         drop_connect_rate: float, dropout rate at skip connections.
         depth_divisor: integer, a unit of network width.
@@ -754,8 +754,10 @@ def kEfficientNet(width_coefficient,
         args['filters_out'] = round_filters(args['filters_out'])
 
         for j in range(round_repeats(args.pop('repeats'))):
+            if (skip_stride_cnt > i):
+                args['strides'] = 1
             # The first block needs to take care of stride and filter size increase.
-            if (j > 0) or (strip_stride_cnt > i):
+            if (j > 0):
                 args['strides'] = 1
                 args['filters_in'] = args['filters_out']
             x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
@@ -813,9 +815,9 @@ def kEfficientNetB0(include_top=True,
                    kType=1,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.0, 1.0, strip_stride_cnt=strip_stride_cnt, # 224,
+    return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
                         model_name='efficientnet-b0',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -833,9 +835,9 @@ def kEfficientNetB1(include_top=True,
                    kType=1,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.0, 1.1, strip_stride_cnt=strip_stride_cnt, #240,
+    return kEfficientNet(1.0, 1.1, skip_stride_cnt=skip_stride_cnt, #240,
                         model_name='efficientnet-b1',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -854,9 +856,9 @@ def kEfficientNetB2(include_top=True,
                    kType=1,
                    dropout_rate=0.3,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.1, 1.2, strip_stride_cnt=strip_stride_cnt, #260,
+    return kEfficientNet(1.1, 1.2, skip_stride_cnt=skip_stride_cnt, #260,
                         model_name='efficientnet-b2',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -875,9 +877,9 @@ def kEfficientNetB3(include_top=True,
                    kType=1,
                    dropout_rate=0.3,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.2, 1.4, strip_stride_cnt=strip_stride_cnt, #300,
+    return kEfficientNet(1.2, 1.4, skip_stride_cnt=skip_stride_cnt, #300,
                         model_name='efficientnet-b3',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -896,9 +898,9 @@ def kEfficientNetB4(include_top=True,
                    kType=1,
                    dropout_rate=0.4,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.4, 1.8, strip_stride_cnt=strip_stride_cnt, #380,
+    return kEfficientNet(1.4, 1.8, skip_stride_cnt=skip_stride_cnt, #380,
                         model_name='efficientnet-b4',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -917,9 +919,9 @@ def kEfficientNetB5(include_top=True,
                    kType=1,
                    dropout_rate=0.4,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.6, 2.2, strip_stride_cnt=strip_stride_cnt, #456,
+    return kEfficientNet(1.6, 2.2, skip_stride_cnt=skip_stride_cnt, #456,
                         model_name='efficientnet-b5',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -938,9 +940,9 @@ def kEfficientNetB6(include_top=True,
                    kType=1,
                    dropout_rate=0.5,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(1.8, 2.6, strip_stride_cnt=strip_stride_cnt, #528,
+    return kEfficientNet(1.8, 2.6, skip_stride_cnt=skip_stride_cnt, #528,
                         model_name='efficientnet-b6',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
@@ -959,9 +961,9 @@ def kEfficientNetB7(include_top=True,
                    kType=1,
                    dropout_rate=0.5,
                    drop_connect_rate=0.2,
-                   strip_stride_cnt=0, 
+                   skip_stride_cnt=0, 
                    **kwargs):
-    return kEfficientNet(2.0, 3.1, strip_stride_cnt=strip_stride_cnt, #600,
+    return kEfficientNet(2.0, 3.1, skip_stride_cnt=skip_stride_cnt, #600,
                         model_name='efficientnet-b7',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
