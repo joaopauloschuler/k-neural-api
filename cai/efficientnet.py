@@ -493,7 +493,7 @@ def kPointwiseConv2DType1(last_tensor,  filters=32,  channel_axis=3,  name=None,
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
     if group_count is None: group_count=1
     output_group_size = output_channel_count // group_count
-    input_group_size = prev_layer_channel_count // group_count
+    # input_group_size = prev_layer_channel_count // group_count
     if (group_count > 1):
         #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
@@ -512,7 +512,7 @@ def kPointwiseConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, ac
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
     if group_count is None: group_count=1
     output_group_size = output_channel_count // group_count
-    input_group_size = prev_layer_channel_count // group_count
+    # input_group_size = prev_layer_channel_count // group_count
     if (group_count>1):
         #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
@@ -538,8 +538,8 @@ def kPointwiseConv2DType3(last_tensor,  filters=32,  channel_axis=3,  name=None,
     max_acceptable_divisor = (prev_layer_channel_count//16)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
     if group_count is None: group_count=1
-    output_group_size = output_channel_count // group_count
-    input_group_size = prev_layer_channel_count // group_count
+    # output_group_size = output_channel_count // group_count
+    # input_group_size = prev_layer_channel_count // group_count
     if (group_count > 1):
         #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
@@ -547,6 +547,14 @@ def kPointwiseConv2DType3(last_tensor,  filters=32,  channel_axis=3,  name=None,
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)        
     return output_tensor
+
+def kPointwiseConv2DType4(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True):
+    """
+    This is Type 2 followed by Type 3.
+    """
+    last_tensor  = kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+    last_tensor  = kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+    return last_tensor
 
 def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=1):
     if kType == 0:
@@ -557,6 +565,8 @@ def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activ
         return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     if kType == 3:
         return kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+    if kType == 4:
+        return kPointwiseConv2DType4(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
         
 def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
           filters_in=32, filters_out=16, kernel_size=3, strides=1,
