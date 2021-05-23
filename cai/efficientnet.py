@@ -553,7 +553,7 @@ def kPointwiseConv2DType4(last_tensor,  filters=32,  channel_axis=3,  name=None,
     This is Type 2 followed by Type 3.
     """
     last_tensor  = kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    last_tensor  = kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+    last_tensor  = kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name='e_'+name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return last_tensor
 
 def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=1):
