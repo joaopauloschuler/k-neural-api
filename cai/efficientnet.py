@@ -556,16 +556,16 @@ def kPointwiseConv2DType4(last_tensor,  filters=32,  channel_axis=3,  name=None,
     last_tensor  = kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name='e_'+name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return last_tensor
 
-def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=1):
+def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     if kType == 0:
         return kPointwiseConv2DType0(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    if kType == 1:
+    elif kType == 1:
         return kPointwiseConv2DType1(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    if kType == 2:
+    elif kType == 2:
         return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    if kType == 3:
+    elif kType == 3:
         return kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    if kType == 4:
+    elif kType == 4:
         return kPointwiseConv2DType4(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
         
 def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
@@ -825,7 +825,7 @@ def kEfficientNetB0(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1,
@@ -845,7 +845,7 @@ def kEfficientNetB1(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -866,7 +866,7 @@ def kEfficientNetB2(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.3,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -887,7 +887,7 @@ def kEfficientNetB3(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.3,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -908,7 +908,7 @@ def kEfficientNetB4(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.4,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -929,7 +929,7 @@ def kEfficientNetB5(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.4,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -950,7 +950,7 @@ def kEfficientNetB6(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.5,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -971,7 +971,7 @@ def kEfficientNetB7(include_top=True,
                    input_shape=None,
                    pooling='avg',
                    classes=1000,
-                   kType=1,
+                   kType=2,
                    dropout_rate=0.5,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
@@ -985,7 +985,109 @@ def kEfficientNetB7(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         **kwargs)
+
    
+def kEfficientNetBN(N=0, 
+                   include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling='avg',
+                   classes=1000,
+                   kType=2,
+                   dropout_rate=None,
+                   drop_connect_rate=0.2,
+                   skip_stride_cnt=-1,
+                   **kwargs):
+    result = None
+    if (N==0):
+        dropout_rate=0.2 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
+                            model_name='efficientnet-b0',
+                            include_top=include_top,
+                            input_tensor=input_tensor, input_shape=input_shape,
+                            pooling=pooling, classes=classes,
+                            kType=kType,
+                            dropout_rate=dropout_rate,
+                            drop_connect_rate=drop_connect_rate,
+                            **kwargs)
+    elif (N==1):
+        dropout_rate=0.2 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.0, 1.1, skip_stride_cnt=skip_stride_cnt, #240,
+                        model_name='efficientnet-b1',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    elif (N==2):
+        dropout_rate=0.3 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.1, 1.2, skip_stride_cnt=skip_stride_cnt, #260,
+                        model_name='efficientnet-b2',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    elif (N==3):
+        dropout_rate=0.3 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.2, 1.4, skip_stride_cnt=skip_stride_cnt, #300,
+                        model_name='efficientnet-b3',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    elif (N==4):
+        dropout_rate=0.4 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.4, 1.8, skip_stride_cnt=skip_stride_cnt, #380,
+                        model_name='efficientnet-b4',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    elif (N==5):
+        dropout_rate=0.4 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.6, 2.2, skip_stride_cnt=skip_stride_cnt, #456,
+                        model_name='efficientnet-b5',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    elif (N==6):
+        dropout_rate=0.5 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.8, 2.6, skip_stride_cnt=skip_stride_cnt, #528,
+                        model_name='efficientnet-b6',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    elif (N==7):
+        dropout_rate=0.5 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(2.0, 3.1, skip_stride_cnt=skip_stride_cnt, #600,
+                        model_name='efficientnet-b7',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        **kwargs)
+    return result
 
 def preprocess_input(x, data_format=None, **kwargs):
     """Preprocesses a numpy array encoding a batch of images.
