@@ -764,8 +764,10 @@ def kEfficientNet(width_coefficient,
         args['filters_out'] = round_filters(args['filters_out'])
 
         for j in range(round_repeats(args.pop('repeats'))):
-            if (skip_stride_cnt > i):
+            #should skip the stride
+            if (skip_stride_cnt > i) and (j == 0) and (args['strides'] > 1):
                 args['strides'] = 1
+                x = keras.layers.MaxPooling2D(pool_size=(1, 1), strides=(1, 1), padding="same")(x)
             # The first block needs to take care of stride and filter size increase.
             if (j > 0):
                 args['strides'] = 1
