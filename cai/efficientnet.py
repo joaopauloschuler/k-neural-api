@@ -612,7 +612,7 @@ def kPointwiseConv2DType6(last_tensor, filters=32, channel_axis=3, name=None, ac
             #print('Has intergroup')
             output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
             output_tensor = cai.layers.SumIntoHalfChannels()(output_tensor)
-            output_tensor = keras.layers.Concatenate(axis=3)([output_tensor, compression_tensor], name=name+'_inter_group_concat')
+            output_tensor = keras.layers.Concatenate(axis=3, name=name+'_inter_group_concat')([output_tensor, compression_tensor])
     else:
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
