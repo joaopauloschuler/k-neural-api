@@ -150,7 +150,7 @@ def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, channel_axis
     return last_tensor
 
 def BinaryPointwiseConvLayers(last_tensor, name, conv_count=1, channel_axis=3):
-    return BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=conv_count, channel_axis=channel_axis)
+    return BinaryConvLayers(last_tensor, name, shape=(1, 1), conv_count=conv_count, channel_axis=channel_axis)
 
 def BinaryCompressionLayer(last_tensor, name, channel_axis=3):
     last_tensor = EnforceEvenChannelCount(last_tensor)
