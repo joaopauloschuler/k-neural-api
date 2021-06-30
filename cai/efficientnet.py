@@ -618,14 +618,13 @@ def kPointwiseConv2DType6(last_tensor, filters=32, channel_axis=3, name=None, ac
         output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return output_tensor
 
-def kPointwiseConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True):
+def kPointwiseConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, bin_conv_count=4):
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     if filters > prev_layer_channel_count:
-        #last_tensor  = kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
         last_tensor = cai.layers.FitChannelCountTo(last_tensor, next_channel_count=filters, channel_axis=channel_axis)
-        last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name, conv_count=1, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
+        if (bin_conv_count>0): last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name, conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
     if filters < prev_layer_channel_count:
-        last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name=name+'_biconv', conv_count=1, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
+        if (bin_conv_count>0): last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name=name+'_biconv', conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
         last_tensor = cai.layers.BinaryCompression(last_tensor, name=name+'_bicompress', activation=activation, has_batch_norm=has_batch_norm, target_channel_count=filters)
     return last_tensor
 
@@ -645,14 +644,23 @@ def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3, name=None, activa
     elif kType == 6:
         return kPointwiseConv2DType6(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     elif kType == 7:
-        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, bin_conv_count=0)
     elif kType == 8:
-        return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, max_channels_per_group=32)
+        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, bin_conv_count=1)
     elif kType == 9:
-        return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, max_channels_per_group=8)
+        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, bin_conv_count=2)
     elif kType == 10:
+        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, bin_conv_count=4)
+    elif kType == 11:
+        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, bin_conv_count=8)
+    elif kType == 12:
+        return kPointwiseConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, bin_conv_count=16)
+    elif kType == 13:
+        return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, max_channels_per_group=32)
+    elif kType == 14:
+        return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, max_channels_per_group=8)
+    elif kType == 15:
         return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, max_channels_per_group=4)
-
         
 def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
           filters_in=32, filters_out=16, kernel_size=3, strides=1,
