@@ -634,7 +634,7 @@ def kPointwiseConv2D(last_tensor,  filters=32, channel_axis=3, name=None, activa
     elif kType == 1:
         return kPointwiseConv2DType1(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     elif kType == 2:
-        return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+        return kPointwiseConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, max_channels_per_group=16)
     elif kType == 3:
         return kPointwiseConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     elif kType == 4:
