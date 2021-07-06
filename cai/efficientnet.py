@@ -620,8 +620,8 @@ def kPointwiseConv2DType6(last_tensor, filters=32, channel_axis=3, name=None, ac
 
 def kPointwiseConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, bin_conv_count=4):
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    if filters > prev_layer_channel_count:
-        last_tensor = cai.layers.FitChannelCountTo(last_tensor, next_channel_count=filters, channel_axis=channel_axis)
+    if filters >= prev_layer_channel_count:
+        if filters > prev_layer_channel_count: last_tensor = cai.layers.FitChannelCountTo(last_tensor, next_channel_count=filters, channel_axis=channel_axis)
         if (bin_conv_count>0): last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name, conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
     if filters < prev_layer_channel_count:
         if (bin_conv_count>0): last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name=name+'_biconv', conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)

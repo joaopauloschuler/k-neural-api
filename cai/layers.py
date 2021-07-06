@@ -126,9 +126,10 @@ def FitChannelCountTo(last_tensor, next_channel_count, channel_axis=3):
         if copy_cnt == 0:
             output_copies.append( last_tensor )
         else:
-            output_copies.append( InterleaveChannels(step_size=(copy_cnt % prev_layer_channel_count))(last_tensor) )
+            output_copies.append( InterleaveChannels(step_size=((copy_cnt+2) % prev_layer_channel_count))(last_tensor) )
     if (extra_channels > 0):
-        output_copies.append( CopyChannels(0,extra_channels)(last_tensor) ) 
+        extra_tensor = InterleaveChannels(step_size=((full_copies+1) % prev_layer_channel_count))(last_tensor)
+        output_copies.append( CopyChannels(0,extra_channels)(extra_tensor) )
     last_tensor = keras.layers.Concatenate(axis=channel_axis)( output_copies )
     return last_tensor
 
