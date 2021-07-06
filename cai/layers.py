@@ -146,8 +146,9 @@ def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, has_batch_no
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     for conv_cnt in range(conv_count):
         input_tensor = last_tensor
+        last_tensor_interleaved = InterleaveChannels(step_size=2, name=name+"_i_"+str(conv_cnt))(last_tensor)
         x1 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_a_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor)
-        x2 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_b_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor)
+        x2 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_b_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor_interleaved)
         last_tensor = keras.layers.Concatenate(axis=channel_axis, name=name+"_conc_"+str(conv_cnt))([x1,x2])
         if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch_"+str(conv_cnt))(last_tensor)
         if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_relu_"+str(conv_cnt))(last_tensor)
