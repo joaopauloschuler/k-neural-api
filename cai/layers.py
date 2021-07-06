@@ -117,7 +117,7 @@ def GlobalAverageMaxPooling2D(previous_layer,  name=None):
       keras.layers.GlobalMaxPooling2D(name=name+'_max')(previous_layer)
     ])
 
-def FitChannelCountTo(last_tensor, next_channel_count, channel_axis=3):
+def FitChannelCountTo(last_tensor, next_channel_count, has_interleaving=False, channel_axis=3):
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     full_copies = next_channel_count // prev_layer_channel_count
     extra_channels = next_channel_count % prev_layer_channel_count
@@ -126,9 +126,15 @@ def FitChannelCountTo(last_tensor, next_channel_count, channel_axis=3):
         if copy_cnt == 0:
             output_copies.append( last_tensor )
         else:
-            output_copies.append( InterleaveChannels(step_size=((copy_cnt+1) % prev_layer_channel_count))(last_tensor) )
+            if has_interleaving:
+                output_copies.append( InterleaveChannels(step_size=((copy_cnt+1) % prev_layer_channel_count))(last_tensor) )
+            else:
+                output_copies.append( last_tensor )
     if (extra_channels > 0):
-        extra_tensor = InterleaveChannels(step_size=((full_copies+1) % prev_layer_channel_count))(last_tensor)
+        if has_interleaving:
+            extra_tensor = InterleaveChannels(step_size=((full_copies+1) % prev_layer_channel_count))(last_tensor)
+        else:
+            extra_tensor = last_tensor
         output_copies.append( CopyChannels(0,extra_channels)(extra_tensor) )
     last_tensor = keras.layers.Concatenate(axis=channel_axis)( output_copies )
     return last_tensor
@@ -142,30 +148,33 @@ def EnforceEvenChannelCount(last_tensor, channel_axis=3):
             channel_axis=channel_axis)
     return last_tensor
 
-def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, has_batch_norm=True,  activation='relu', channel_axis=3):
+def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, has_batch_norm=True, has_interleaving=False, activation='relu', channel_axis=3):
     last_tensor = EnforceEvenChannelCount(last_tensor)
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     for conv_cnt in range(conv_count):
         input_tensor = last_tensor
-        last_tensor_interleaved = InterleaveChannels(step_size=2, name=name+"_i_"+str(conv_cnt))(last_tensor)
+        if has_interleaving:
+            last_tensor_interleaved = InterleaveChannels(step_size=2, name=name+"_i_"+str(conv_cnt))(last_tensor)
+        else:
+            last_tensor_interleaved = last_tensor
         x1 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_a_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor)
         x2 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_b_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor_interleaved)
         last_tensor = keras.layers.Concatenate(axis=channel_axis, name=name+"_conc_"+str(conv_cnt))([x1,x2])
         if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch_"+str(conv_cnt))(last_tensor)
-        if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_relu_"+str(conv_cnt))(last_tensor)
+        if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_act_"+str(conv_cnt))(last_tensor)
         last_tensor = keras.layers.add([input_tensor, last_tensor], name=name+'_add'+str(conv_cnt))
         if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis)(last_tensor)
     return last_tensor
 
-def BinaryPointwiseConvLayers(last_tensor, name, conv_count=1, has_batch_norm=True,  activation='relu', channel_axis=3):
-    return BinaryConvLayers(last_tensor, name, shape=(1, 1), conv_count=conv_count, has_batch_norm=has_batch_norm, activation=activation, channel_axis=channel_axis)
+def BinaryPointwiseConvLayers(last_tensor, name, conv_count=1, has_batch_norm=True, has_interleaving=False, activation='relu', channel_axis=3):
+    return BinaryConvLayers(last_tensor, name, shape=(1, 1), conv_count=conv_count, has_batch_norm=has_batch_norm, has_interleaving=has_interleaving,  activation=activation, channel_axis=channel_axis)
 
 def BinaryCompressionLayer(last_tensor, name, has_batch_norm=True, activation='relu', channel_axis=3):
     last_tensor = EnforceEvenChannelCount(last_tensor)
     prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
     last_tensor = keras.layers.Conv2D(prev_layer_channel_count//2, (1, 1), padding='same', activation=None, name=name+"_conv", groups=prev_layer_channel_count//2)(last_tensor)
     if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch")(last_tensor)
-    if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_relu")(last_tensor)
+    if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_act")(last_tensor)
     return last_tensor
 
 def BinaryCompression(last_tensor, name, target_channel_count, has_batch_norm=True, activation='relu', channel_axis=3):
