@@ -63,7 +63,10 @@ class InterleaveChannels(keras.layers.Layer):
     def __init__(self,
                  step_size=2,
                  **kwargs):
-        self.step_size=step_size
+        if step_size < 2:
+            self.step_size=1
+        else:
+            self.step_size=step_size
         super(InterleaveChannels, self).__init__(**kwargs)
 
     def compute_output_shape(self, input_shape):
@@ -120,7 +123,10 @@ def FitChannelCountTo(last_tensor, next_channel_count, channel_axis=3):
     extra_channels = next_channel_count % prev_layer_channel_count
     output_copies = []
     for copy_cnt in range(full_copies):
-        output_copies.append(last_tensor)
+        if copy_cnt == 0:
+            output_copies.append( last_tensor )
+        else:
+            output_copies.append( InterleaveChannels(step_size=(copy_cnt % prev_layer_channel_count))(last_tensor) )
     if (extra_channels > 0):
         output_copies.append( CopyChannels(0,extra_channels)(last_tensor) ) 
     last_tensor = keras.layers.Concatenate(axis=channel_axis)( output_copies )
