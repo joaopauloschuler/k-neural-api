@@ -769,7 +769,7 @@ def kEfficientNet(width_coefficient,
                  input_shape=None,
                  pooling=None,
                  classes=1000,
-                 kType=1, 
+                 kType=2, 
                  **kwargs):
     """Instantiates the EfficientNet architecture using given scaling coefficients.
     Optionally loads weights pre-trained on ImageNet.
@@ -835,6 +835,11 @@ def kEfficientNet(width_coefficient,
         """Round number of repeats based on depth multiplier."""
         return int(math.ceil(depth_coefficient * repeats))
 
+    if isinstance(kType, (int)):
+        kTypeList = [kType]
+    else:
+        kTypeList = kType
+    
     # Build stem
     x = img_input
     x = layers.ZeroPadding2D(padding=correct_pad(backend, x, 3),
@@ -849,31 +854,43 @@ def kEfficientNet(width_coefficient,
     x = layers.BatchNormalization(axis=bn_axis, name='stem_bn')(x)
     x = layers.Activation(activation_fn, name='stem_activation')(x)
 
-    # Build blocks
-    from copy import deepcopy
-    blocks_args = deepcopy(blocks_args)
+    root_layer = x
+    output_layers = []
+    path_cnt = 0
+    for kType in kTypeList:
+        x = root_layer
 
-    b = 0
-    blocks = float(sum(args['repeats'] for args in blocks_args))
-    for (i, args) in enumerate(blocks_args):
-        assert args['repeats'] > 0
-        # Update block input and output filters based on depth multiplier.
-        args['filters_in'] = round_filters(args['filters_in'])
-        args['filters_out'] = round_filters(args['filters_out'])
+        # Build blocks
+        from copy import deepcopy
+        blocks_args = deepcopy(blocks_args)
 
-        for j in range(round_repeats(args.pop('repeats'))):
-            #should skip the stride
-            if (skip_stride_cnt > i) and (j == 0) and (args['strides'] > 1):
-                args['strides'] = 1
-                # x = keras.layers.MaxPooling2D(pool_size=(1, 1), strides=(1, 1), padding="same")(x)
-            # The first block needs to take care of stride and filter size increase.
-            if (j > 0):
-                args['strides'] = 1
-                args['filters_in'] = args['filters_out']
-            x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
-                      name='block{}{}_'.format(i + 1, chr(j + 97)), **args,
-                      kType=kType)
-            b += 1
+        b = 0
+        blocks = float(sum(args['repeats'] for args in blocks_args))
+        for (i, args) in enumerate(blocks_args):
+            assert args['repeats'] > 0
+            # Update block input and output filters based on depth multiplier.
+            args['filters_in'] = round_filters(args['filters_in'])
+            args['filters_out'] = round_filters(args['filters_out'])
+
+            for j in range(round_repeats(args.pop('repeats'))):
+                #should skip the stride
+                if (skip_stride_cnt > i) and (j == 0) and (args['strides'] > 1):
+                    args['strides'] = 1
+                # The first block needs to take care of stride and filter size increase.
+                if (j > 0):
+                    args['strides'] = 1
+                    args['filters_in'] = args['filters_out']
+                x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
+                          name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
+                          kType=kType)
+                b += 1
+        output_layers.append(x)
+        path_cnt = path_cnt +1
+        
+    if (len(output_layers)==1):
+        x = output_layers[0]
+    else:
+        x = keras.layers.Concatenate(axis=bn_axis)([output_layers])
 
     # Build top
     #x = layers.Conv2D(round_filters(1280), 1,
