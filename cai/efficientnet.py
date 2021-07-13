@@ -52,6 +52,7 @@ from tensorflow.keras import backend
 from tensorflow.keras import models
 from tensorflow.keras import utils
 from tensorflow.keras.applications import imagenet_utils
+from copy import deepcopy
 import cai.util
 import cai.models
 
@@ -860,13 +861,11 @@ def kEfficientNet(width_coefficient,
     for kType in kTypeList:
         x = root_layer
 
-        # Build blocks
-        from copy import deepcopy
-        blocks_args = deepcopy(blocks_args)
+        blocks_args_cp = deepcopy(blocks_args)
 
         b = 0
-        blocks = float(sum(args['repeats'] for args in blocks_args))
-        for (i, args) in enumerate(blocks_args):
+        blocks = float(sum(args['repeats'] for args in blocks_args_cp))
+        for (i, args) in enumerate(blocks_args_cp):
             assert args['repeats'] > 0
             # Update block input and output filters based on depth multiplier.
             args['filters_in'] = round_filters(args['filters_in'])
