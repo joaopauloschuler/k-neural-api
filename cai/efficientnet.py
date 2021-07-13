@@ -889,7 +889,7 @@ def kEfficientNet(width_coefficient,
     if (len(output_layers)==1):
         x = output_layers[0]
     else:
-        x = keras.layers.Concatenate(axis=bn_axis)([output_layers])
+        x = keras.layers.Concatenate(axis=bn_axis)(output_layers)
 
     # Build top
     #x = layers.Conv2D(round_filters(1280), 1,
