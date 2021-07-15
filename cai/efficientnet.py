@@ -914,7 +914,7 @@ def kEfficientNet(width_coefficient,
         x = keras.layers.add(output_layers, name='global_add')
 
     if include_top:
-        x = layers.Activation('softamx', name='probs')(x)
+        x = layers.Activation('softmax', name='probs')(x)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
