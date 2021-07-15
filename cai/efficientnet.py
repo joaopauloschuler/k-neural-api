@@ -860,9 +860,7 @@ def kEfficientNet(width_coefficient,
     path_cnt = 0
     for kType in kTypeList:
         x = root_layer
-
         blocks_args_cp = deepcopy(blocks_args)
-
         b = 0
         blocks = float(sum(args['repeats'] for args in blocks_args_cp))
         for (i, args) in enumerate(blocks_args_cp):
@@ -883,43 +881,40 @@ def kEfficientNet(width_coefficient,
                           name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
                           kType=kType)
                 b += 1
+
+        # Build top
+        #x = layers.Conv2D(round_filters(1280), 1,
+        #                  padding='same',
+        #                  use_bias=False,
+        #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
+        #                  name='top_conv')(x)
+        #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
+        #x = layers.Activation(activation_fn, name='top_activation')(x)
+        x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv'+'_'+str(path_cnt), activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+        if pooling == 'avg':
+            x = layers.GlobalAveragePooling2D(name='avg_pool'+'_'+str(path_cnt))(x)
+        elif pooling == 'max':
+            x = layers.GlobalMaxPooling2D(name='max_pool'+'_'+str(path_cnt))(x)
+        elif pooling == 'avgmax':
+            x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool'+'_'+str(path_cnt))
+
+        if include_top:
+            # dropout won't work here as we need specialization.
+            x = layers.Dense(classes,
+                             activation=None, # 'softmax'
+                             kernel_initializer=DENSE_KERNEL_INITIALIZER,
+                             name='probs'+'_'+str(path_cnt))(x)
+
         output_layers.append(x)
         path_cnt = path_cnt +1
         
     if (len(output_layers)==1):
         x = output_layers[0]
     else:
-        x = keras.layers.Concatenate(axis=bn_axis)(output_layers)
+        x = keras.layers.add(output_layers, name='global_add')
 
-    # Build top
-    #x = layers.Conv2D(round_filters(1280), 1,
-    #                  padding='same',
-    #                  use_bias=False,
-    #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
-    #                  name='top_conv')(x)
-    #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
-    #x = layers.Activation(activation_fn, name='top_activation')(x)
-    x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
     if include_top:
-        if pooling == 'avg':
-            x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-        elif pooling == 'max':
-            x = layers.GlobalMaxPooling2D(name='max_pool')(x)
-        elif pooling == 'avgmax':
-            x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
-        if dropout_rate > 0:
-            x = layers.Dropout(dropout_rate, name='top_dropout')(x)
-        x = layers.Dense(classes,
-                         activation='softmax',
-                         kernel_initializer=DENSE_KERNEL_INITIALIZER,
-                         name='probs')(x)
-    else:
-        if pooling == 'avg':
-            x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-        elif pooling == 'max':
-            x = layers.GlobalMaxPooling2D(name='max_pool')(x)
-        elif pooling == 'avgmax':
-            x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
+        x = layers.Activation('softamx', name='probs')(x)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
