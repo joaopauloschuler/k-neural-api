@@ -890,7 +890,7 @@ def kEfficientNet(width_coefficient,
         #                  name='top_conv')(x)
         #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
         #x = layers.Activation(activation_fn, name='top_activation')(x)
-        x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv'+'_'+str(path_cnt), activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+        x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv'+'_'+str(path_cnt), activation='relu', has_batch_norm=True, use_bias=False, kType=kType)
         if pooling == 'avg':
             x = layers.GlobalAveragePooling2D(name='avg_pool'+'_'+str(path_cnt))(x)
         elif pooling == 'max':
@@ -899,7 +899,8 @@ def kEfficientNet(width_coefficient,
             x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool'+'_'+str(path_cnt))
 
         if include_top:
-            # dropout won't work here as we need specialization.
+            if dropout_rate > 0:
+                x = layers.Dropout(dropout_rate, name='top_dropout'+'_'+str(path_cnt))(x)
             x = layers.Dense(classes,
                              activation=None, # 'softmax'
                              kernel_initializer=DENSE_KERNEL_INITIALIZER,
