@@ -891,20 +891,6 @@ def kEfficientNet(width_coefficient,
         #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
         #x = layers.Activation(activation_fn, name='top_activation')(x)
         x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv'+'_'+str(path_cnt), activation='relu', has_batch_norm=True, use_bias=False, kType=kType)
-        if pooling == 'avg':
-            x = layers.GlobalAveragePooling2D(name='avg_pool'+'_'+str(path_cnt))(x)
-        elif pooling == 'max':
-            x = layers.GlobalMaxPooling2D(name='max_pool'+'_'+str(path_cnt))(x)
-        elif pooling == 'avgmax':
-            x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool'+'_'+str(path_cnt))
-
-        if include_top:
-            if dropout_rate > 0:
-                x = layers.Dropout(dropout_rate, name='top_dropout'+'_'+str(path_cnt))(x)
-            x = layers.Dense(classes,
-                             activation=None, # 'softmax'
-                             kernel_initializer=DENSE_KERNEL_INITIALIZER,
-                             name='probs'+'_'+str(path_cnt))(x)
 
         output_layers.append(x)
         path_cnt = path_cnt +1
@@ -914,8 +900,20 @@ def kEfficientNet(width_coefficient,
     else:
         x = keras.layers.add(output_layers, name='global_add')
 
+    if pooling == 'avg':
+        x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+    elif pooling == 'max':
+        x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+    elif pooling == 'avgmax':
+        x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
+
     if include_top:
-        x = layers.Activation('softmax', name='probs')(x)
+        if dropout_rate > 0:
+            x = layers.Dropout(dropout_rate, name='top_dropout')(x)
+        x = layers.Dense(classes,
+            activation='softmax', # 'softmax'
+            kernel_initializer=DENSE_KERNEL_INITIALIZER,
+            name='probs')(x)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
