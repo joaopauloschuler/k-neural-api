@@ -881,14 +881,15 @@ def kEfficientNet(width_coefficient,
                           name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
                           kType=kType)
                 b += 1
-
+        x = layers.Activation('relu', name='end_relu'+'_'+str(path_cnt))(x)
         output_layers.append(x)
         path_cnt = path_cnt +1
         
     if (len(output_layers)==1):
         x = output_layers[0]
     else:
-        x = keras.layers.add(output_layers, name='global_add')
+        #x = keras.layers.add(output_layers, name='global_add')
+        x = keras.layers.Concatenate(axis=bn_axis, name='global_concat')(output_layers)
 
     # Build top
     #x = layers.Conv2D(round_filters(1280), 1,
