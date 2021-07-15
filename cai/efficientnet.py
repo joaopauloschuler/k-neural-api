@@ -882,16 +882,6 @@ def kEfficientNet(width_coefficient,
                           kType=kType)
                 b += 1
 
-        # Build top
-        #x = layers.Conv2D(round_filters(1280), 1,
-        #                  padding='same',
-        #                  use_bias=False,
-        #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
-        #                  name='top_conv')(x)
-        #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
-        #x = layers.Activation(activation_fn, name='top_activation')(x)
-        x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv'+'_'+str(path_cnt), activation='relu', has_batch_norm=True, use_bias=False, kType=kType)
-
         output_layers.append(x)
         path_cnt = path_cnt +1
         
@@ -899,6 +889,16 @@ def kEfficientNet(width_coefficient,
         x = output_layers[0]
     else:
         x = keras.layers.add(output_layers, name='global_add')
+
+    # Build top
+    #x = layers.Conv2D(round_filters(1280), 1,
+    #                  padding='same',
+    #                  use_bias=False,
+    #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
+    #                  name='top_conv')(x)
+    #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
+    #x = layers.Activation(activation_fn, name='top_activation')(x)
+    x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
 
     if pooling == 'avg':
         x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
