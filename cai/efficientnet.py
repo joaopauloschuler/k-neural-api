@@ -97,6 +97,23 @@ DEFAULT_BLOCKS_ARGS = [
      'expand_ratio': 6, 'id_skip': True, 'strides': 1, 'se_ratio': 0.25}
 ]
 
+SMALL_BLOCKS_ARGS = [
+    {'kernel_size': 3, 'repeats': 1, 'filters_in': 32, 'filters_out': 16,
+     'expand_ratio': 1, 'id_skip': True, 'strides': 1, 'se_ratio': 0.25},
+    {'kernel_size': 3, 'repeats': 1, 'filters_in': 16, 'filters_out': 24,
+     'expand_ratio': 6, 'id_skip': True, 'strides': 2, 'se_ratio': 0.25},
+    {'kernel_size': 5, 'repeats': 1, 'filters_in': 24, 'filters_out': 40,
+     'expand_ratio': 6, 'id_skip': True, 'strides': 2, 'se_ratio': 0.25},
+    {'kernel_size': 3, 'repeats': 1, 'filters_in': 40, 'filters_out': 80,
+     'expand_ratio': 6, 'id_skip': True, 'strides': 2, 'se_ratio': 0.25},
+    {'kernel_size': 5, 'repeats': 1, 'filters_in': 80, 'filters_out': 112,
+     'expand_ratio': 6, 'id_skip': True, 'strides': 1, 'se_ratio': 0.25},
+    {'kernel_size': 5, 'repeats': 1, 'filters_in': 112, 'filters_out': 192,
+     'expand_ratio': 6, 'id_skip': True, 'strides': 2, 'se_ratio': 0.25},
+    {'kernel_size': 3, 'repeats': 1, 'filters_in': 192, 'filters_out': 320,
+     'expand_ratio': 6, 'id_skip': True, 'strides': 1, 'se_ratio': 0.25}
+]
+
 CONV_KERNEL_INITIALIZER = {
     'class_name': 'VarianceScaling',
     'config': {
@@ -770,7 +787,8 @@ def kEfficientNet(width_coefficient,
                  input_shape=None,
                  pooling=None,
                  classes=1000,
-                 kType=2, 
+                 kType=2,
+                 concat_paths=True,
                  **kwargs):
     """Instantiates the EfficientNet architecture using given scaling coefficients.
     Optionally loads weights pre-trained on ImageNet.
@@ -881,15 +899,18 @@ def kEfficientNet(width_coefficient,
                           name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
                           kType=kType)
                 b += 1
-        x = layers.Activation('relu', name='end_relu'+'_'+str(path_cnt))(x)
+        if (len(kType)>1):
+            x = layers.Activation('relu', name='end_relu'+'_'+str(path_cnt))(x)
         output_layers.append(x)
         path_cnt = path_cnt +1
         
     if (len(output_layers)==1):
         x = output_layers[0]
     else:
-        x = keras.layers.add(output_layers, name='global_add')
-        #x = keras.layers.Concatenate(axis=bn_axis, name='global_concat')(output_layers)
+        if concat_paths:
+            x = keras.layers.Concatenate(axis=bn_axis, name='global_concat')(output_layers)
+        else:
+            x = keras.layers.add(output_layers, name='global_add')
 
     # Build top
     #x = layers.Conv2D(round_filters(1280), 1,
@@ -928,6 +949,27 @@ def kEfficientNet(width_coefficient,
 
     return model
 
+def kEfficientNetS(include_top=True,
+                   input_tensor=None,
+                   input_shape=None,
+                   pooling='avg',
+                   classes=1000,
+                   kType=2,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
+                   skip_stride_cnt=-1,
+                   **kwargs):
+    return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
+                        model_name='kEffNet-s',
+                        include_top=include_top,
+                        input_tensor=input_tensor, input_shape=input_shape,
+                        pooling=pooling, classes=classes,
+                        kType=kType,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
+                        blocks_args=SMALL_BLOCKS_ARGS,
+                        **kwargs)
+
 def kEfficientNetB0(include_top=True,
                    input_tensor=None,
                    input_shape=None,
@@ -939,7 +981,7 @@ def kEfficientNetB0(include_top=True,
                    skip_stride_cnt=-1,
                    **kwargs):
     return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
-                        model_name='efficientnet-b0',
+                        model_name='kEffNet-b0',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -959,7 +1001,7 @@ def kEfficientNetB1(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(1.0, 1.1, skip_stride_cnt=skip_stride_cnt, #240,
-                        model_name='efficientnet-b1',
+                        model_name='kEffNet-b1',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -980,7 +1022,7 @@ def kEfficientNetB2(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(1.1, 1.2, skip_stride_cnt=skip_stride_cnt, #260,
-                        model_name='efficientnet-b2',
+                        model_name='kEffNet-b2',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1001,7 +1043,7 @@ def kEfficientNetB3(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(1.2, 1.4, skip_stride_cnt=skip_stride_cnt, #300,
-                        model_name='efficientnet-b3',
+                        model_name='kEffNet-b3',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1022,7 +1064,7 @@ def kEfficientNetB4(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(1.4, 1.8, skip_stride_cnt=skip_stride_cnt, #380,
-                        model_name='efficientnet-b4',
+                        model_name='kEffNet-b4',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1043,7 +1085,7 @@ def kEfficientNetB5(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(1.6, 2.2, skip_stride_cnt=skip_stride_cnt, #456,
-                        model_name='efficientnet-b5',
+                        model_name='kEffNet-b5',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1064,7 +1106,7 @@ def kEfficientNetB6(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(1.8, 2.6, skip_stride_cnt=skip_stride_cnt, #528,
-                        model_name='efficientnet-b6',
+                        model_name='kEffNet-b6',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1085,7 +1127,7 @@ def kEfficientNetB7(include_top=True,
                    skip_stride_cnt=-1, 
                    **kwargs):
     return kEfficientNet(2.0, 3.1, skip_stride_cnt=skip_stride_cnt, #600,
-                        model_name='efficientnet-b7',
+                        model_name='kEffNet-b7',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1107,10 +1149,22 @@ def kEfficientNetBN(N=0,
                    skip_stride_cnt=-1,
                    **kwargs):
     result = None
+    if (N==-1):
+        dropout_rate=0.2 if dropout_rate is None else dropout_rate
+        result = kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
+                            model_name='kEffNet-s',
+                            include_top=include_top,
+                            input_tensor=input_tensor, input_shape=input_shape,
+                            pooling=pooling, classes=classes,
+                            kType=kType,
+                            dropout_rate=dropout_rate,
+                            drop_connect_rate=drop_connect_rate,
+                            blocks_args=SMALL_BLOCKS_ARGS,
+                            **kwargs)
     if (N==0):
         dropout_rate=0.2 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
-                            model_name='efficientnet-b0',
+                            model_name='kEffNet-b0',
                             include_top=include_top,
                             input_tensor=input_tensor, input_shape=input_shape,
                             pooling=pooling, classes=classes,
@@ -1121,7 +1175,7 @@ def kEfficientNetBN(N=0,
     elif (N==1):
         dropout_rate=0.2 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.0, 1.1, skip_stride_cnt=skip_stride_cnt, #240,
-                        model_name='efficientnet-b1',
+                        model_name='kEffNet-b1',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1132,7 +1186,7 @@ def kEfficientNetBN(N=0,
     elif (N==2):
         dropout_rate=0.3 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.1, 1.2, skip_stride_cnt=skip_stride_cnt, #260,
-                        model_name='efficientnet-b2',
+                        model_name='kEffNet-b2',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1143,7 +1197,7 @@ def kEfficientNetBN(N=0,
     elif (N==3):
         dropout_rate=0.3 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.2, 1.4, skip_stride_cnt=skip_stride_cnt, #300,
-                        model_name='efficientnet-b3',
+                        model_name='kEffNet-b3',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1154,7 +1208,7 @@ def kEfficientNetBN(N=0,
     elif (N==4):
         dropout_rate=0.4 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.4, 1.8, skip_stride_cnt=skip_stride_cnt, #380,
-                        model_name='efficientnet-b4',
+                        model_name='kEffNet-b4',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1165,7 +1219,7 @@ def kEfficientNetBN(N=0,
     elif (N==5):
         dropout_rate=0.4 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.6, 2.2, skip_stride_cnt=skip_stride_cnt, #456,
-                        model_name='efficientnet-b5',
+                        model_name='kEffNet-b5',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1176,7 +1230,7 @@ def kEfficientNetBN(N=0,
     elif (N==6):
         dropout_rate=0.5 if dropout_rate is None else dropout_rate
         result = kEfficientNet(1.8, 2.6, skip_stride_cnt=skip_stride_cnt, #528,
-                        model_name='efficientnet-b6',
+                        model_name='kEffNet-b6',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
@@ -1187,7 +1241,7 @@ def kEfficientNetBN(N=0,
     elif (N==7):
         dropout_rate=0.5 if dropout_rate is None else dropout_rate
         result = kEfficientNet(2.0, 3.1, skip_stride_cnt=skip_stride_cnt, #600,
-                        model_name='efficientnet-b7',
+                        model_name='kEffNet-b7',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
