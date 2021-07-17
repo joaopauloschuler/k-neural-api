@@ -958,6 +958,7 @@ def kEfficientNetS(include_top=True,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1,
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
                         model_name='kEffNet-s',
@@ -967,6 +968,7 @@ def kEfficientNetS(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         blocks_args=SMALL_BLOCKS_ARGS,
                         **kwargs)
 
@@ -979,6 +981,7 @@ def kEfficientNetB0(include_top=True,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1,
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
                         model_name='kEffNet-b0',
@@ -988,6 +991,7 @@ def kEfficientNetB0(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 def kEfficientNetB1(include_top=True,
@@ -999,6 +1003,7 @@ def kEfficientNetB1(include_top=True,
                    dropout_rate=0.2,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.0, 1.1, skip_stride_cnt=skip_stride_cnt, #240,
                         model_name='kEffNet-b1',
@@ -1008,6 +1013,7 @@ def kEfficientNetB1(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 
@@ -1020,6 +1026,7 @@ def kEfficientNetB2(include_top=True,
                    dropout_rate=0.3,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.1, 1.2, skip_stride_cnt=skip_stride_cnt, #260,
                         model_name='kEffNet-b2',
@@ -1029,6 +1036,7 @@ def kEfficientNetB2(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 
@@ -1041,6 +1049,7 @@ def kEfficientNetB3(include_top=True,
                    dropout_rate=0.3,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.2, 1.4, skip_stride_cnt=skip_stride_cnt, #300,
                         model_name='kEffNet-b3',
@@ -1050,6 +1059,7 @@ def kEfficientNetB3(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 
@@ -1062,6 +1072,7 @@ def kEfficientNetB4(include_top=True,
                    dropout_rate=0.4,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.4, 1.8, skip_stride_cnt=skip_stride_cnt, #380,
                         model_name='kEffNet-b4',
@@ -1071,6 +1082,7 @@ def kEfficientNetB4(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 
@@ -1083,6 +1095,7 @@ def kEfficientNetB5(include_top=True,
                    dropout_rate=0.4,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.6, 2.2, skip_stride_cnt=skip_stride_cnt, #456,
                         model_name='kEffNet-b5',
@@ -1092,6 +1105,7 @@ def kEfficientNetB5(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 
@@ -1104,6 +1118,7 @@ def kEfficientNetB6(include_top=True,
                    dropout_rate=0.5,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(1.8, 2.6, skip_stride_cnt=skip_stride_cnt, #528,
                         model_name='kEffNet-b6',
@@ -1113,6 +1128,7 @@ def kEfficientNetB6(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
 
@@ -1125,6 +1141,7 @@ def kEfficientNetB7(include_top=True,
                    dropout_rate=0.5,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
+                   activation_fn=swish,
                    **kwargs):
     return kEfficientNet(2.0, 3.1, skip_stride_cnt=skip_stride_cnt, #600,
                         model_name='kEffNet-b7',
@@ -1134,6 +1151,7 @@ def kEfficientNetB7(include_top=True,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        activation_fn=activation_fn,
                         **kwargs)
 
    
