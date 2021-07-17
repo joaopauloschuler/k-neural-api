@@ -899,7 +899,7 @@ def kEfficientNet(width_coefficient,
                           name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
                           kType=kType)
                 b += 1
-        if (len(kType)>1):
+        if (len(kTypeList)>1):
             x = layers.Activation('relu', name='end_relu'+'_'+str(path_cnt))(x)
         output_layers.append(x)
         path_cnt = path_cnt +1
