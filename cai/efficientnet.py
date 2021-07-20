@@ -500,188 +500,6 @@ def EfficientNetB7(include_top=True,
                         pooling=pooling, classes=classes,
                         **kwargs)
 
-def kConv2DType0(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
-    return cai.models.conv2d_bn(last_tensor, filters, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-
-def kConv2DType1(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
-    output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    output_channel_count = filters
-    max_acceptable_divisor = (prev_layer_channel_count//16)
-    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
-    if group_count is None: group_count=1
-    output_group_size = output_channel_count // group_count
-    # input_group_size = prev_layer_channel_count // group_count
-    if (group_count > 1):
-        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-        if output_group_size > 1:
-          output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-    else:
-        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)        
-    return output_tensor
-
-def kConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, max_channels_per_group=16, kernel_size=1, stride_size=1, padding='same'):
-    """
-    This is the default ktype. It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
-    vary according to input tensor and function parameter. In internal documentation, this is solution D6.
-    """
-    output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    output_channel_count = filters
-    max_acceptable_divisor = (prev_layer_channel_count//max_channels_per_group)
-    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
-    if group_count is None: group_count=1
-    output_group_size = output_channel_count // group_count
-    # input_group_size = prev_layer_channel_count // group_count
-    if (group_count>1):
-        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-        compression_tensor = output_tensor
-        if output_group_size > 1:
-            output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-        if (prev_layer_channel_count >= output_channel_count):
-            #print('Has intergroup')
-            output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
-            output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
-    else:
-        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    return output_tensor
-
-def kConv2DType3(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
-    """
-    Same as Type 1 but without interleaving and extra convolution.
-    """
-    output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    output_channel_count = filters
-    max_acceptable_divisor = (prev_layer_channel_count//16)
-    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
-    if group_count is None: group_count=1
-    # output_group_size = output_channel_count // group_count
-    # input_group_size = prev_layer_channel_count // group_count
-    if (group_count > 1):
-        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-    else:
-        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-    return output_tensor
-
-def kConv2DType4(last_tensor,  filters=32,  channel_axis=3,  name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
-    """
-    This is Type 2 followed by Type 3.
-    """
-    last_tensor  = kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    last_tensor  = kConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name='e_'+name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    return last_tensor
-
-def kConv2DType5(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
-    """
-    This is the default ktype. It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
-    vary according to input tensor and function parameter. This implementation differs from type 2 as the skip connection isn't made accross the interleaving layer.
-    In internal documentation, this is solution D10.
-    """
-    output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    output_channel_count = filters
-    max_acceptable_divisor = (prev_layer_channel_count//16)
-    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
-    if group_count is None: group_count=1
-    output_group_size = output_channel_count // group_count
-    # input_group_size = prev_layer_channel_count // group_count
-    if (group_count>1):
-        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-        if output_group_size > 1:
-            output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-        if (prev_layer_channel_count >= output_channel_count):
-            #print('Has intergroup')
-            compression_tensor = output_tensor
-            output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
-            output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
-    else:
-        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    return output_tensor
-
-def kConv2DType6(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
-    """
-    In internal documentation, this is solution D8.
-    """
-    output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    output_channel_count = filters
-    max_acceptable_divisor = (prev_layer_channel_count//16)
-    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
-    if group_count is None: group_count=1
-    output_group_size = output_channel_count // group_count
-    # input_group_size = prev_layer_channel_count // group_count
-    if (group_count>1):
-        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
-        compression_tensor = output_tensor
-        compression_tensor = cai.layers.SumIntoHalfChannels()(compression_tensor)
-        if output_group_size > 1:
-            output_tensor = cai.layers.InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-        if (prev_layer_channel_count >= output_channel_count):
-            #print('Has intergroup')
-            output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
-            output_tensor = cai.layers.SumIntoHalfChannels()(output_tensor)
-            output_tensor = keras.layers.Concatenate(axis=3, name=name+'_inter_group_concat')([output_tensor, compression_tensor])
-    else:
-        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
-        output_tensor = cai.models.conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-    return output_tensor
-
-def kConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, bin_conv_count=4, kernel_size=1, stride_size=1, padding='same'):
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    if filters >= prev_layer_channel_count:
-        if filters > prev_layer_channel_count: last_tensor = cai.layers.FitChannelCountTo(last_tensor, next_channel_count=filters, channel_axis=channel_axis)
-        if (bin_conv_count>0): last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name, conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
-    if filters < prev_layer_channel_count:
-        if (bin_conv_count>0): last_tensor = cai.layers.BinaryPointwiseConvLayers(last_tensor, name=name+'_biconv', conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
-        last_tensor = cai.layers.BinaryCompression(last_tensor, name=name+'_bicompress', activation=activation, has_batch_norm=has_batch_norm, target_channel_count=filters)
-    return last_tensor
-
-def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
-    return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
-
-def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same', kType=2):
-    if kType == 0:
-        return kConv2DType0(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    elif kType == 1:
-        return kConv2DType1(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    elif kType == 2:
-        return kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, max_channels_per_group=16)
-    elif kType == 3:
-        return kConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    elif kType == 4:
-        return kConv2DType4(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    elif kType == 5:
-        return kConv2DType5(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    elif kType == 6:
-        return kConv2DType6(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    elif kType == 7:
-        return kConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, bin_conv_count=0)
-    elif kType == 8:
-        return kConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, bin_conv_count=1)
-    elif kType == 9:
-        return kConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, bin_conv_count=2)
-    elif kType == 10:
-        return kConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, bin_conv_count=4)
-    elif kType == 11:
-        return kConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, bin_conv_count=8)
-    elif kType == 12:
-        return kConv2DType7(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, bin_conv_count=16)
-    elif kType == 13:
-        return kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, max_channels_per_group=32)
-    elif kType == 14:
-        return kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, max_channels_per_group=8)
-    elif kType == 15:
-        return kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, max_channels_per_group=4)
         
 def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
           filters_in=32, filters_out=16, kernel_size=3, strides=1,
@@ -714,7 +532,7 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
         #                  name=name + 'expand_conv')(inputs)
         #x = layers.BatchNormalization(axis=bn_axis, name=name + 'expand_bn')(x)
         #x = layers.Activation(activation_fn, name=name + 'expand_activation')(x)
-        x = kPointwiseConv2D(last_tensor=inputs, filters=filters, channel_axis=bn_axis, name=name+'expand', activation=activation_fn, has_batch_norm=True, use_bias=False, kType=kType)
+        x = cai.layers.kPointwiseConv2D(last_tensor=inputs, filters=filters, channel_axis=bn_axis, name=name+'expand', activation=activation_fn, has_batch_norm=True, use_bias=False, kType=kType)
     else:
         x = inputs
 
@@ -747,13 +565,13 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
         #                   activation=activation_fn,
         #                   kernel_initializer=CONV_KERNEL_INITIALIZER,
         #                   name=name + 'se_reduce')(se)
-        se = kPointwiseConv2D(last_tensor=se, filters=filters_se, channel_axis=bn_axis, name=name+'se_reduce', activation=activation_fn, has_batch_norm=False, use_bias=True, kType=kType)
+        se = cai.layers.kPointwiseConv2D(last_tensor=se, filters=filters_se, channel_axis=bn_axis, name=name+'se_reduce', activation=activation_fn, has_batch_norm=False, use_bias=True, kType=kType)
         #se = layers.Conv2D(filters, 1,
         #                   padding='same',
         #                   activation='sigmoid',
         #                   kernel_initializer=CONV_KERNEL_INITIALIZER,
         #                   name=name + 'se_expand')(se)
-        se = kPointwiseConv2D(last_tensor=se, filters=filters, channel_axis=bn_axis, name=name+'se_expand', activation='sigmoid', has_batch_norm=False, use_bias=True, kType=kType)
+        se = cai.layers.kPointwiseConv2D(last_tensor=se, filters=filters, channel_axis=bn_axis, name=name+'se_expand', activation='sigmoid', has_batch_norm=False, use_bias=True, kType=kType)
         x = layers.multiply([x, se], name=name + 'se_excite')
 
     # Output phase
@@ -763,7 +581,7 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
     #                  kernel_initializer=CONV_KERNEL_INITIALIZER,
     #                  name=name + 'project_conv')(x)
     # x = layers.BatchNormalization(axis=bn_axis, name=name + 'project_bn')(x)
-    x = kPointwiseConv2D(last_tensor=x, filters=filters_out, channel_axis=bn_axis, name=name+'project_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=filters_out, channel_axis=bn_axis, name=name+'project_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
     
     if (id_skip is True and strides == 1 and filters_in == filters_out):
         if drop_rate > 0:
@@ -920,7 +738,7 @@ def kEfficientNet(width_coefficient,
     #                  name='top_conv')(x)
     #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
     #x = layers.Activation(activation_fn, name='top_activation')(x)
-    x = kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
 
     if pooling == 'avg':
         x = layers.GlobalAveragePooling2D(name='avg_pool')(x)

@@ -90,47 +90,24 @@ def conv2d_bn(x,
               has_batch_scale=False,  
               groups=0
               ):
-    """Utility function to apply conv + BN.
-
-    # Arguments
-        x: input tensor.
-        filters: filters in `Conv2D`.
-        num_row: height of the convolution kernel.
-        num_col: width of the convolution kernel.
-        padding: padding mode in `Conv2D`.
-        strides: strides in `Conv2D`.
-        name: name of the ops; will become `name + '_conv'`
-            for the convolution and `name + '_bn'` for the
-            batch norm layer.
-        use_bias: True means that bias will be added,
-        activation: activation function. None means no activation function. 
-        has_batch_norm: True means that batch normalization is added.
-        has_batch_scale: True means that scaling is added to batch norm.
-        groups: number of groups in the convolution
-
+    """
+    # This is a wrapper for cai.layers.conv2d_bn
     # Returns
         Output tensor after applying `Conv2D` and `BatchNormalization`.
     """
-    if name is not None:
-        bn_name = name + '_bn'
-        conv_name = name + '_conv'
-    else:
-        bn_name = None
-        conv_name = None
-    if keras.backend.image_data_format() == 'channels_first':
-        bn_axis = 1
-    else:
-        bn_axis = 3
-    x = keras.layers.Conv2D(
-        filters, (num_row, num_col),
-        strides=strides,
-        padding=padding,
-        use_bias=use_bias,
-        groups=groups, 
-        name=conv_name)(x)
-    if (has_batch_norm): x = keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
-    if activation is not None: x = keras.layers.Activation(activation=activation, name=name)(x)
-    return x
+    return cai.layers.conv2d_bn(x,
+              filters=filters,
+              num_row=num_row,
+              num_col=num_col,
+              padding=padding,
+              strides=strides,
+              name=name,
+              use_bias=use_bias,
+              activation=activation, 
+              has_batch_norm=has_batch_norm,
+              has_batch_scale=has_batch_scale,
+              groups=groups
+              )
 
 def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck_compression=1,  compression=1):
     if id == 0:
