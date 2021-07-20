@@ -45,6 +45,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import cai.util
+import cai.models
+import cai.layers
+
 import math
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -53,8 +57,6 @@ from tensorflow.keras import models
 from tensorflow.keras import utils
 from tensorflow.keras.applications import imagenet_utils
 from copy import deepcopy
-import cai.util
-import cai.models
 
 def correct_pad(backend, inputs, kernel_size):
     """Returns a tuple for zero-padding for 2D convolution with downsampling.
@@ -972,7 +974,7 @@ def kEfficientNetB7(include_top=True,
                         activation_fn=activation_fn,
                         **kwargs)
 
-   
+
 def kEfficientNetBN(N=0, 
                    include_top=True,
                    input_tensor=None,
