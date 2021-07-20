@@ -1,9 +1,8 @@
 import tensorflow
-from tensorflow import keras
-import keras.layers
+import tensorflow.keras.layers
 import cai.util
 
-class CopyChannels(keras.layers.Layer):
+class CopyChannels(tensorflow.keras.layers.Layer):
     """
     This layer copies channels from channel_start the number of channels given in channel_count.
     """
@@ -29,7 +28,7 @@ class CopyChannels(keras.layers.Layer):
         base_config = super(CopyChannels, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-class Negate(keras.layers.Layer):
+class Negate(tensorflow.keras.layers.Layer):
     """
     This layer negates (multiplies by -1) the input tensor.
     """
@@ -43,7 +42,7 @@ class Negate(keras.layers.Layer):
     def call(self, x):
         return -x
 
-class ConcatNegation(keras.layers.Layer):        
+class ConcatNegation(tensorflow.keras.layers.Layer):        
     """
     This layer concatenates to the input its negation.
     """
@@ -56,9 +55,9 @@ class ConcatNegation(keras.layers.Layer):
     
     def call(self, x):
         #return np.concatenate((x, -x), axis=3)
-        return keras.layers.Concatenate(axis=3)([x, -x])
+        return tensorflow.keras.layers.Concatenate(axis=3)([x, -x])
 
-class InterleaveChannels(keras.layers.Layer):
+class InterleaveChannels(tensorflow.keras.layers.Layer):
     """
     This layer interleaves channels stepping according to the number passed as parameter.
     """
@@ -75,7 +74,7 @@ class InterleaveChannels(keras.layers.Layer):
         return (input_shape[0], input_shape[1], input_shape[2], input_shape[3])
 
     def call(self, x):
-        return keras.layers.Concatenate(axis=3)(
+        return tensorflow.keras.layers.Concatenate(axis=3)(
             [ x[:, :, :, shift_pos::self.step_size] for shift_pos in range(self.step_size) ]
         )
         # for self.step_size == 2, we would have:
@@ -91,7 +90,7 @@ class InterleaveChannels(keras.layers.Layer):
         base_config = super(InterleaveChannels, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-class SumIntoHalfChannels(keras.layers.Layer):
+class SumIntoHalfChannels(tensorflow.keras.layers.Layer):
     """
     This layer divedes channels into 2 halfs and then sums resulting in half of the input channels.
     """
@@ -114,13 +113,13 @@ def GlobalAverageMaxPooling2D(previous_layer,  name=None):
     Adds both global Average and Max poolings. This layers is known to speed up training.
     """
     if name is None: name='global_pool'
-    return keras.layers.Concatenate(axis=1)([
-      keras.layers.GlobalAveragePooling2D(name=name+'_avg')(previous_layer),
-      keras.layers.GlobalMaxPooling2D(name=name+'_max')(previous_layer)
+    return tensorflow.keras.layers.Concatenate(axis=1)([
+      tensorflow.keras.layers.GlobalAveragePooling2D(name=name+'_avg')(previous_layer),
+      tensorflow.keras.layers.GlobalMaxPooling2D(name=name+'_max')(previous_layer)
     ])
 
 def FitChannelCountTo(last_tensor, next_channel_count, has_interleaving=False, channel_axis=3):
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     full_copies = next_channel_count // prev_layer_channel_count
     extra_channels = next_channel_count % prev_layer_channel_count
     output_copies = []
@@ -138,11 +137,11 @@ def FitChannelCountTo(last_tensor, next_channel_count, has_interleaving=False, c
         else:
             extra_tensor = last_tensor
         output_copies.append( CopyChannels(0,extra_channels)(extra_tensor) )
-    last_tensor = keras.layers.Concatenate(axis=channel_axis)( output_copies )
+    last_tensor = tensorflow.keras.layers.Concatenate(axis=channel_axis)( output_copies )
     return last_tensor
 
 def EnforceEvenChannelCount(last_tensor, channel_axis=3):
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     if (prev_layer_channel_count % 2 > 0):
         last_tensor = FitChannelCountTo(
             last_tensor,
@@ -152,20 +151,20 @@ def EnforceEvenChannelCount(last_tensor, channel_axis=3):
 
 def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, has_batch_norm=True, has_interleaving=False, activation='relu', channel_axis=3):
     last_tensor = EnforceEvenChannelCount(last_tensor)
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     for conv_cnt in range(conv_count):
         input_tensor = last_tensor
         if has_interleaving:
             last_tensor_interleaved = InterleaveChannels(step_size=2, name=name+"_i_"+str(conv_cnt))(last_tensor)
         else:
             last_tensor_interleaved = last_tensor
-        x1 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_a_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor)
-        x2 = keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_b_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor_interleaved)
-        last_tensor = keras.layers.Concatenate(axis=channel_axis, name=name+"_conc_"+str(conv_cnt))([x1,x2])
-        if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch_"+str(conv_cnt))(last_tensor)
-        if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_act_"+str(conv_cnt))(last_tensor)
-        last_tensor = keras.layers.add([input_tensor, last_tensor], name=name+'_add'+str(conv_cnt))
-        if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis)(last_tensor)
+        x1 = tensorflow.keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_a_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor)
+        x2 = tensorflow.keras.layers.Conv2D(prev_layer_channel_count//2, shape, padding='same', activation=None, name=name+"_b_"+str(conv_cnt), groups=prev_layer_channel_count//2)(last_tensor_interleaved)
+        last_tensor = tensorflow.keras.layers.Concatenate(axis=channel_axis, name=name+"_conc_"+str(conv_cnt))([x1,x2])
+        if has_batch_norm: last_tensor = tensorflow.keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch_"+str(conv_cnt))(last_tensor)
+        if activation is not None: last_tensor = tensorflow.keras.layers.Activation(activation=activation, name=name+"_act_"+str(conv_cnt))(last_tensor)
+        last_tensor = tensorflow.keras.layers.add([input_tensor, last_tensor], name=name+'_add'+str(conv_cnt))
+        if has_batch_norm: last_tensor = tensorflow.keras.layers.BatchNormalization(axis=channel_axis)(last_tensor)
     return last_tensor
 
 def BinaryPointwiseConvLayers(last_tensor, name, conv_count=1, has_batch_norm=True, has_interleaving=False, activation='relu', channel_axis=3):
@@ -173,18 +172,18 @@ def BinaryPointwiseConvLayers(last_tensor, name, conv_count=1, has_batch_norm=Tr
 
 def BinaryCompressionLayer(last_tensor, name, has_batch_norm=True, activation='relu', channel_axis=3):
     last_tensor = EnforceEvenChannelCount(last_tensor)
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
-    last_tensor = keras.layers.Conv2D(prev_layer_channel_count//2, (1, 1), padding='same', activation=None, name=name+"_conv", groups=prev_layer_channel_count//2)(last_tensor)
-    if has_batch_norm: last_tensor = keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch")(last_tensor)
-    if activation is not None: last_tensor = keras.layers.Activation(activation=activation, name=name+"_act")(last_tensor)
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
+    last_tensor = tensorflow.keras.layers.Conv2D(prev_layer_channel_count//2, (1, 1), padding='same', activation=None, name=name+"_conv", groups=prev_layer_channel_count//2)(last_tensor)
+    if has_batch_norm: last_tensor = tensorflow.keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch")(last_tensor)
+    if activation is not None: last_tensor = tensorflow.keras.layers.Activation(activation=activation, name=name+"_act")(last_tensor)
     return last_tensor
 
 def BinaryCompression(last_tensor, name, target_channel_count, has_batch_norm=True, activation='relu', channel_axis=3):
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     cnt = 0
     while (prev_layer_channel_count >= target_channel_count * 2):
         last_tensor = BinaryCompressionLayer(last_tensor, name=name+'_'+str(cnt), has_batch_norm=has_batch_norm, activation=activation, channel_axis=channel_axis)
-        prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+        prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
         cnt = cnt + 1
     if prev_layer_channel_count > target_channel_count:
         last_tensor = FitChannelCountTo(last_tensor, next_channel_count=target_channel_count*2, channel_axis=channel_axis)
@@ -204,7 +203,7 @@ def conv2d_bn(x,
               has_batch_scale=False,  
               groups=0
               ):
-    """Utility function to apply conv + BN.
+    """Utility function to apply convolution, batch norm and activation function.
 
     # Arguments
         x: input tensor.
@@ -231,19 +230,19 @@ def conv2d_bn(x,
     else:
         bn_name = None
         conv_name = None
-    if keras.backend.image_data_format() == 'channels_first':
+    if tensorflow.keras.backend.image_data_format() == 'channels_first':
         bn_axis = 1
     else:
         bn_axis = 3
-    x = keras.layers.Conv2D(
+    x = tensorflow.keras.layers.Conv2D(
         filters, (num_row, num_col),
         strides=strides,
         padding=padding,
         use_bias=use_bias,
         groups=groups, 
         name=conv_name)(x)
-    if (has_batch_norm): x = keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
-    if activation is not None: x = keras.layers.Activation(activation=activation, name=name)(x)
+    if (has_batch_norm): x = tensorflow.keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
+    if activation is not None: x = tensorflow.keras.layers.Activation(activation=activation, name=name)(x)
     return x
     
 def kConv2DType0(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
@@ -251,7 +250,7 @@ def kConv2DType0(last_tensor, filters=32, channel_axis=3, name=None, activation=
 
 def kConv2DType1(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
     output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     output_channel_count = filters
     max_acceptable_divisor = (prev_layer_channel_count//16)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
@@ -274,7 +273,7 @@ def kConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, activation=
     vary according to input tensor and function parameter. In internal documentation, this is solution D6.
     """
     output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     output_channel_count = filters
     max_acceptable_divisor = (prev_layer_channel_count//max_channels_per_group)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
@@ -290,7 +289,7 @@ def kConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, activation=
         if (prev_layer_channel_count >= output_channel_count):
             #print('Has intergroup')
             output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
-            output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
+            output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
@@ -301,7 +300,7 @@ def kConv2DType3(last_tensor,  filters=32,  channel_axis=3,  name=None, activati
     Same as Type 1 but without interleaving and extra convolution.
     """
     output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     output_channel_count = filters
     max_acceptable_divisor = (prev_layer_channel_count//16)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
@@ -331,7 +330,7 @@ def kConv2DType5(last_tensor, filters=32, channel_axis=3, name=None, activation=
     In internal documentation, this is solution D10.
     """
     output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     output_channel_count = filters
     max_acceptable_divisor = (prev_layer_channel_count//16)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
@@ -347,7 +346,7 @@ def kConv2DType5(last_tensor, filters=32, channel_axis=3, name=None, activation=
             #print('Has intergroup')
             compression_tensor = output_tensor
             output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
-            output_tensor = keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
+            output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
@@ -358,7 +357,7 @@ def kConv2DType6(last_tensor, filters=32, channel_axis=3, name=None, activation=
     In internal documentation, this is solution D8.
     """
     output_tensor = last_tensor
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     output_channel_count = filters
     max_acceptable_divisor = (prev_layer_channel_count//16)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
@@ -376,14 +375,14 @@ def kConv2DType6(last_tensor, filters=32, channel_axis=3, name=None, activation=
             #print('Has intergroup')
             output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias)
             output_tensor = SumIntoHalfChannels()(output_tensor)
-            output_tensor = keras.layers.Concatenate(axis=3, name=name+'_inter_group_concat')([output_tensor, compression_tensor])
+            output_tensor = tensorflow.keras.layers.Concatenate(axis=3, name=name+'_inter_group_concat')([output_tensor, compression_tensor])
     else:
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return output_tensor
 
 def kConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, bin_conv_count=4, kernel_size=1, stride_size=1, padding='same'):
-    prev_layer_channel_count = keras.backend.int_shape(last_tensor)[channel_axis]
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     if filters >= prev_layer_channel_count:
         if filters > prev_layer_channel_count: last_tensor = FitChannelCountTo(last_tensor, next_channel_count=filters, channel_axis=channel_axis)
         if (bin_conv_count>0): last_tensor = BinaryPointwiseConvLayers(last_tensor, name, conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
