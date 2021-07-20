@@ -56,6 +56,7 @@ from tensorflow.keras import backend
 from tensorflow.keras import models
 from tensorflow.keras import utils
 from tensorflow.keras.applications import imagenet_utils
+import tensorflow
 from copy import deepcopy
 
 def correct_pad(backend, inputs, kernel_size):
@@ -701,6 +702,9 @@ def kEfficientNet(width_coefficient,
         blocks_args_cp = deepcopy(blocks_args)
         b = 0
         blocks = float(sum(args['repeats'] for args in blocks_args_cp))
+        #only the first branch can backpropagate to the input.
+        if path_cnt>0:
+            x = keras.layers.Lambda(lambda x: tensorflow.stop_gradient(x))(x)
         for (i, args) in enumerate(blocks_args_cp):
             assert args['repeats'] > 0
             # Update block input and output filters based on depth multiplier.
