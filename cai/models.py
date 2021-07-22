@@ -36,6 +36,20 @@ def load_kereas_model(filename):
     """
     return keras.models.load_model(filename, custom_objects=cai.layers.GetClasses())
 
+def make_model_trainable(model):
+    """
+    Makes all layers trainable.
+    """
+    for layer in model.layers:
+        layer.trainable = True
+
+def make_model_untrainable(model):
+    """
+    Makes all layers untrainable.
+    """
+    for layer in model.layers:
+        layer.trainable = False
+
 def plant_leaf(pinput_shape, num_classes,  l2_decay=0.0, dropout_drop_rate=0.2, has_batch_norm=True):
     """Implements the architecture found on the paper: 
         Identification of plant leaf diseases using a nine-layer deep convolutional neural network.
