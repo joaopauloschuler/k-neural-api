@@ -100,7 +100,7 @@ DEFAULT_BLOCKS_ARGS = [
      'expand_ratio': 6, 'id_skip': True, 'strides': 1, 'se_ratio': 0.25}
 ]
 
-SMALL_BLOCKS_ARGS = [
+SHALLOW_BLOCKS_ARGS = [
     {'kernel_size': 3, 'repeats': 1, 'filters_in': 32, 'filters_out': 16,
      'expand_ratio': 1, 'id_skip': True, 'strides': 1, 'se_ratio': 0.25},
     {'kernel_size': 3, 'repeats': 1, 'filters_in': 16, 'filters_out': 24,
@@ -932,7 +932,7 @@ def kEfficientNetS(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
-                        blocks_args=SMALL_BLOCKS_ARGS,
+                        blocks_args=SHALLOW_BLOCKS_ARGS,
                         **kwargs)
 
 def kEfficientNetB0(include_top=True,
@@ -1140,7 +1140,7 @@ def kEfficientNetBN(N=0,
                             kType=kType,
                             dropout_rate=dropout_rate,
                             drop_connect_rate=drop_connect_rate,
-                            blocks_args=SMALL_BLOCKS_ARGS,
+                            blocks_args=SHALLOW_BLOCKS_ARGS,
                             **kwargs)
     if (N==0):
         dropout_rate=0.2 if dropout_rate is None else dropout_rate
