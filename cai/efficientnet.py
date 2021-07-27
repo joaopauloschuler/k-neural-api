@@ -506,7 +506,8 @@ def EfficientNetB7(include_top=True,
         
 def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
           filters_in=32, filters_out=16, kernel_size=3, strides=1,
-          expand_ratio=1, se_ratio=0., id_skip=True, kType=1):
+          expand_ratio=1, se_ratio=0., id_skip=True, kType=1,
+          dropout_all_blocks=False):
     """A mobile inverted residual block.
     # Arguments
         inputs: input tensor.
@@ -585,9 +586,14 @@ def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
     #                  name=name + 'project_conv')(x)
     # x = layers.BatchNormalization(axis=bn_axis, name=name + 'project_bn')(x)
     x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=filters_out, channel_axis=bn_axis, name=name+'project_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
-    
+
+    if (drop_rate > 0)  and (dropout_all_blocks):
+        x = layers.Dropout(drop_rate,
+                noise_shape=(None, 1, 1, 1),
+                name=name + 'drop')(x)
+
     if (id_skip is True and strides == 1 and filters_in == filters_out):
-        if drop_rate > 0:
+        if (drop_rate > 0)  and (not dropout_all_blocks):
             x = layers.Dropout(drop_rate,
                                noise_shape=(None, 1, 1, 1),
                                name=name + 'drop')(x)
@@ -611,6 +617,7 @@ def kEfficientNet(
         classes=1000,
         kType=2,
         concat_paths=True,
+        dropout_all_blocks=False,
         **kwargs):
     """Instantiates the EfficientNet architecture using given scaling coefficients.
     Optionally loads weights pre-trained on ImageNet.
@@ -722,7 +729,7 @@ def kEfficientNet(
                     args['filters_in'] = args['filters_out']
                 x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
                           name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
-                          kType=kType)
+                          kType=kType, dropout_all_blocks=dropout_all_blocks)
                 b += 1
         if (len(kTypeList)>1):
             x = layers.Activation('relu', name='end_relu'+'_'+str(path_cnt))(x)
@@ -755,7 +762,7 @@ def kEfficientNet(
         x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
 
     if include_top:
-        if dropout_rate > 0:
+        if (dropout_rate > 0):
             x = layers.Dropout(dropout_rate, name='top_dropout')(x)
         x = layers.Dense(classes,
             activation='softmax', # 'softmax'
@@ -790,6 +797,7 @@ def AddkEfficientNetPath(
         classes=1000,
         kType=2,
         concat_paths=True,
+        dropout_all_blocks=False,
         **kwargs):
     """Instantiates the EfficientNet architecture using given scaling coefficients.
     Optionally loads weights pre-trained on ImageNet.
@@ -878,7 +886,7 @@ def AddkEfficientNetPath(
                     args['filters_in'] = args['filters_out']
                 x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
                           name=name_prefix+'block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
-                          kType=kType)
+                          kType=kType, dropout_all_blocks=dropout_all_blocks)
                 b += 1
         if (len(kTypeList)>1):
             x = layers.Activation('relu', name=name_prefix+'end_relu'+'_'+str(path_cnt))(x)
@@ -922,6 +930,7 @@ def kEfficientNetS(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1,
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
                         model_name='kEffNet-s',
@@ -933,6 +942,7 @@ def kEfficientNetS(include_top=True,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
                         blocks_args=SHALLOW_BLOCKS_ARGS,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 def kEfficientNetB0(include_top=True,
@@ -945,6 +955,7 @@ def kEfficientNetB0(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1,
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.0, 1.0, skip_stride_cnt=skip_stride_cnt, # 224,
                         model_name='kEffNet-b0',
@@ -955,6 +966,7 @@ def kEfficientNetB0(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 def kEfficientNetB1(include_top=True,
@@ -967,6 +979,7 @@ def kEfficientNetB1(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.0, 1.1, skip_stride_cnt=skip_stride_cnt, #240,
                         model_name='kEffNet-b1',
@@ -977,6 +990,7 @@ def kEfficientNetB1(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -990,6 +1004,7 @@ def kEfficientNetB2(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.1, 1.2, skip_stride_cnt=skip_stride_cnt, #260,
                         model_name='kEffNet-b2',
@@ -1000,6 +1015,7 @@ def kEfficientNetB2(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -1013,6 +1029,7 @@ def kEfficientNetB3(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.2, 1.4, skip_stride_cnt=skip_stride_cnt, #300,
                         model_name='kEffNet-b3',
@@ -1023,6 +1040,7 @@ def kEfficientNetB3(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -1036,6 +1054,7 @@ def kEfficientNetB4(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.4, 1.8, skip_stride_cnt=skip_stride_cnt, #380,
                         model_name='kEffNet-b4',
@@ -1046,6 +1065,7 @@ def kEfficientNetB4(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -1059,6 +1079,7 @@ def kEfficientNetB5(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.6, 2.2, skip_stride_cnt=skip_stride_cnt, #456,
                         model_name='kEffNet-b5',
@@ -1069,6 +1090,7 @@ def kEfficientNetB5(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -1082,6 +1104,7 @@ def kEfficientNetB6(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(1.8, 2.6, skip_stride_cnt=skip_stride_cnt, #528,
                         model_name='kEffNet-b6',
@@ -1092,6 +1115,7 @@ def kEfficientNetB6(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -1105,6 +1129,7 @@ def kEfficientNetB7(include_top=True,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1, 
                    activation_fn=swish,
+                   dropout_all_blocks=False,
                    **kwargs):
     return kEfficientNet(2.0, 3.1, skip_stride_cnt=skip_stride_cnt, #600,
                         model_name='kEffNet-b7',
@@ -1115,6 +1140,7 @@ def kEfficientNetB7(include_top=True,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
                         activation_fn=activation_fn,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
 
 
@@ -1128,6 +1154,7 @@ def kEfficientNetBN(N=0,
                    dropout_rate=None,
                    drop_connect_rate=0.2,
                    skip_stride_cnt=-1,
+                   dropout_all_blocks=False,
                    **kwargs):
     result = None
     if (N==-1):
@@ -1141,6 +1168,7 @@ def kEfficientNetBN(N=0,
                             dropout_rate=dropout_rate,
                             drop_connect_rate=drop_connect_rate,
                             blocks_args=SHALLOW_BLOCKS_ARGS,
+                            dropout_all_blocks=dropout_all_blocks,
                             **kwargs)
     if (N==0):
         dropout_rate=0.2 if dropout_rate is None else dropout_rate
@@ -1152,6 +1180,7 @@ def kEfficientNetBN(N=0,
                             kType=kType,
                             dropout_rate=dropout_rate,
                             drop_connect_rate=drop_connect_rate,
+                            dropout_all_blocks=dropout_all_blocks,
                             **kwargs)
     elif (N==1):
         dropout_rate=0.2 if dropout_rate is None else dropout_rate
@@ -1163,6 +1192,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     elif (N==2):
         dropout_rate=0.3 if dropout_rate is None else dropout_rate
@@ -1174,6 +1204,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     elif (N==3):
         dropout_rate=0.3 if dropout_rate is None else dropout_rate
@@ -1185,6 +1216,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     elif (N==4):
         dropout_rate=0.4 if dropout_rate is None else dropout_rate
@@ -1196,6 +1228,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     elif (N==5):
         dropout_rate=0.4 if dropout_rate is None else dropout_rate
@@ -1207,6 +1240,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     elif (N==6):
         dropout_rate=0.5 if dropout_rate is None else dropout_rate
@@ -1218,6 +1252,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     elif (N==7):
         dropout_rate=0.5 if dropout_rate is None else dropout_rate
@@ -1229,6 +1264,7 @@ def kEfficientNetBN(N=0,
                         kType=kType,
                         dropout_rate=dropout_rate,
                         drop_connect_rate=drop_connect_rate,
+                        dropout_all_blocks=dropout_all_blocks,
                         **kwargs)
     return result
 
