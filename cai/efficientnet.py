@@ -893,7 +893,7 @@ def AddkEfficientNetPath(
         else:
             x = keras.layers.add(output_layers, name=name_prefix+'global_add')
 
-    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name=name_prefix+'top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
 
     if pooling == 'avg':
         x = layers.GlobalAveragePooling2D(name=name_prefix+'avg_pool')(x)
