@@ -618,6 +618,7 @@ def kEfficientNet(
         kType=2,
         concat_paths=True,
         dropout_all_blocks=False,
+        name_prefix='k_',
         **kwargs):
     """Instantiates the EfficientNet architecture using given scaling coefficients.
     Optionally loads weights pre-trained on ImageNet.
@@ -691,16 +692,16 @@ def kEfficientNet(
     # Build stem
     x = img_input
     x = layers.ZeroPadding2D(padding=correct_pad(backend, x, 3),
-                             name='stem_conv_pad')(x)
+                             name=name_prefix+'stem_conv_pad')(x)
     first_stride = 1 if skip_stride_cnt >= 0 else 2
     x = layers.Conv2D(round_filters(32), 3,
                       strides=first_stride,
                       padding='valid',
                       use_bias=False,
                       kernel_initializer=CONV_KERNEL_INITIALIZER,
-                      name='stem_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, name='stem_bn')(x)
-    x = layers.Activation(activation_fn, name='stem_activation')(x)
+                      name=name_prefix+'stem_conv')(x)
+    x = layers.BatchNormalization(axis=bn_axis, name=name_prefix+'stem_bn')(x)
+    x = layers.Activation(activation_fn, name=name_prefix+'stem_activation')(x)
 
     root_layer = x
     output_layers = []
@@ -728,11 +729,11 @@ def kEfficientNet(
                     args['strides'] = 1
                     args['filters_in'] = args['filters_out']
                 x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
-                          name='block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
+                          name=name_prefix+'block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
                           kType=kType, dropout_all_blocks=dropout_all_blocks)
                 b += 1
         if (len(kTypeList)>1):
-            x = layers.Activation('relu', name='end_relu'+'_'+str(path_cnt))(x)
+            x = layers.Activation('relu', name=name_prefix+'end_relu'+'_'+str(path_cnt))(x)
         output_layers.append(x)
         path_cnt = path_cnt +1
         
@@ -740,9 +741,9 @@ def kEfficientNet(
         x = output_layers[0]
     else:
         if concat_paths:
-            x = keras.layers.Concatenate(axis=bn_axis, name='global_concat')(output_layers)
+            x = keras.layers.Concatenate(axis=bn_axis, name=name_prefix+'global_concat')(output_layers)
         else:
-            x = keras.layers.add(output_layers, name='global_add')
+            x = keras.layers.add(output_layers, name=name_prefix+'global_add')
 
     # Build top
     #x = layers.Conv2D(round_filters(1280), 1,
@@ -752,22 +753,22 @@ def kEfficientNet(
     #                  name='top_conv')(x)
     #x = layers.BatchNormalization(axis=bn_axis, name='top_bn')(x)
     #x = layers.Activation(activation_fn, name='top_activation')(x)
-    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name='top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name=name_prefix+'top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
 
     if pooling == 'avg':
-        x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+        x = layers.GlobalAveragePooling2D(name=name_prefix+'avg_pool')(x)
     elif pooling == 'max':
-        x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+        x = layers.GlobalMaxPooling2D(name=name_prefix+'max_pool')(x)
     elif pooling == 'avgmax':
-        x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
+        x = cai.layers.GlobalAverageMaxPooling2D(x, name=name_prefix+'avgmax_pool')
 
     if include_top:
         if (dropout_rate > 0):
-            x = layers.Dropout(dropout_rate, name='top_dropout')(x)
+            x = layers.Dropout(dropout_rate, name=name_prefix+'top_dropout')(x)
         x = layers.Dense(classes,
             activation='softmax', # 'softmax'
             kernel_initializer=DENSE_KERNEL_INITIALIZER,
-            name='probs')(x)
+            name=name_prefix+'probs')(x)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
@@ -791,7 +792,7 @@ def AddkEfficientNetPath(
         depth_divisor=8,
         activation_fn=swish,
         blocks_args=DEFAULT_BLOCKS_ARGS,
-        name_prefix='pre_', 
+        name_prefix='pre_',
         pooling='avg',
         include_dense=True,
         classes=1000,
@@ -918,7 +919,153 @@ def AddkEfficientNetPath(
                 activation='relu',
                 kernel_initializer=DENSE_KERNEL_INITIALIZER,
                 name=name_prefix+'probs')(x)
-    return x
+    return x # end of AddkEfficientNetPath
+
+def AddkEfficientNetParallelBlocks(
+        last_tensor,
+        existing_model,
+        width_coefficient,
+        depth_coefficient,
+        skip_stride_cnt=-1,
+        dropout_rate=0.2,
+        drop_connect_rate=0.2,
+        depth_divisor=8,
+        activation_fn=swish,
+        blocks_args=DEFAULT_BLOCKS_ARGS,
+        name_prefix='pre2_',
+        existing_name_prefix='k_',
+        pooling='avg',
+        include_dense=True,
+        classes=1000,
+        kType=2,
+        concat_paths=True,
+        dropout_all_blocks=False,
+        **kwargs):
+    """Instantiates the EfficientNet architecture using given scaling coefficients.
+    Optionally loads weights pre-trained on ImageNet.
+    Note that the data format convention used by the model is
+    the one specified in your Keras config at `~/.keras/keras.json`.
+    # Arguments
+        width_coefficient: float, scaling coefficient for network width.
+        depth_coefficient: float, scaling coefficient for network depth.
+        skip_stride_cnt: number of layers to skip stride. Good for smalll images.
+        dropout_rate: float, dropout rate before final classifier layer.
+        drop_connect_rate: float, dropout rate at skip connections.
+        depth_divisor: integer, a unit of network width.
+        activation_fn: activation function.
+        blocks_args: list of dicts, parameters to construct block modules.
+        model_name: string, model name.
+        include_top: whether to include the fully-connected
+            layer at the top of the network.
+        input_tensor: optional Keras tensor
+            (i.e. output of `layers.Input()`)
+            to use as image input for the model.
+        input_shape: optional shape tuple, only to be specified
+            if `include_top` is False.
+            It should have exactly 3 inputs channels.
+        pooling: optional pooling mode for feature extraction
+            when `include_top` is `False`.
+            - `None` means that the output of the model will be
+                the 4D tensor output of the
+                last convolutional layer.
+            - `avg` means that global average pooling
+                will be applied to the output of the
+                last convolutional layer, and thus
+                the output of the model will be a 2D tensor.
+            - `max` means that global max pooling will
+                be applied.
+        classes: optional number of classes to classify images
+            into, only to be specified if `include_top` is True, and
+    # Returns
+        A Keras model instance.
+    # Raises
+        ValueError: in case of invalid input shape.
+    """
+
+    x=last_tensor
+    bn_axis = 3
+
+    def round_filters(filters, divisor=depth_divisor):
+        """Round number of filters based on depth multiplier."""
+        filters *= width_coefficient
+        new_filters = max(divisor, int(filters + divisor / 2) // divisor * divisor)
+        # Make sure that round down does not go down by more than 10%.
+        if new_filters < 0.9 * filters:
+            new_filters += divisor
+        return int(new_filters)
+
+    def round_repeats(repeats):
+        """Round number of repeats based on depth multiplier."""
+        return int(math.ceil(depth_coefficient * repeats))
+
+    if isinstance(kType, (int)):
+        kTypeList = [kType]
+    else:
+        kTypeList = kType
+    
+    root_layer = x
+    output_layers = []
+    path_cnt = 0
+    for kType in kTypeList:
+        x = root_layer
+        blocks_args_cp = deepcopy(blocks_args)
+        b = 0
+        blocks = float(sum(args['repeats'] for args in blocks_args_cp))
+
+        for (i, args) in enumerate(blocks_args_cp):
+            assert args['repeats'] > 0
+            # Update block input and output filters based on depth multiplier.
+            args['filters_in'] = round_filters(args['filters_in'])
+            args['filters_out'] = round_filters(args['filters_out'])
+            prev_layer_name = x.name
+            other_layer_name = prev_layer_name.replace(existing_name_prefix, name_prefix)
+            other_layer = existing_model.get_layer(other_layer_name).output
+            #adds both paths.
+            x = layers.add([x, other_layer])
+
+            for j in range(round_repeats(args.pop('repeats'))):
+                #should skip the stride
+                if (skip_stride_cnt > i) and (j == 0) and (args['strides'] > 1):
+                    args['strides'] = 1
+                # The first block needs to take care of stride and filter size increase.
+                if (j > 0):
+                    args['strides'] = 1
+                    args['filters_in'] = args['filters_out']
+                x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
+                          name=name_prefix+'block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
+                          kType=kType, dropout_all_blocks=dropout_all_blocks)
+                b += 1
+        if (len(kTypeList)>1):
+            x = layers.Activation('relu', name=name_prefix+'end_relu'+'_'+str(path_cnt))(x)
+        output_layers.append(x)
+        path_cnt = path_cnt +1
+        
+    if (len(output_layers)==1):
+        x = output_layers[0]
+    else:
+        if concat_paths:
+            x = keras.layers.Concatenate(axis=bn_axis, name=name_prefix+'global_concat')(output_layers)
+        else:
+            x = keras.layers.add(output_layers, name=name_prefix+'global_add')
+
+    x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name=name_prefix+'top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+
+    if pooling == 'avg':
+        x = layers.GlobalAveragePooling2D(name=name_prefix+'avg_pool')(x)
+    elif pooling == 'max':
+        x = layers.GlobalMaxPooling2D(name=name_prefix+'max_pool')(x)
+    elif pooling == 'avgmax':
+        x = cai.layers.GlobalAverageMaxPooling2D(x, name=name_prefix+'avgmax_pool')
+
+    if dropout_rate > 0:
+        x = layers.Dropout(dropout_rate, name=name_prefix+'top_dropout')(x)
+    
+    if include_dense:
+        x = layers.Dense(classes,
+                activation='relu',
+                kernel_initializer=DENSE_KERNEL_INITIALIZER,
+                name=name_prefix+'probs')(x)
+    return x # AddkEfficientNetParallelBlocks
 
 def kEfficientNetS(include_top=True,
                    input_tensor=None,
