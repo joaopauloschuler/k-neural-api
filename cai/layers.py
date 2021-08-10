@@ -178,7 +178,12 @@ def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, has_batch_no
         last_tensor = tensorflow.keras.layers.Concatenate(axis=channel_axis, name=name+"_conc_"+str(conv_cnt))([x1,x2])
         if has_batch_norm: last_tensor = tensorflow.keras.layers.BatchNormalization(axis=channel_axis, name=name+"_batch_"+str(conv_cnt))(last_tensor)
         if activation is not None: last_tensor = tensorflow.keras.layers.Activation(activation=activation, name=name+"_act_"+str(conv_cnt))(last_tensor)
-        last_tensor = tensorflow.keras.layers.add([input_tensor, last_tensor], name=name+'_add'+str(conv_cnt))
+        from_highway = tensorflow.keras.layers.DepthwiseConv2D(1, # kernel_size
+            strides=1,
+            padding='valid',
+            use_bias=True,
+            name=name + '_depth_'+str(conv_cnt))(input_tensor)
+        last_tensor = tensorflow.keras.layers.add([from_highway, last_tensor], name=name+'_add'+str(conv_cnt))
         if has_batch_norm: last_tensor = tensorflow.keras.layers.BatchNormalization(axis=channel_axis)(last_tensor)
     return last_tensor
 
@@ -405,6 +410,9 @@ def kConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=
         if (bin_conv_count>0): last_tensor = BinaryPointwiseConvLayers(last_tensor, name=name+'_biconv', conv_count=bin_conv_count, activation=activation, has_batch_norm=has_batch_norm, channel_axis=channel_axis)
         last_tensor = BinaryCompression(last_tensor, name=name+'_bicompress', activation=activation, has_batch_norm=has_batch_norm, target_channel_count=filters)
     return last_tensor
+
+
+    
 
 def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same', kType=2):
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
