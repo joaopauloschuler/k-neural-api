@@ -1017,13 +1017,6 @@ def AddkEfficientNetParallelBlocks(
             # Update block input and output filters based on depth multiplier.
             args['filters_in'] = round_filters(args['filters_in'])
             args['filters_out'] = round_filters(args['filters_out'])
-            prev_layer_name = x.name
-            other_layer_name = prev_layer_name.replace(name_prefix,  existing_name_prefix).split('/')[0]
-            # print('[',other_layer_name,']')
-            # existing_model.summary()
-            other_layer = existing_model.get_layer(other_layer_name).output
-            #adds both paths.
-            x = layers.add([x, other_layer],  name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
 
             for j in range(round_repeats(args.pop('repeats'))):
                 #should skip the stride
@@ -1037,6 +1030,14 @@ def AddkEfficientNetParallelBlocks(
                           name=name_prefix+'block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
                           kType=kType, dropout_all_blocks=dropout_all_blocks)
                 b += 1
+            prev_layer_name = x.name
+            other_layer_name = prev_layer_name.replace(name_prefix,  existing_name_prefix).split('/')[0]
+            # print('[',other_layer_name,']')
+            # existing_model.summary()
+            other_layer = existing_model.get_layer(other_layer_name).output
+            #adds both paths.
+            x = layers.add([x, other_layer],  name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
+        
         if (len(kTypeList)>1):
             x = layers.Activation('relu', name=name_prefix+'end_relu'+'_'+str(path_cnt))(x)
         output_layers.append(x)
