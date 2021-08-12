@@ -1019,6 +1019,7 @@ def AddkEfficientNetParallelBlocks(
             args['filters_out'] = round_filters(args['filters_out'])
             prev_layer_name = x.name
             other_layer_name = prev_layer_name.replace(name_prefix,  existing_name_prefix)
+            existing_model.summary()
             other_layer = existing_model.get_layer(other_layer_name).output
             #adds both paths.
             x = layers.add([x, other_layer],  name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
