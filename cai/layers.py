@@ -181,7 +181,7 @@ def BinaryConvLayers(last_tensor, name, shape=(3, 3), conv_count=1, has_batch_no
         from_highway = tensorflow.keras.layers.DepthwiseConv2D(1, # kernel_size
             strides=1,
             padding='valid',
-            use_bias=True,
+            use_bias=False,
             name=name + '_depth_'+str(conv_cnt))(input_tensor)
         last_tensor = tensorflow.keras.layers.add([from_highway, last_tensor], name=name+'_add'+str(conv_cnt))
         if has_batch_norm: last_tensor = tensorflow.keras.layers.BatchNormalization(axis=channel_axis)(last_tensor)
