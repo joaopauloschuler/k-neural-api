@@ -924,8 +924,8 @@ def AddkEfficientNetPath(
 def AddkEfficientNetParallelBlocks(
         last_tensor,
         existing_model,
-        width_coefficient,
-        depth_coefficient,
+        width_coefficient=1.0,
+        depth_coefficient=1.0,
         skip_stride_cnt=-1,
         dropout_rate=0.2,
         drop_connect_rate=0.2,
@@ -1018,10 +1018,10 @@ def AddkEfficientNetParallelBlocks(
             args['filters_in'] = round_filters(args['filters_in'])
             args['filters_out'] = round_filters(args['filters_out'])
             prev_layer_name = x.name
-            other_layer_name = prev_layer_name.replace(existing_name_prefix, name_prefix)
+            other_layer_name = prev_layer_name.replace(name_prefix,  existing_name_prefix)
             other_layer = existing_model.get_layer(other_layer_name).output
             #adds both paths.
-            x = layers.add([x, other_layer])
+            x = layers.add([x, other_layer],  name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
 
             for j in range(round_repeats(args.pop('repeats'))):
                 #should skip the stride
