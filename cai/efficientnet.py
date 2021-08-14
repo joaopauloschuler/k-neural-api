@@ -1053,6 +1053,12 @@ def AddkEfficientNetParallelBlocks(
 
     x = cai.layers.kPointwiseConv2D(last_tensor=x, filters=round_filters(1280), channel_axis=bn_axis, name=name_prefix+'top_conv', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
 
+    prev_layer_name = x.name
+    other_layer_name = prev_layer_name.replace(name_prefix,  existing_name_prefix).split('/')[0]
+    other_layer = existing_model.get_layer(other_layer_name).output
+    #adds both paths.
+    x = layers.add([x, other_layer],  name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
+
     if pooling == 'avg':
         x = layers.GlobalAveragePooling2D(name=name_prefix+'avg_pool')(x)
     elif pooling == 'max':
@@ -1065,7 +1071,7 @@ def AddkEfficientNetParallelBlocks(
     
     if include_dense:
         x = layers.Dense(classes,
-                activation='relu',
+                activation='softmax',
                 kernel_initializer=DENSE_KERNEL_INITIALIZER,
                 name=name_prefix+'probs')(x)
     return x # AddkEfficientNetParallelBlocks
