@@ -1057,7 +1057,7 @@ def AddkEfficientNetParallelBlocks(
     other_layer_name = prev_layer_name.replace(name_prefix,  existing_name_prefix).split('/')[0]
     other_layer = existing_model.get_layer(other_layer_name).output
     #adds both paths.
-    x = layers.add([x, other_layer],  name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
+    x = layers.add([x, other_layer],  name=name_prefix+'_final_add')
 
     if pooling == 'avg':
         x = layers.GlobalAveragePooling2D(name=name_prefix+'avg_pool')(x)
