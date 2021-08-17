@@ -416,7 +416,8 @@ def create_image_generator_no_augmentation(
         zca_epsilon=0,  # epsilon for ZCA whitening
         rescale=None, # set rescaling factor (applied before any other transformation)
         preprocessing_function=None, # set function that will be applied on each input
-        data_format=None# image data format, either "channels_first" or "channels_last"
+        data_format=None, # image data format, either "channels_first" or "channels_last"
+        validation_split=0.0 # fraction of images reserved for validation (strictly between 0 and 1)
     ):
     """This is a wrapper for keras.preprocessing.image without data augmentation.
     """
@@ -447,7 +448,7 @@ def create_image_generator_no_augmentation(
         # image data format, either "channels_first" or "channels_last"
         data_format=data_format,
         # fraction of images reserved for validation (strictly between 0 and 1)
-        validation_split=0.0
+        validation_split=validation_split
     )
 
 def relu(adata):   
