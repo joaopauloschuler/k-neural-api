@@ -1086,6 +1086,7 @@ def AddkEfficientNetOtherBlocks(
         kType=2,
         concat_paths=True,
         dropout_all_blocks=False,
+        dropout_extra=False, 
         **kwargs):
 
     x=last_tensor
@@ -1132,9 +1133,10 @@ def AddkEfficientNetOtherBlocks(
                 if (j > 0):
                     args['strides'] = 1
                     args['filters_in'] = args['filters_out']
-                    
-                x = kblock(x, activation_fn, drop_connect_rate * b / blocks,
-                    name=name_prefix+'block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt), **args,
+                block_dropout_rate = drop_connect_rate * b / blocks
+                layer_name = name_prefix+'block{}{}_'.format(i + 1, chr(j + 97))+'_'+str(path_cnt)
+                x = kblock(x, activation_fn, block_dropout_rate,
+                    name=layer_name, **args,
                     kType=kType, dropout_all_blocks=dropout_all_blocks)
                 prev_layer_name = x.name
                 other_layer_name = prev_layer_name.replace(name_prefix, existing_name_prefix).split('/')[0]
@@ -1142,6 +1144,10 @@ def AddkEfficientNetOtherBlocks(
                 # existing_model.summary()
                 other_layer = existing_model.get_layer(other_layer_name).output
                 #adds both paths.
+                if (dropout_extra):
+                    x = layers.Dropout(block_dropout_rate,
+                        noise_shape=(None, 1, 1, 1),
+                        name=layer_name + '_extra_drop')(x)
                 x = layers.add([x, other_layer], name=name_prefix+'add_'+str(i)+'_'+str(path_cnt))
                 b += 1
         
