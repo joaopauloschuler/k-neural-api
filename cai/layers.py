@@ -254,13 +254,24 @@ def conv2d_bn(x,
         bn_axis = 1
     else:
         bn_axis = 3
-    x = tensorflow.keras.layers.Conv2D(
-        filters, (num_row, num_col),
-        strides=strides,
-        padding=padding,
-        use_bias=use_bias,
-        groups=groups, 
-        name=conv_name)(x)
+
+    # groups parameter isn't available in older tensorflow implementations
+    if (groups>1) :
+        x = tensorflow.keras.layers.Conv2D(
+            filters, (num_row, num_col),
+            strides=strides,
+            padding=padding,
+            use_bias=use_bias,
+            groups=groups,
+            name=conv_name)(x)
+    else:
+        x = tensorflow.keras.layers.Conv2D(
+            filters, (num_row, num_col),
+            strides=strides,
+            padding=padding,
+            use_bias=use_bias,
+            name=conv_name)(x)
+
     if (has_batch_norm): x = tensorflow.keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
     if activation is not None: x = tensorflow.keras.layers.Activation(activation=activation, name=name)(x)
     return x
