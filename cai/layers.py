@@ -356,8 +356,7 @@ def kConv2DType4(last_tensor,  filters=32,  channel_axis=3,  name=None, activati
 
 def kConv2DType5(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
     """
-    This is the default ktype. It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
-    vary according to input tensor and function parameter. This implementation differs from type 2 as the skip connection isn't made accross the interleaving layer.
+    This basic architecture can vary according to input tensor and function parameter. This implementation differs from type 2 as the skip connection isn't made accross the interleaving layer.
     In internal documentation, this is solution D10.
     """
     output_tensor = last_tensor
