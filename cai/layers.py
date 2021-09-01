@@ -44,7 +44,7 @@ class Negate(tensorflow.keras.layers.Layer):
     
     def get_config(self):
         # this is here to make the warning to disappear.
-        base_config = super(CopyChannels, self).get_config()
+        base_config = super(Negate, self).get_config()
         return dict(list(base_config.items()))
 
 class ConcatNegation(tensorflow.keras.layers.Layer):        
@@ -64,7 +64,7 @@ class ConcatNegation(tensorflow.keras.layers.Layer):
 
     def get_config(self):
         # this is here to make the warning to disappear.
-        base_config = super(CopyChannels, self).get_config()
+        base_config = super(ConcatNegation, self).get_config()
         return dict(list(base_config.items()))
 
 class InterleaveChannels(tensorflow.keras.layers.Layer):
@@ -120,7 +120,7 @@ class SumIntoHalfChannels(tensorflow.keras.layers.Layer):
 
     def get_config(self):
         # this is here to make the warning to disappear.
-        base_config = super(CopyChannels, self).get_config()
+        base_config = super(SumIntoHalfChannels, self).get_config()
         return dict(list(base_config.items()))
 
 def GlobalAverageMaxPooling2D(previous_layer,  name=None):
