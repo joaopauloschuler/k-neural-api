@@ -421,7 +421,7 @@ def kConv2DType7(last_tensor, filters=32, channel_axis=3, name=None, activation=
         last_tensor = BinaryCompression(last_tensor, name=name+'_bicompress', activation=activation, has_batch_norm=has_batch_norm, target_channel_count=filters)
     return last_tensor
 
-def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, min_channels_per_group=16, kernel_size=1, stride_size=1, padding='same'):
+def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, min_channels_per_group=16, kernel_size=1, stride_size=1, padding='same', always_intergroup=False):
     """
     It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
     vary according to input tensor and function parameter. In internal documentation, this is solution D6.
@@ -442,9 +442,9 @@ def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=
         second_conv_group_count = cai.util.get_max_acceptable_common_divisor(output_channel_count, output_channel_count, max_acceptable = second_conv_max_acceptable_divisor)
         #print ('Second conv max acceptable divisor:', second_conv_max_acceptable_divisor, 'Output group count:',second_conv_group_count,'Second conv max acceptable divisor:', second_conv_max_acceptable_divisor)
         if second_conv_group_count > 1:
-            output_tensor = InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
-            if (prev_layer_channel_count >= output_channel_count):
+            if (prev_layer_channel_count >= output_channel_count) or (always_intergroup):
                 #print('Has grouped intergroup')
+                output_tensor = InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
                 output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=second_conv_group_count, use_bias=use_bias)
         else:
             #print('Has intergroup')
@@ -509,6 +509,10 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
             return kConv2DType8(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=16)
     elif kType == 20:
             return kConv2DType8(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=32)
+    elif kType == 21:
+            return kConv2DType8(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=16, always_intergroup=True)
+    elif kType == 22:
+            return kConv2DType8(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=32, always_intergroup=True)
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
