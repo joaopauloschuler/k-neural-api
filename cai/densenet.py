@@ -132,7 +132,7 @@ def kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, d
     else:
         x1 = keras.layers.BatchNormalization(axis=bn_axis, 
                                    epsilon=1.001e-5)(last_tensor)
-    x1 = keras.layers.Activation('relu')(x1)
+        x1 = keras.layers.Activation('relu')(x1) # there is already relu in the optimizied compression.
     x1 = keras.layers.Conv2D(growth_rate, 3,
                        padding='same',
                        use_bias=False,
