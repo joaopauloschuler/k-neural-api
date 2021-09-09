@@ -109,7 +109,7 @@ def kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, d
     # Arguments
         last_tensor: input tensor.
         growth_rate: float, growth rate at dense layers.
-        bottleneck: float, densenet bottleneck.
+        bottleneck: float, densenet bottleneck. This is usually 4*growth_rate.
         l2_decay: float.
         name: string, block label.
         dropout_rate: zero means no dropout.
@@ -146,7 +146,7 @@ def densenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, dr
     # Arguments
         last_tensor: input tensor.
         growth_rate: float, growth rate at dense layers.
-        bottleneck: float, densenet bottleneck.
+        bottleneck: float, densenet bottleneck. This is usually 4*growth_rate.
         l2_decay: float.
         name: string, block label.
         dropout_rate: zero means no dropout.
@@ -182,7 +182,7 @@ def kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name
         last_tensor: input tensor.
         blocks: integer, the number of building blocks.
         growth_rate: float, growth rate at dense layers.
-        bottleneck: float, densenet bottleneck.
+        bottleneck: float, densenet bottleneck. This is usually 4*growth_rate.
         l2_decay: float.
         name: string, block label.
         dropout_rate: zero means no dropout.
@@ -200,7 +200,7 @@ def densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name,
         last_tensor: input tensor.
         blocks: integer, the number of building blocks.
         growth_rate: float, growth rate at dense layers.
-        bottleneck: float, densenet bottleneck.
+        bottleneck: float, densenet bottleneck. This is usually 4*growth_rate.
         l2_decay: float.
         name: string, block label.
         dropout_rate: zero means no dropout.
@@ -278,25 +278,28 @@ def densenet_transition_block_paths(last_tensor, compression, l2_decay, name, dr
     return last_tensor
 
 def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,
-    l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0, kTypeBlock=0, kTypeTransition=13):
+    l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0, 
+    kTypeBlock=0, kTypeTransition=13, first_conv_filters=24):
     """Builds a simple densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
         blocks: integer number with densenet number of blocks.
         growth_rate: integer number with the number of channels added at each convolution.
-        bottleneck: integer. This is the number of bottleneck output channels.
+        bottleneck: integer. This is the number of bottleneck output channels. This is usually 4*growth_rate.
         compression: compression rate at transition blocks.
         l2_decay: float.
         num_classes: integer number with the number of classes to be classified.
         extra_compression: an extra compression might increase accuracy.
         dropout_rate: zero means no dropout.
-        kType: k optimized convolutional type.
+        kTypeBlock: k optimized convolutional type for DenseNet blocks.
+        kTypeTransition: k optimized convolutional type for DenseNet transitions.
+        first_conv_filters: number of filters in the first convolution. This is usually 2*growth_rate.
     # Returns
         a densenet model.
     """
     bn_axis = 3
     img_input = keras.layers.Input(shape=pinput_shape)
-    last_tensor = keras.layers.Conv2D(24, (3, 3), padding='same',
+    last_tensor = keras.layers.Conv2D(first_conv_filters, (3, 3), padding='same',
                      input_shape=pinput_shape, 
                      kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate, kType=kTypeBlock)
@@ -321,24 +324,25 @@ def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, comp
     return Model(inputs = [img_input], outputs = [last_tensor])
     
 def simple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,
-    l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0):
+    l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0, first_conv_filters=24):
     """Builds a simple densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
         blocks: integer number with densenet number of blocks.
         growth_rate: integer number with the number of channels added at each convolution.
-        bottleneck: integer. This is the number of bottleneck output channels.
+        bottleneck: integer. This is the number of bottleneck output channels. This is usually 4*growth_rate.
         compression: compression rate at transition blocks.
         l2_decay: float.
         num_classes: integer number with the number of classes to be classified.
         extra_compression: an extra compression might increase accuracy.
         dropout_rate: zero means no dropout.
+        first_conv_filters: number of filters in the first convolution. This is usually 2*growth_rate.
     # Returns
         a densenet model.
     """
     bn_axis = 3
     img_input = keras.layers.Input(shape=pinput_shape)
-    last_tensor = keras.layers.Conv2D(24, (3, 3), padding='same',
+    last_tensor = keras.layers.Conv2D(first_conv_filters, (3, 3), padding='same',
                      input_shape=pinput_shape, 
                      kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
     last_tensor = densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate)
