@@ -227,7 +227,7 @@ def kdensenet_transition_block(last_tensor, compression, l2_decay, name, dropout
     
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_bn')(last_tensor)
-    # last_tensor = keras.layers.Activation('relu')(last_tensor)
+    last_tensor = keras.layers.Activation('relu')(last_tensor)
     # last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
     #                   use_bias=False,
     #                   kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
