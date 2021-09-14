@@ -448,7 +448,7 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck
         # branch1x1 = conv2d_bn(x, int(bottleneck_compression*320), 1, 1, name=name + '_11')
         branch1x1 = kInceptionPointwise(x, filters=int(bottleneck_compression*320), name=name + '_11', kType=kType)
         # branch3x3 = conv2d_bn(x, int(bottleneck_compression*384), 1, 1, name=name + '_11a')
-        branch3x3 = kInceptionPointwise(x, filters=int(bottleneck_compression*384), name=name + '_11a', kType=kType)
+        branch3x3 = kInceptionPointwise(x, filters=int(bottleneck_compression*384), name=name + '_22', kType=kType)
         branch3x3_1 = conv2d_bn(branch3x3, int(compression*384), 1, 3, name=name + '_11a')
         branch3x3_2 = conv2d_bn(branch3x3, int(compression*384), 3, 1, name=name + '_31a')
         branch3x3 = keras.layers.concatenate([branch3x3_1, branch3x3_2], axis=channel_axis, name=name + '_pa')
