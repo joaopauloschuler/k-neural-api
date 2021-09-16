@@ -386,7 +386,8 @@ def create_inception_v3_mixed_layer(x,  id,  name='', channel_axis=3, bottleneck
         branch7x7 = kInceptionPointwise(x, filters=int(bottleneck_compression*128), name=name + '_11b', kType=kType)
         branch7x7 = conv2d_bn(branch7x7, int(compression*128), 1, 7, name=name + '_17b')
         branch7x7 = conv2d_bn(branch7x7, int(compression*192), 7, 1, name=name + '_71b')
-        branch7x7dbl = conv2d_bn(x, int(bottleneck_compression*128), 1, 1, name=name + '_11c')
+        # branch7x7dbl = conv2d_bn(x, int(bottleneck_compression*128), 1, 1, name=name + '_11c')
+        branch7x7dbl = kInceptionPointwise(x, filters=int(bottleneck_compression*128), name=name + '_11c', kType=kType)
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*128), 7, 1, name=name + '_71c')
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*128), 1, 7, name=name + '_17c')
         branch7x7dbl = conv2d_bn(branch7x7dbl, int(compression*128), 7, 1, name=name + '_71cc')
@@ -661,7 +662,7 @@ def two_path_inception_v3(
       l_branch = kInceptionPointwise(l_branch, filters=int(round(80 *deep_two_paths_compression)), name='l_branch_path', kType=kType)
       l_branch    = conv2d_bn(l_branch,    int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
       # ab_branch = conv2d_bn(ab_branch, int(round(80 *deep_two_paths_compression)), 1, 1, padding='valid')
-      ab_branch = kInceptionPointwise(l_branch, filters=int(round(80 *deep_two_paths_compression)), name='ab_branch_path', kType=kType)
+      ab_branch = kInceptionPointwise(ab_branch, filters=int(round(80 *deep_two_paths_compression)), name='ab_branch_path', kType=kType)
       ab_branch = conv2d_bn(ab_branch, int(round(192*deep_two_paths_compression)), 3, 3, padding='valid')
       
       x = keras.layers.Concatenate(axis=channel_axis, name='concat_second_block')([l_branch, ab_branch])
