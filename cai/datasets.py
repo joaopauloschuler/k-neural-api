@@ -412,6 +412,43 @@ def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
     """
     return load_dataset(cifar10, lab=lab,  verbose=verbose,  bipolar=bipolar,  base_model_name='cifar10')
     
+def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.png'):
+    """Saves a dataset loaded with load_dataset into disk.
+    # Arguments
+        aImages: array with images. This is usually x_train or x_test.
+        aClasses: categorical array. This is usually y_train or y_test.
+        dest_folder_name: destination folder name.
+        format: image format as a file extension.
+    # Example for saving CIFAR-10 into disk:
+    dataset=tf.keras.datasets.cifar10
+    x_train, y_train, x_test, y_test = cai.datasets.load_dataset(dataset, lab=False, bipolar=False)
+    save_dataset_in_format(x_train*255, y_train, dest_folder_name='train')
+    save_dataset_in_format(x_test*255, y_test, dest_folder_name='test')
+    # Returns
+        x_train: array with training images.
+        y_train: array with training labels.
+        x_test: array with testing images.
+        y_test: array with testing labels.
+    """
+    if not os.path.isdir(dest_folder_name):
+        os.mkdir(dest_folder_name)
+    imgLen = len(aImages)
+    for img_cnt in range(imgLen):
+        img = aImages[img_cnt]
+        class_idx = aClasses[img_cnt].tolist().index(1)
+        class_folder = dest_folder_name + '/class_' + str(class_idx)
+        if not os.path.isdir(class_folder):
+            os.mkdir(class_folder)
+        cv2.imwrite(class_folder+'/img_'+str(img_cnt)+'.png',img)
+
+def save_dataset_as_png(aImages, aClasses, dest_folder_name='img'):
+    """Saves a dataset loaded with load_dataset into disk with png format"""
+    save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.png')
+
+def save_dataset_as_jpg(aImages, aClasses, dest_folder_name='img'):
+    """Saves a dataset loaded with load_dataset into disk with png format"""
+    save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.jpg')
+
 def download_file(remote_url,  local_file):
     r = requests.get(remote_url, stream = True) 
     with open(local_file,"wb") as local_wb: 
