@@ -441,6 +441,14 @@ def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.p
             os.mkdir(class_folder)
         cv2.imwrite(class_folder+'/img_'+str(img_cnt)+'.png',img)
 
+def fix_bad_tfkeras_channel_order(aImages):
+    """Fixes bad channel order from API loading"""
+    local_x = np.zeros(shape=(aImages.shape[0], aImages.shape[1], aImages.shape[2], aImages.shape[3]))
+    local_x[:, :, :, 0] = aImages[:, :, :, 2]
+    local_x[:, :, :, 1] = aImages[:, :, :, 1]
+    local_x[:, :, :, 2] = aImages[:, :, :, 0]
+    return local_x
+
 def save_dataset_as_png(aImages, aClasses, dest_folder_name='img'):
     """Saves a dataset loaded with load_dataset into disk with png format"""
     save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.png')
