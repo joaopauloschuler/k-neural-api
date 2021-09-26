@@ -407,7 +407,11 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     # Returns
         Output tensor of block.
     """
-    channel_axis = 1 if backend.image_data_format() == 'channels_first' else -1
+    if keras.backend.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = 3
+    
     pointwise_conv_filters = int(pointwise_conv_filters * alpha)
 
     if strides == (1, 1):
