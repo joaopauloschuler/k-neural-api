@@ -62,24 +62,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
-import os
-import warnings
-
-from . import correct_pad
-from . import get_submodules_from_kwargs
-from . import imagenet_utils
-from .imagenet_utils import _obtain_input_shape
-from .imagenet_utils import decode_predictions
-
-
-backend = None
-layers = None
-models = None
-keras_utils = None
+import keras.utils
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras import backend
 
 BASE_WEIGHT_PATH = ('https://github.com/DrSlink/mobilenet_v3_keras/'
                     'releases/download/v1.0/')
@@ -104,18 +91,29 @@ WEIGHTS_HASHES = {
         '1efbf7e822e03f250f45faa3c6bbe156'),
 }
 
-
-def preprocess_input(x, **kwargs):
-    """Preprocesses a numpy array encoding a batch of images.
-
+def correct_pad(backend, inputs, kernel_size):
+    """Returns a tuple for zero-padding for 2D convolution with downsampling.
     # Arguments
-        x: a 4D numpy array consists of RGB values within [0, 255].
-
+        input_size: An integer or tuple/list of 2 integers.
+        kernel_size: An integer or tuple/list of 2 integers.
     # Returns
-        Preprocessed array.
+        A tuple.
     """
-    return imagenet_utils.preprocess_input(x, mode='tf', **kwargs)
+    img_dim = 2 if backend.image_data_format() == 'channels_first' else 1
+    input_size = backend.int_shape(inputs)[img_dim:(img_dim + 2)]
 
+    if isinstance(kernel_size, int):
+        kernel_size = (kernel_size, kernel_size)
+
+    if input_size[0] is None:
+        adjust = (1, 1)
+    else:
+        adjust = (1 - input_size[0] % 2, 1 - input_size[1] % 2)
+
+    correct = (kernel_size[0] // 2, kernel_size[1] // 2)
+
+    return ((correct[0] - adjust[0], correct[0]),
+            (correct[1] - adjust[1], correct[1]))
 
 def relu(x):
     return layers.ReLU()(x)
@@ -301,100 +299,13 @@ def MobileNetV3(stack_fn,
         ValueError: in case of invalid model type, argument for `weights`,
             or invalid input shape when weights='imagenet'
     """
-    global backend, layers, models, keras_utils
-    backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
-
-    if not (weights in {'imagenet', None} or os.path.exists(weights)):
-        raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization), `imagenet` '
-                         '(pre-training on ImageNet), '
-                         'or the path to the weights file to be loaded.')
-
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as `"imagenet"` with `include_top` '
-                         'as true, `classes` should be 1000')
-
-    # Determine proper input shape and default size.
-    # If both input_shape and input_tensor are used, they should match
-    if input_shape is not None and input_tensor is not None:
-        try:
-            is_input_t_tensor = backend.is_keras_tensor(input_tensor)
-        except ValueError:
-            try:
-                is_input_t_tensor = backend.is_keras_tensor(
-                    keras_utils.get_source_inputs(input_tensor))
-            except ValueError:
-                raise ValueError('input_tensor: ', input_tensor,
-                                 'is not type input_tensor')
-        if is_input_t_tensor:
-            if backend.image_data_format == 'channels_first':
-                if backend.int_shape(input_tensor)[1] != input_shape[1]:
-                    raise ValueError('input_shape: ', input_shape,
-                                     'and input_tensor: ', input_tensor,
-                                     'do not meet the same shape requirements')
-            else:
-                if backend.int_shape(input_tensor)[2] != input_shape[1]:
-                    raise ValueError('input_shape: ', input_shape,
-                                     'and input_tensor: ', input_tensor,
-                                     'do not meet the same shape requirements')
-        else:
-            raise ValueError('input_tensor specified: ', input_tensor,
-                             'is not a keras tensor')
-
-    # If input_shape is None, infer shape from input_tensor
-    if input_shape is None and input_tensor is not None:
-
-        try:
-            backend.is_keras_tensor(input_tensor)
-        except ValueError:
-            raise ValueError('input_tensor: ', input_tensor,
-                             'is type: ', type(input_tensor),
-                             'which is not a valid type')
-
-        if backend.is_keras_tensor(input_tensor):
-            if backend.image_data_format() == 'channels_first':
-                rows = backend.int_shape(input_tensor)[2]
-                cols = backend.int_shape(input_tensor)[3]
-                input_shape = (3, cols, rows)
-            else:
-                rows = backend.int_shape(input_tensor)[1]
-                cols = backend.int_shape(input_tensor)[2]
-                input_shape = (cols, rows, 3)
-    # If input_shape is None and input_tensor is None using standart shape
-    if input_shape is None and input_tensor is None:
-        input_shape = (None, None, 3)
-
-    if backend.image_data_format() == 'channels_last':
-        row_axis, col_axis = (0, 1)
+    
+    img_input = keras.layers.Input(shape=input_shape)
+    
+    if keras.backend.image_data_format() == 'channels_first':
+        channel_axis = 1
     else:
-        row_axis, col_axis = (1, 2)
-    rows = input_shape[row_axis]
-    cols = input_shape[col_axis]
-    if rows and cols and (rows < 32 or cols < 32):
-        raise ValueError('Input size must be at least 32x32; got `input_shape=' +
-                         str(input_shape) + '`')
-    if weights == 'imagenet':
-        if minimalistic is False and alpha not in [0.75, 1.0] \
-                or minimalistic is True and alpha != 1.0:
-            raise ValueError('If imagenet weights are being loaded, '
-                             'alpha can be one of `0.75`, `1.0` for non minimalistic'
-                             ' or `1.0` for minimalistic only.')
-
-        if rows != cols or rows != 224:
-            warnings.warn('`input_shape` is undefined or non-square, '
-                          'or `rows` is not 224.'
-                          ' Weights for input shape (224, 224) will be'
-                          ' loaded as the default.')
-
-    if input_tensor is None:
-        img_input = layers.Input(shape=input_shape)
-    else:
-        if not backend.is_keras_tensor(input_tensor):
-            img_input = layers.Input(tensor=input_tensor, shape=input_shape)
-        else:
-            img_input = input_tensor
-
-    channel_axis = 1 if backend.image_data_format() == 'channels_first' else -1
+        channel_axis = 3
 
     if minimalistic:
         kernel = 3
@@ -463,33 +374,11 @@ def MobileNetV3(stack_fn,
             x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
         elif pooling == 'max':
             x = layers.GlobalMaxPooling2D(name='max_pool')(x)
-    # Ensure that the model takes into account
-    # any potential predecessors of `input_tensor`.
-    if input_tensor is not None:
-        inputs = keras_utils.get_source_inputs(input_tensor)
-    else:
-        inputs = img_input
 
+    inputs = img_input
+    
     # Create model.
-    model = models.Model(inputs, x, name='MobilenetV3' + model_type)
-
-    # Load weights.
-    if weights == 'imagenet':
-        model_name = "{}{}_224_{}_float".format(
-            model_type, '_minimalistic' if minimalistic else '', str(alpha))
-        if include_top:
-            file_name = 'weights_mobilenet_v3_' + model_name + '.h5'
-            file_hash = WEIGHTS_HASHES[model_name][0]
-        else:
-            file_name = 'weights_mobilenet_v3_' + model_name + '_no_top.h5'
-            file_hash = WEIGHTS_HASHES[model_name][1]
-        weights_path = keras_utils.get_file(file_name,
-                                            BASE_WEIGHT_PATH + file_name,
-                                            cache_subdir='models',
-                                            file_hash=file_hash)
-        model.load_weights(weights_path)
-    elif weights is not None:
-        model.load_weights(weights)
+    model = keras.models.Model(inputs, x, name='MobilenetV3' + model_type)
 
     return model
 
