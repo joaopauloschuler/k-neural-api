@@ -68,6 +68,8 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import backend
 
+import cai.layers
+
 BASE_WEIGHT_PATH = ('https://github.com/DrSlink/mobilenet_v3_keras/'
                     'releases/download/v1.0/')
 WEIGHTS_HASHES = {
@@ -469,6 +471,331 @@ def MobileNetV3Large(input_shape=None,
                        dropout_rate,
                        **kwargs)
 
+def kse_block(inputs, filters, se_ratio, prefix, kType=0):
+    x = layers.GlobalAveragePooling2D(name=prefix + 'squeeze_excite/AvgPool')(inputs)
+    if backend.image_data_format() == 'channels_first':
+        x = layers.Reshape((filters, 1, 1))(x)
+        channel_axis = 1
+    else:
+        x = layers.Reshape((1, 1, filters))(x)
+        channel_axis = 3
+    x = layers.Conv2D(_depth(filters * se_ratio),
+                      kernel_size=1,
+                      padding='same',
+                      name=prefix + 'squeeze_excite/Conv')(x)
+    x = layers.ReLU(name=prefix + 'squeeze_excite/Relu')(x)
+    # x = layers.Conv2D(filters,
+    #                  kernel_size=1,
+    #                  padding='same',
+    #                  name=prefix + 'squeeze_excite/Conv_1')(x)
+    #x = layers.Activation(hard_sigmoid)(x)
+    x = cai.layers.kPointwiseConv2D(x, filters=filters, channel_axis=channel_axis, name=prefix + 'squeeze_excite/Conv_1', activation=hard_sigmoid, has_batch_norm=False, use_bias=True, kType=kType)
+    x = layers.Multiply(name=prefix + 'squeeze_excite/Mul')([inputs, x])
+    return x
+
+def kinverted_res_block(x, expansion, filters, kernel_size, stride,
+                        se_ratio, activation, block_id,  kType=0):
+    if keras.backend.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = 3
+    shortcut = x
+    prefix = 'expanded_conv/'
+    infilters = backend.int_shape(x)[channel_axis]
+    if block_id:
+        # Expand
+        prefix = 'expanded_conv_{}/'.format(block_id)
+        # x = layers.Conv2D(_depth(infilters * expansion),
+        #                   kernel_size=1,
+        #                  padding='same',
+        #                  use_bias=False,
+        #                  name=prefix + 'expand')(x)
+        # x = layers.BatchNormalization(axis=channel_axis,
+        #                              epsilon=1e-3,
+        #                              momentum=0.999,
+        #                              name=prefix + 'expand/BatchNorm')(x)
+        #x = layers.Activation(activation)(x)
+        x = cai.layers.kPointwiseConv2D(x, filters=_depth(infilters * expansion), channel_axis=channel_axis, name=prefix + 'expand', activation=activation, has_batch_norm=True, use_bias=False, kType=kType)
+
+    if stride == 2:
+        x = layers.ZeroPadding2D(padding=correct_pad(backend, x, kernel_size),
+                                 name=prefix + 'depthwise/pad')(x)
+    x = layers.DepthwiseConv2D(kernel_size,
+                               strides=stride,
+                               padding='same' if stride == 1 else 'valid',
+                               use_bias=False,
+                               name=prefix + 'depthwise')(x)
+    x = layers.BatchNormalization(axis=channel_axis,
+                                  epsilon=1e-3,
+                                  momentum=0.999,
+                                  name=prefix + 'depthwise/BatchNorm')(x)
+    x = layers.Activation(activation)(x)
+
+    if se_ratio:
+        x = kse_block(x, _depth(infilters * expansion), se_ratio, prefix, kType=kType)
+
+    # x = layers.Conv2D(filters,
+    #                  kernel_size=1,
+    #                  padding='same',
+    #                  use_bias=False,
+    #                  name=prefix + 'project')(x)
+    # x = layers.BatchNormalization(axis=channel_axis,
+    #                              epsilon=1e-3,
+    #                              momentum=0.999,
+    #                              name=prefix + 'project/BatchNorm')(x)
+    x = cai.layers.kPointwiseConv2D(x, filters=filters, channel_axis=channel_axis, name=prefix + 'project', activation=None, has_batch_norm=True, use_bias=False, kType=kType)
+
+    if stride == 1 and infilters == filters:
+        x = layers.Add(name=prefix + 'Add')([shortcut, x])
+    return x
+
+def kMobileNetV3(stack_fn,
+                last_point_ch,
+                input_shape=None,
+                alpha=1.0,
+                model_type='large',
+                minimalistic=False,
+                include_top=True,
+                weights='imagenet',
+                input_tensor=None,
+                classes=1000,
+                pooling=None,
+                dropout_rate=0.2,
+                kType=0,
+                **kwargs):
+    """Instantiates the MobileNetV3 architecture.
+
+    # Arguments
+        stack_fn: a function that returns output tensor for the
+            stacked residual blocks.
+        last_point_ch: number channels at the last layer (before top)
+        input_shape: optional shape tuple, to be specified if you would
+            like to use a model with an input img resolution that is not
+            (224, 224, 3).
+            It should have exactly 3 inputs channels (224, 224, 3).
+            You can also omit this option if you would like
+            to infer input_shape from an input_tensor.
+            If you choose to include both input_tensor and input_shape then
+            input_shape will be used if they match, if the shapes
+            do not match then we will throw an error.
+            E.g. `(160, 160, 3)` would be one valid value.
+        alpha: controls the width of the network. This is known as the
+            depth multiplier in the MobileNetV3 paper, but the name is kept for
+            consistency with MobileNetV1 in Keras.
+            - If `alpha` < 1.0, proportionally decreases the number
+                of filters in each layer.
+            - If `alpha` > 1.0, proportionally increases the number
+                of filters in each layer.
+            - If `alpha` = 1, default number of filters from the paper
+                are used at each layer.
+        model_type: MobileNetV3 is defined as two models: large and small. These
+        models are targeted at high and low resource use cases respectively.
+        minimalistic: In addition to large and small models this module also contains
+            so-called minimalistic models, these models have the same per-layer
+            dimensions characteristic as MobilenetV3 however, they don't utilize any
+            of the advanced blocks (squeeze-and-excite units, hard-swish, and 5x5
+            convolutions). While these models are less efficient on CPU, they are
+            much more performant on GPU/DSP.
+        include_top: whether to include the fully-connected
+            layer at the top of the network.
+        weights: one of `None` (random initialization),
+              'imagenet' (pre-training on ImageNet),
+              or the path to the weights file to be loaded.
+        input_tensor: optional Keras tensor (i.e. output of
+            `layers.Input()`)
+            to use as image input for the model.
+        classes: optional number of classes to classify images
+            into, only to be specified if `include_top` is True, and
+            if no `weights` argument is specified.
+        pooling: optional pooling mode for feature extraction
+            when `include_top` is `False`.
+            - `None` means that the output of the model will be
+                the 4D tensor output of the
+                last convolutional layer.
+            - `avg` means that global average pooling
+                will be applied to the output of the
+                last convolutional layer, and thus
+                the output of the model will be a 2D tensor.
+            - `max` means that global max pooling will
+                be applied.
+        dropout_rate: fraction of the input units to drop on the last layer
+    # Returns
+        A Keras model instance.
+
+    # Raises
+        ValueError: in case of invalid model type, argument for `weights`,
+            or invalid input shape when weights='imagenet'
+    """
+    
+    img_input = keras.layers.Input(shape=input_shape)
+    
+    if keras.backend.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = 3
+
+    if minimalistic:
+        kernel = 3
+        activation = relu
+        se_ratio = None
+    else:
+        kernel = 5
+        activation = hard_swish
+        se_ratio = 0.25
+
+    x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3),
+                             name='Conv_pad')(img_input)
+    x = layers.Conv2D(16,
+                      kernel_size=3,
+                      strides=(2, 2),
+                      padding='valid',
+                      use_bias=False,
+                      name='Conv')(x)
+    x = layers.BatchNormalization(axis=channel_axis,
+                                  epsilon=1e-3,
+                                  momentum=0.999,
+                                  name='Conv/BatchNorm')(x)
+    x = layers.Activation(activation)(x)
+
+    x = stack_fn(x, kernel, activation, se_ratio, kType=kType)
+
+    last_conv_ch = _depth(backend.int_shape(x)[channel_axis] * 6)
+
+    # if the width multiplier is greater than 1 we
+    # increase the number of output channels
+    if alpha > 1.0:
+        last_point_ch = _depth(last_point_ch * alpha)
+
+    # x = layers.Conv2D(last_conv_ch,
+    #                  kernel_size=1,
+    #                  padding='same',
+    #                  use_bias=False,
+    #                  name='Conv_1')(x)
+    # x = layers.BatchNormalization(axis=channel_axis,
+    #                              epsilon=1e-3,
+    #                              momentum=0.999,
+    #                              name='Conv_1/BatchNorm')(x)
+    # x = layers.Activation(activation)(x)
+    x = cai.layers.kPointwiseConv2D(x, filters=last_conv_ch, channel_axis=channel_axis, name='Conv_1', activation=activation, has_batch_norm=True, use_bias=False, kType=kType)
+
+    if include_top:
+        x = layers.GlobalAveragePooling2D()(x)
+        if channel_axis == 1:
+            x = layers.Reshape((last_conv_ch, 1, 1))(x)
+        else:
+            x = layers.Reshape((1, 1, last_conv_ch))(x)
+        x = layers.Conv2D(last_point_ch,
+                          kernel_size=1,
+                          padding='same',
+                          name='Conv_2')(x)
+        x = layers.Activation(activation)(x)
+        if dropout_rate > 0:
+            x = layers.Dropout(dropout_rate)(x)
+        x = layers.Conv2D(classes,
+                          kernel_size=1,
+                          padding='same',
+                          name='Logits')(x)
+        x = layers.Flatten()(x)
+        x = layers.Softmax(name='Predictions/Softmax')(x)
+    else:
+        if pooling == 'avg':
+            x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+        elif pooling == 'max':
+            x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+
+    inputs = img_input
+    
+    # Create model.
+    model = keras.models.Model(inputs, x, name='MobilenetV3' + model_type)
+
+    return model
+
+def kMobileNetV3Small(input_shape=None,
+                     alpha=1.0,
+                     minimalistic=False,
+                     include_top=True,
+                     weights='imagenet',
+                     input_tensor=None,
+                     classes=1000,
+                     pooling=None,
+                     dropout_rate=0.2,
+                     kType=0,
+                     **kwargs):
+    def stack_fn(x, kernel, activation, se_ratio, kType=0):
+        def depth(d):
+            return _depth(d * alpha)
+        x = kinverted_res_block(x, 1, depth(16), 3, 2, se_ratio, relu, 0, kType=kType)
+        x = kinverted_res_block(x, 72. / 16, depth(24), 3, 2, None, relu, 1, kType=kType)
+        x = kinverted_res_block(x, 88. / 24, depth(24), 3, 1, None, relu, 2, kType=kType)
+        x = kinverted_res_block(x, 4, depth(40), kernel, 2, se_ratio, activation, 3, kType=kType)
+        x = kinverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 4, kType=kType)
+        x = kinverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 5, kType=kType)
+        x = kinverted_res_block(x, 3, depth(48), kernel, 1, se_ratio, activation, 6, kType=kType)
+        x = kinverted_res_block(x, 3, depth(48), kernel, 1, se_ratio, activation, 7, kType=kType)
+        x = kinverted_res_block(x, 6, depth(96), kernel, 2, se_ratio, activation, 8, kType=kType)
+        x = kinverted_res_block(x, 6, depth(96), kernel, 1, se_ratio, activation, 9, kType=kType)
+        x = kinverted_res_block(x, 6, depth(96), kernel, 1, se_ratio, activation, 10, kType=kType)
+        return x
+    return MobileNetV3(stack_fn,
+                       1024,
+                       input_shape,
+                       alpha,
+                       'small',
+                       minimalistic,
+                       include_top,
+                       weights,
+                       input_tensor,
+                       classes,
+                       pooling,
+                       dropout_rate,
+                       kType=kType,  
+                       **kwargs)
+
+
+def kMobileNetV3Large(input_shape=None,
+                     alpha=1.0,
+                     minimalistic=False,
+                     include_top=True,
+                     weights='imagenet',
+                     input_tensor=None,
+                     classes=1000,
+                     pooling=None,
+                     dropout_rate=0.2,
+                     kType=0,
+                     **kwargs):
+    def stack_fn(x, kernel, activation, se_ratio, kType=0):
+        def depth(d):
+            return _depth(d * alpha)
+        x = kinverted_res_block(x, 1, depth(16), 3, 1, None, relu, 0, kType=kType)
+        x = kinverted_res_block(x, 4, depth(24), 3, 2, None, relu, 1, kType=kType)
+        x = kinverted_res_block(x, 3, depth(24), 3, 1, None, relu, 2, kType=kType)
+        x = kinverted_res_block(x, 3, depth(40), kernel, 2, se_ratio, relu, 3, kType=kType)
+        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, relu, 4, kType=kType)
+        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, relu, 5, kType=kType)
+        x = kinverted_res_block(x, 6, depth(80), 3, 2, None, activation, 6, kType=kType)
+        x = kinverted_res_block(x, 2.5, depth(80), 3, 1, None, activation, 7, kType=kType)
+        x = kinverted_res_block(x, 2.3, depth(80), 3, 1, None, activation, 8, kType=kType)
+        x = kinverted_res_block(x, 2.3, depth(80), 3, 1, None, activation, 9, kType=kType)
+        x = kinverted_res_block(x, 6, depth(112), 3, 1, se_ratio, activation, 10, kType=kType)
+        x = kinverted_res_block(x, 6, depth(112), 3, 1, se_ratio, activation, 11, kType=kType)
+        x = kinverted_res_block(x, 6, depth(160), kernel, 2, se_ratio, activation, 12, kType=kType)
+        x = kinverted_res_block(x, 6, depth(160), kernel, 1, se_ratio, activation, 13, kType=kType)
+        x = kinverted_res_block(x, 6, depth(160), kernel, 1, se_ratio, activation, 14, kType=kType)
+        return x
+    return MobileNetV3(stack_fn,
+                       1280,
+                       input_shape,
+                       alpha,
+                       'large',
+                       minimalistic,
+                       include_top,
+                       weights,
+                       input_tensor,
+                       classes,
+                       pooling,
+                       dropout_rate,
+                       kType=kType,
+                       **kwargs)
 
 setattr(MobileNetV3Small, '__doc__', MobileNetV3.__doc__)
 setattr(MobileNetV3Large, '__doc__', MobileNetV3.__doc__)
