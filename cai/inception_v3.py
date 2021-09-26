@@ -542,7 +542,8 @@ def two_path_inception_v3(
         max_mix_idx: last "mixed layer" index. You can create smaller
             architectures with this parameter.
         max_mix_deep_two_paths_idx: last "mixed layer" index with two-paths.
-        model_name: model name 
+        model_name: model name
+        kType: k optimized convolutional type.
     # Returns
         A Keras model instance.
     # Raises
