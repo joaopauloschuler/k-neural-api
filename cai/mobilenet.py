@@ -91,6 +91,7 @@ import keras.utils
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import backend
+import cai.efficientnet
 
 import cai.layers
 
@@ -436,7 +437,7 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     #                  name='conv_pw_%d' % block_id)(x)
     #x = layers.BatchNormalization(axis=channel_axis,
     #                             name='conv_pw_%d_bn' % block_id)(x)
-    x = cai.layers.kPointwiseConv2D(x, filters=pointwise_conv_filters, channel_axis=channel_axis, name='conv_pw_%d_bn' % block_id, activation=backend.tf.nn.swish(x), has_batch_norm=True, use_bias=False, kType=kType)
+    x = cai.layers.kPointwiseConv2D(x, filters=pointwise_conv_filters, channel_axis=channel_axis, name='conv_pw_%d_bn' % block_id, activation=cai.efficientnet.swish, has_batch_norm=True, use_bias=False, kType=kType)
     return x #layers.ReLU(6., name='conv_pw_%d_relu' % block_id)(x)
 
 def kMobileNet(input_shape=None,
