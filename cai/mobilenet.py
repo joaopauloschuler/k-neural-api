@@ -91,7 +91,6 @@ import keras.utils
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import backend
-import cai.efficientnet
 
 import cai.layers
 
@@ -408,10 +407,7 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     # Returns
         Output tensor of block.
     """
-    if keras.backend.image_data_format() == 'channels_first':
-        channel_axis = 1
-    else:
-        channel_axis = 3
+    channel_axis = cai.layers.GetChannelAxis()
     
     pointwise_conv_filters = int(pointwise_conv_filters * alpha)
 
@@ -536,9 +532,10 @@ def kMobileNet(input_shape=None,
         x = layers.GlobalAveragePooling2D()(x)
         x = layers.Reshape(shape, name='reshape_1')(x)
         x = layers.Dropout(dropout, name='dropout')(x)
-        x = layers.Conv2D(classes, (1, 1),
-                          padding='same',
-                          name='conv_preds')(x)
+        # x = layers.Conv2D(classes, (1, 1),
+        #                  padding='same',
+        #                  name='conv_preds')(x)
+        x = cai.layers.kPointwiseConv2D(x, filters=classes, channel_axis=cai.layers.GetChannelAxis(), name='conv_preds', activation=None, has_batch_norm=False, use_bias=True, kType=kType)
         x = layers.Reshape((classes,), name='reshape_2')(x)
         x = layers.Activation('softmax', name='act_softmax')(x)
     else:

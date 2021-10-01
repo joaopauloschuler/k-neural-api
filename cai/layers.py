@@ -210,6 +210,13 @@ def BinaryCompression(last_tensor, name, target_channel_count, has_batch_norm=Tr
         last_tensor = BinaryCompressionLayer(last_tensor, name=name+'_'+str(cnt), has_batch_norm=has_batch_norm, activation=activation, channel_axis=channel_axis)
     return last_tensor
 
+def GetChannelAxis():
+    if tensorflow.keras.backend.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = 3
+    return channel_axis
+    
 def conv2d_bn(x,
               filters,
               num_row,
