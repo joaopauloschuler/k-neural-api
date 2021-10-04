@@ -104,7 +104,7 @@ def cyclical_smooth_lrscheduler(epoch):
     else:
        return 0.0001
 
-def kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, dropout_rate=0.0, kType=13):
+def kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, dropout_rate=0.0, activation=keras.activations.swish, kType=13):
     """Builds a unit inside a densenet convolutional block.
     # Arguments
         last_tensor: input tensor.
@@ -125,7 +125,7 @@ def kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, d
         # x1 = keras.layers.Conv2D(bottleneck, 1,
         #               use_bias=False,
         #               kernel_regularizer=keras.regularizers.l2(l2_decay))(x1)
-        x1 = cai.layers.kPointwiseConv2D(last_tensor=x1, filters=bottleneck, channel_axis=bn_axis, name=name+'_k', activation=keras.activations.swish, has_batch_norm=False, use_bias=False, kType=kType)
+        x1 = cai.layers.kPointwiseConv2D(last_tensor=x1, filters=bottleneck, channel_axis=bn_axis, name=name+'_k', activation=activation, has_batch_norm=False, use_bias=False, kType=kType)
         if (dropout_rate>0): x1 = keras.layers.Dropout(dropout_rate)(x1)
         x1 = keras.layers.BatchNormalization(axis=bn_axis, 
                                    epsilon=1.001e-5)(x1)
@@ -176,7 +176,7 @@ def densenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, dr
     last_tensor = keras.layers.Concatenate(axis=bn_axis)([last_tensor, x1])
     return last_tensor
     
-def kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name, dropout_rate=0.0, kType=13):
+def kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name, dropout_rate=0.0, activation=keras.activations.swish, kType=13):
     """Builds a densenet convolutional block.
     # Arguments
         last_tensor: input tensor.
@@ -191,7 +191,7 @@ def kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name
         output tensor for the block.
     """
     for i in range(blocks):
-        last_tensor = kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name=name + '_b' + str(i + 1), dropout_rate=dropout_rate, kType=kType)
+        last_tensor = kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name=name + '_b' + str(i + 1), dropout_rate=dropout_rate, activation=activation, kType=kType)
     return last_tensor
 
 def densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name, dropout_rate=0.0):
@@ -211,7 +211,7 @@ def densenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name,
         last_tensor = densenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name=name + '_b' + str(i + 1), dropout_rate=dropout_rate)
     return last_tensor
 
-def kdensenet_transition_block(last_tensor, compression, l2_decay, name, dropout_rate=0.0, kType=13):
+def kdensenet_transition_block(last_tensor, compression, l2_decay, name, dropout_rate=0.0, activation=keras.activations.swish, kType=13):
     """Builds a k optimized densenet transition block.
     # Arguments
         last_tensor: input tensor.
@@ -232,7 +232,7 @@ def kdensenet_transition_block(last_tensor, compression, l2_decay, name, dropout
     #                   use_bias=False,
     #                   kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
     filters = int(backend.int_shape(last_tensor)[bn_axis] * compression)
-    last_tensor = cai.layers.kPointwiseConv2D(last_tensor=last_tensor, filters=filters, channel_axis=bn_axis, name=name, activation=keras.activations.swish, has_batch_norm=False, use_bias=False, kType=kType)
+    last_tensor = cai.layers.kPointwiseConv2D(last_tensor=last_tensor, filters=filters, channel_axis=bn_axis, name=name, activation=activation, has_batch_norm=False, use_bias=False, kType=kType)
     if (dropout_rate>0): last_tensor = keras.layers.Dropout(dropout_rate)(last_tensor)
     last_tensor = keras.layers.AveragePooling2D(2, strides=2)(last_tensor)
     return last_tensor
@@ -279,7 +279,7 @@ def densenet_transition_block_paths(last_tensor, compression, l2_decay, name, dr
 
 def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,
     l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0, 
-    kTypeBlock=0, kTypeTransition=13, first_conv_filters=24):
+    kTypeBlock=0, kTypeTransition=13, first_conv_filters=24, activation=keras.activations.swish):
     """Builds a simple densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
@@ -300,13 +300,13 @@ def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, comp
     bn_axis = cai.layers.GetChannelAxis()
     img_input = keras.layers.Input(shape=pinput_shape)
     last_tensor = keras.layers.Conv2D(first_conv_filters, (3, 3), padding='same',
-                     input_shape=pinput_shape, 
-                     kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
-    last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate, kType=kTypeBlock)
-    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition1', dropout_rate=dropout_rate, kType=kTypeTransition)
-    last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn2', dropout_rate=dropout_rate, kType=kTypeBlock)
-    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate, kType=kTypeTransition)
-    last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn3', dropout_rate=dropout_rate, kType=kTypeBlock)
+        input_shape=pinput_shape, 
+        kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
+    last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
+    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition1', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
+    last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn2', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
+    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
+    last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn3', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
     last_tensor = keras.layers.Activation('relu', name='relu')(last_tensor)
     if (extra_compression):
