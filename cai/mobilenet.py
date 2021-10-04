@@ -354,7 +354,9 @@ def _depthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     return layers.ReLU(6., name='conv_pw_%d_relu' % block_id)(x)
 
 def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
-        depth_multiplier=1, strides=(1, 1), block_id=1, kType=0):
+    depth_multiplier=1, strides=(1, 1), block_id=1,
+    activation=keras.activations.swish,
+    kType=0):
     """Adds an optimized depthwise convolution block.
 
     A depthwise convolution block consists of a depthwise conv,
@@ -433,7 +435,7 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     #                  name='conv_pw_%d' % block_id)(x)
     #x = layers.BatchNormalization(axis=channel_axis,
     #                             name='conv_pw_%d_bn' % block_id)(x)
-    x = cai.layers.kPointwiseConv2D(x, filters=pointwise_conv_filters, channel_axis=channel_axis, name='conv_pw_%d_bn' % block_id, activation=keras.activations.swish, has_batch_norm=True, use_bias=False, kType=kType)
+    x = cai.layers.kPointwiseConv2D(x, filters=pointwise_conv_filters, channel_axis=channel_axis, name='conv_pw_%d_bn' % block_id, activation=activation, has_batch_norm=True, use_bias=False, kType=kType)
     return x #layers.ReLU(6., name='conv_pw_%d_relu' % block_id)(x)
 
 def kMobileNet(input_shape=None,
@@ -445,6 +447,7 @@ def kMobileNet(input_shape=None,
     input_tensor=None,
     pooling=None,
     classes=1000,
+    activation=keras.activations.swish,
     kType=0):
     """Instantiates the k optimized MobileNet architecture.
 
@@ -505,23 +508,23 @@ def kMobileNet(input_shape=None,
     img_input = keras.layers.Input(shape=input_shape)
 
     x = _conv_block(img_input, 32, alpha, strides=(2, 2))
-    x = kdepthwise_conv_block(x, 64, alpha, depth_multiplier, block_id=1, kType=kType)
+    x = kdepthwise_conv_block(x, 64, alpha, depth_multiplier, block_id=1, activation=activation, kType=kType)
 
-    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, strides=(2, 2), block_id=2, kType=kType)
-    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, block_id=3, kType=kType)
+    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, strides=(2, 2), block_id=2, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, block_id=3, activation=activation, kType=kType)
 
-    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, strides=(2, 2), block_id=4, kType=kType)
-    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, block_id=5, kType=kType)
+    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, strides=(2, 2), block_id=4, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, block_id=5, activation=activation, kType=kType)
 
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, strides=(2, 2), block_id=6, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=7, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=8, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=9, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=10, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=11, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, strides=(2, 2), block_id=6, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=7, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=8, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=9, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=10, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=11, activation=activation, kType=kType)
 
-    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, strides=(2, 2), block_id=12, kType=kType)
-    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, block_id=13, kType=kType)
+    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, strides=(2, 2), block_id=12, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, block_id=13, activation=activation, kType=kType)
 
     if include_top:
         if backend.image_data_format() == 'channels_first':
@@ -547,6 +550,6 @@ def kMobileNet(input_shape=None,
     inputs = img_input
 
     # Create model.
-    model = keras.models.Model(inputs, x, name='mobilenetv1')
+    model = keras.models.Model(inputs, x, name='kmobilenetv1-'+str(kType))
 
     return model
