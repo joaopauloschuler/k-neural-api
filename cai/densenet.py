@@ -308,7 +308,7 @@ def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, comp
     last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn3', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
-    last_tensor = keras.layers.Activation('relu', name='relu')(last_tensor)
+    last_tensor = keras.layers.Activation(activation, name='relu')(last_tensor)
     if (extra_compression):
         # last_tensor = keras.layers.Conv2D(int(backend.int_shape(last_tensor)[bn_axis] * compression), 1,
         #    use_bias=False,
