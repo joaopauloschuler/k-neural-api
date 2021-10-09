@@ -117,18 +117,6 @@ def correct_pad(backend, inputs, kernel_size):
     return ((correct[0] - adjust[0], correct[0]),
             (correct[1] - adjust[1], correct[1]))
 
-def relu(x):
-    return layers.ReLU()(x)
-
-
-def hard_sigmoid(x):
-    return layers.ReLU(6.)(x + 3.) * (1. / 6.)
-
-
-def hard_swish(x):
-    return layers.Multiply()([layers.Activation(hard_sigmoid)(x), x])
-
-
 # This function is taken from the original tf repo.
 # It ensures that all layers have a channel number that is divisible by 8
 # It can be seen here:
@@ -161,7 +149,7 @@ def _se_block(inputs, filters, se_ratio, prefix):
                       kernel_size=1,
                       padding='same',
                       name=prefix + 'squeeze_excite/Conv_1')(x)
-    x = layers.Activation(hard_sigmoid)(x)
+    x = layers.Activation(cai.layers.hard_sigmoid)(x)
     if backend.backend() == 'theano':
         # For the Theano backend, we have to explicitly make
         # the excitation weights broadcastable.
@@ -304,18 +292,15 @@ def MobileNetV3(stack_fn,
     
     img_input = keras.layers.Input(shape=input_shape)
     
-    if keras.backend.image_data_format() == 'channels_first':
-        channel_axis = 1
-    else:
-        channel_axis = 3
-
+    channel_axis = cai.layers.GetChannelAxis()
+    
     if minimalistic:
         kernel = 3
-        activation = relu
+        activation = 'relu'
         se_ratio = None
     else:
         kernel = 5
-        activation = hard_swish
+        activation = cai.layers.HardSwish
         se_ratio = 0.25
 
     x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3),
@@ -398,9 +383,9 @@ def MobileNetV3Small(input_shape=None,
     def stack_fn(x, kernel, activation, se_ratio):
         def depth(d):
             return _depth(d * alpha)
-        x = _inverted_res_block(x, 1, depth(16), 3, 2, se_ratio, relu, 0)
-        x = _inverted_res_block(x, 72. / 16, depth(24), 3, 2, None, relu, 1)
-        x = _inverted_res_block(x, 88. / 24, depth(24), 3, 1, None, relu, 2)
+        x = _inverted_res_block(x, 1, depth(16), 3, 2, se_ratio, 'relu', 0)
+        x = _inverted_res_block(x, 72. / 16, depth(24), 3, 2, None, 'relu', 1)
+        x = _inverted_res_block(x, 88. / 24, depth(24), 3, 1, None, 'relu', 2)
         x = _inverted_res_block(x, 4, depth(40), kernel, 2, se_ratio, activation, 3)
         x = _inverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 4)
         x = _inverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 5)
@@ -438,12 +423,12 @@ def MobileNetV3Large(input_shape=None,
     def stack_fn(x, kernel, activation, se_ratio):
         def depth(d):
             return _depth(d * alpha)
-        x = _inverted_res_block(x, 1, depth(16), 3, 1, None, relu, 0)
-        x = _inverted_res_block(x, 4, depth(24), 3, 2, None, relu, 1)
-        x = _inverted_res_block(x, 3, depth(24), 3, 1, None, relu, 2)
-        x = _inverted_res_block(x, 3, depth(40), kernel, 2, se_ratio, relu, 3)
-        x = _inverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, relu, 4)
-        x = _inverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, relu, 5)
+        x = _inverted_res_block(x, 1, depth(16), 3, 1, None, 'relu', 0)
+        x = _inverted_res_block(x, 4, depth(24), 3, 2, None, 'relu', 1)
+        x = _inverted_res_block(x, 3, depth(24), 3, 1, None, 'relu', 2)
+        x = _inverted_res_block(x, 3, depth(40), kernel, 2, se_ratio, 'relu', 3)
+        x = _inverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, 'relu', 4)
+        x = _inverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, 'relu', 5)
         x = _inverted_res_block(x, 6, depth(80), 3, 2, None, activation, 6)
         x = _inverted_res_block(x, 2.5, depth(80), 3, 1, None, activation, 7)
         x = _inverted_res_block(x, 2.3, depth(80), 3, 1, None, activation, 8)
@@ -489,16 +474,13 @@ def kse_block(inputs, filters, se_ratio, prefix, kType=0):
     #                  padding='same',
     #                  name=prefix + 'squeeze_excite/Conv_1')(x)
     #x = layers.Activation(hard_sigmoid)(x)
-    x = cai.layers.kPointwiseConv2D(x, filters=filters, channel_axis=channel_axis, name=prefix + 'squeeze_excite/Conv_1', activation=hard_sigmoid, has_batch_norm=False, use_bias=True, kType=kType)
+    x = cai.layers.kPointwiseConv2D(x, filters=filters, channel_axis=channel_axis, name=prefix + 'squeeze_excite/Conv_1', activation=cai.layers.hard_sigmoid, has_batch_norm=False, use_bias=True, kType=kType)
     x = layers.Multiply(name=prefix + 'squeeze_excite/Mul')([inputs, x])
     return x
 
 def kinverted_res_block(x, expansion, filters, kernel_size, stride,
                         se_ratio, activation, block_id,  kType=0):
-    if keras.backend.image_data_format() == 'channels_first':
-        channel_axis = 1
-    else:
-        channel_axis = 3
+    channel_axis = cai.layers.GetChannelAxis()
     shortcut = x
     prefix = 'expanded_conv/'
     infilters = backend.int_shape(x)[channel_axis]
@@ -628,14 +610,11 @@ def kMobileNetV3(stack_fn,
     
     img_input = keras.layers.Input(shape=input_shape)
     
-    if keras.backend.image_data_format() == 'channels_first':
-        channel_axis = 1
-    else:
-        channel_axis = 3
+    channel_axis = cai.layers.GetChannelAxis()
 
     if minimalistic:
         kernel = 3
-        activation = relu
+        activation = 'relu'
         se_ratio = None
     else:
         kernel = 5
@@ -722,9 +701,9 @@ def kMobileNetV3Small(input_shape=None,
     def stack_fn(x, kernel, activation, se_ratio, kType=0):
         def depth(d):
             return _depth(d * alpha)
-        x = kinverted_res_block(x, 1, depth(16), 3, 2, se_ratio, relu, 0, kType=kType)
-        x = kinverted_res_block(x, 72. / 16, depth(24), 3, 2, None, relu, 1, kType=kType)
-        x = kinverted_res_block(x, 88. / 24, depth(24), 3, 1, None, relu, 2, kType=kType)
+        x = kinverted_res_block(x, 1, depth(16), 3, 2, se_ratio, 'relu', 0, kType=kType)
+        x = kinverted_res_block(x, 72. / 16, depth(24), 3, 2, None, 'relu', 1, kType=kType)
+        x = kinverted_res_block(x, 88. / 24, depth(24), 3, 1, None, 'relu', 2, kType=kType)
         x = kinverted_res_block(x, 4, depth(40), kernel, 2, se_ratio, activation, 3, kType=kType)
         x = kinverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 4, kType=kType)
         x = kinverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 5, kType=kType)
@@ -762,12 +741,12 @@ def kMobileNetV3Large(input_shape=None,
     def stack_fn(x, kernel, activation, se_ratio, kType=0):
         def depth(d):
             return _depth(d * alpha)
-        x = kinverted_res_block(x, 1, depth(16), 3, 1, None, relu, 0, kType=kType)
-        x = kinverted_res_block(x, 4, depth(24), 3, 2, None, relu, 1, kType=kType)
-        x = kinverted_res_block(x, 3, depth(24), 3, 1, None, relu, 2, kType=kType)
-        x = kinverted_res_block(x, 3, depth(40), kernel, 2, se_ratio, relu, 3, kType=kType)
-        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, relu, 4, kType=kType)
-        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, relu, 5, kType=kType)
+        x = kinverted_res_block(x, 1, depth(16), 3, 1, None, 'relu', 0, kType=kType)
+        x = kinverted_res_block(x, 4, depth(24), 3, 2, None, 'relu', 1, kType=kType)
+        x = kinverted_res_block(x, 3, depth(24), 3, 1, None, 'relu', 2, kType=kType)
+        x = kinverted_res_block(x, 3, depth(40), kernel, 2, se_ratio, 'relu', 3, kType=kType)
+        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, 'relu', 4, kType=kType)
+        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, 'relu', 5, kType=kType)
         x = kinverted_res_block(x, 6, depth(80), 3, 2, None, activation, 6, kType=kType)
         x = kinverted_res_block(x, 2.5, depth(80), 3, 1, None, activation, 7, kType=kType)
         x = kinverted_res_block(x, 2.3, depth(80), 3, 1, None, activation, 8, kType=kType)

@@ -547,8 +547,8 @@ def GetClasses():
         'ConcatNegation': ConcatNegation,
         'InterleaveChannels': InterleaveChannels,
         'SumIntoHalfChannels': SumIntoHalfChannels,
-        'HardSigmoid': tensorflow.keras.layers.Activation(HardSigmoid),
-        'HardSwish': tensorflow.keras.layers.Activation(HardSwish),
-        'hard_sigmoid': tensorflow.keras.layers.Activation(HardSigmoid),
-        'hard_swish': tensorflow.keras.layers.Activation(HardSwish)
+        'HardSigmoid': HardSigmoid,
+        'HardSwish': HardSwish,
+        'hard_sigmoid': HardSigmoid,
+        'hard_swish': HardSwish
     }
