@@ -705,7 +705,7 @@ def kMobileNetV3(stack_fn,
     inputs = img_input
     
     # Create model.
-    model = keras.models.Model(inputs, x, name='MobilenetV3' + model_type)
+    model = keras.models.Model(inputs, x, name='kMobilenetV3' + model_type+'-'+str(kType))
 
     return model
 
@@ -734,7 +734,7 @@ def kMobileNetV3Small(input_shape=None,
         x = kinverted_res_block(x, 6, depth(96), kernel, 1, se_ratio, activation, 9, kType=kType)
         x = kinverted_res_block(x, 6, depth(96), kernel, 1, se_ratio, activation, 10, kType=kType)
         return x
-    return MobileNetV3(stack_fn,
+    return kMobileNetV3(stack_fn,
                        1024,
                        input_shape,
                        alpha,
@@ -778,7 +778,7 @@ def kMobileNetV3Large(input_shape=None,
         x = kinverted_res_block(x, 6, depth(160), kernel, 1, se_ratio, activation, 13, kType=kType)
         x = kinverted_res_block(x, 6, depth(160), kernel, 1, se_ratio, activation, 14, kType=kType)
         return x
-    return MobileNetV3(stack_fn,
+    return kMobileNetV3(stack_fn,
                        1280,
                        input_shape,
                        alpha,
