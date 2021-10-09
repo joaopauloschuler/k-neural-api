@@ -282,6 +282,12 @@ def conv2d_bn(x,
     if (has_batch_norm): x = tensorflow.keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
     if activation is not None: x = tensorflow.keras.layers.Activation(activation=activation, name=name)(x)
     return x
+
+def hard_sigmoid(x):
+    return tensorflow.keras.layers.ReLU( 6.0 )( x + 3.0 ) * ( 1.0 / 6.0 )
+
+def hard_swish(x):
+    return tensorflow.keras.layers.Multiply()([tensorflow.keras.layers.Activation(hard_sigmoid)(x), x])
     
 def kConv2DType0(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
     return conv2d_bn(last_tensor, filters, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
