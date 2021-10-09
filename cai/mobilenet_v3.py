@@ -149,7 +149,7 @@ def _se_block(inputs, filters, se_ratio, prefix):
                       kernel_size=1,
                       padding='same',
                       name=prefix + 'squeeze_excite/Conv_1')(x)
-    x = layers.Activation(cai.layers.hard_sigmoid)(x)
+    x = layers.Activation(cai.layers.HardSigmoid)(x)
     if backend.backend() == 'theano':
         # For the Theano backend, we have to explicitly make
         # the excitation weights broadcastable.
@@ -474,7 +474,7 @@ def kse_block(inputs, filters, se_ratio, prefix, kType=0):
     #                  padding='same',
     #                  name=prefix + 'squeeze_excite/Conv_1')(x)
     #x = layers.Activation(hard_sigmoid)(x)
-    x = cai.layers.kPointwiseConv2D(x, filters=filters, channel_axis=channel_axis, name=prefix + 'squeeze_excite/Conv_1', activation=cai.layers.hard_sigmoid, has_batch_norm=False, use_bias=True, kType=kType)
+    x = cai.layers.kPointwiseConv2D(x, filters=filters, channel_axis=channel_axis, name=prefix + 'squeeze_excite/Conv_1', activation=cai.layers.HardSigmoid, has_batch_norm=False, use_bias=True, kType=kType)
     x = layers.Multiply(name=prefix + 'squeeze_excite/Mul')([inputs, x])
     return x
 
