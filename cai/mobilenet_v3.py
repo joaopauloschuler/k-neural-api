@@ -639,7 +639,7 @@ def kMobileNetV3(stack_fn,
         se_ratio = None
     else:
         kernel = 5
-        activation = cai.layers.hard_swish
+        activation = cai.layers.HardSwish
         se_ratio = 0.25
 
     x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3),
