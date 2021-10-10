@@ -465,9 +465,10 @@ def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=
             #print('Has intergroup')
             if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
             output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
-        if not has_batch_norm:
-            output_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_sep')(output_tensor)
-            compression_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_comp')(compression_tensor)
+        
+        # Scales each channel.
+        output_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_sep')(output_tensor)
+        compression_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_comp')(compression_tensor)
         output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
