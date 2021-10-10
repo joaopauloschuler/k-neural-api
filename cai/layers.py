@@ -458,10 +458,12 @@ def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=
         if second_conv_group_count > 1:
             if (prev_layer_channel_count >= output_channel_count) or (always_intergroup):
                 #print('Has grouped intergroup')
+                if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
                 output_tensor = InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
                 output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=second_conv_group_count, use_bias=use_bias)
         else:
             #print('Has intergroup')
+            if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
             output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
         output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
