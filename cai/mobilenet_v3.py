@@ -464,11 +464,12 @@ def kse_block(inputs, filters, se_ratio, prefix, kType=0):
     else:
         x = layers.Reshape((1, 1, filters))(x)
         channel_axis = 3
-    x = layers.Conv2D(_depth(filters * se_ratio),
-                      kernel_size=1,
-                      padding='same',
-                      name=prefix + 'squeeze_excite/Conv')(x)
-    x = layers.ReLU(name=prefix + 'squeeze_excite/Relu')(x)
+    #x = layers.Conv2D(_depth(filters * se_ratio),
+    #                  kernel_size=1,
+    #                  padding='same',
+    #                  name=prefix + 'squeeze_excite/Conv')(x)
+    # x = layers.ReLU(name=prefix + 'squeeze_excite/Relu')(x)
+    x = cai.layers.kPointwiseConv2D(x, filters=_depth(filters * se_ratio), channel_axis=channel_axis, name=prefix + 'squeeze_excite/Conv', activation='relu', has_batch_norm=False, use_bias=True, kType=kType)
     # x = layers.Conv2D(filters,
     #                  kernel_size=1,
     #                  padding='same',
@@ -662,13 +663,15 @@ def kMobileNetV3(stack_fn,
             x = layers.Reshape((last_conv_ch, 1, 1))(x)
         else:
             x = layers.Reshape((1, 1, last_conv_ch))(x)
-        x = layers.Conv2D(last_point_ch,
-                          kernel_size=1,
-                          padding='same',
-                          name='Conv_2')(x)
-        x = layers.Activation(activation)(x)
+        #x = layers.Conv2D(last_point_ch,
+        #                  kernel_size=1,
+        #                  padding='same',
+        #                  name='Conv_2')(x)
+        #x = layers.Activation(activation)(x)
+        x = cai.layers.kPointwiseConv2D(x, filters=last_point_ch, channel_axis=channel_axis, name='Conv_2', activation=activation, has_batch_norm=False, use_bias=True, kType=kType)
         if dropout_rate > 0:
             x = layers.Dropout(dropout_rate)(x)
+        #Last layer hasn't been transformed.
         x = layers.Conv2D(classes,
                           kernel_size=1,
                           padding='same',
