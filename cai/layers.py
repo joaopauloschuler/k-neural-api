@@ -1,6 +1,7 @@
 import tensorflow
 import tensorflow.keras.layers
 import cai.util
+import math
 
 class CopyChannels(tensorflow.keras.layers.Layer):
     """
@@ -446,14 +447,14 @@ def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=
     max_acceptable_divisor = (prev_layer_channel_count//min_channels_per_group)
     group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
     if group_count is None: group_count=1
-    output_group_size = output_channel_count // group_count
     # input_group_size = prev_layer_channel_count // group_count
     if (group_count>1):
-        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
         compression_tensor = output_tensor
         second_conv_max_acceptable_divisor = (output_channel_count//min_channels_per_group)
         second_conv_group_count = cai.util.get_max_acceptable_common_divisor(output_channel_count, output_channel_count, max_acceptable = second_conv_max_acceptable_divisor)
+        output_group_size = output_channel_count // second_conv_group_count
+        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         #print ('Second conv max acceptable divisor:', second_conv_max_acceptable_divisor, 'Output group count:',second_conv_group_count,'Second conv max acceptable divisor:', second_conv_max_acceptable_divisor)
         if second_conv_group_count > 1:
             if (prev_layer_channel_count >= output_channel_count) or (always_intergroup):
@@ -466,15 +467,57 @@ def kConv2DType8(last_tensor, filters=32, channel_axis=3, name=None, activation=
             if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
             output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
         
-        # Scales each channel.
-        output_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_sep')(output_tensor)
-        compression_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_comp')(compression_tensor)
+        # # Scales each channel.
+        # output_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_sep')(output_tensor)
+        # compression_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_comp')(compression_tensor)
         output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
     else:
         #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
         output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return output_tensor
 
+def kConv2DType9(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, min_channels_per_group=16, kernel_size=1, stride_size=1, padding='same', always_intergroup=False):
+    """
+    Same as Type 2 but with a different grouping for the second convolution.
+    It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
+    vary according to input tensor and function parameter. In internal documentation, this is solution D6.
+    """
+    output_tensor = last_tensor
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
+    output_channel_count = filters
+    first_conv_min_group_channel_count = max(min_channels_per_group, int(math.sqrt(prev_layer_channel_count)) )
+    max_acceptable_divisor = (prev_layer_channel_count//first_conv_min_group_channel_count)
+    group_count = cai.util.get_max_acceptable_common_divisor(prev_layer_channel_count, output_channel_count, max_acceptable = max_acceptable_divisor)
+    if group_count is None: group_count=1
+    # input_group_size = prev_layer_channel_count // group_count
+    if (group_count>1):
+        output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=group_count, use_bias=use_bias, strides=(stride_size, stride_size), padding=padding)
+        compression_tensor = output_tensor
+        second_conv_min_group_channel_count = max(min_channels_per_group, int(math.sqrt(output_channel_count)) )
+        second_conv_max_acceptable_divisor = (output_channel_count//second_conv_min_group_channel_count)
+        second_conv_group_count = cai.util.get_max_acceptable_common_divisor(output_channel_count, output_channel_count, max_acceptable = second_conv_max_acceptable_divisor)
+        output_group_size = output_channel_count // second_conv_group_count
+        #print ('Second conv max acceptable divisor:', second_conv_max_acceptable_divisor, 'Output group count:',second_conv_group_count,'Second conv max acceptable divisor:', second_conv_max_acceptable_divisor)
+        #print ('Input channels:', prev_layer_channel_count, 'Output Channels:',output_channel_count,'Groups:', group_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        if second_conv_group_count > 1:
+            if (prev_layer_channel_count >= output_channel_count) or (always_intergroup):
+                #print('Has grouped intergroup')
+                if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
+                output_tensor = InterleaveChannels(output_group_size, name=name+'_group_interleaved')(output_tensor)
+                output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, groups=second_conv_group_count, use_bias=use_bias)
+        else:
+            #print('Has intergroup')
+            if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
+            output_tensor = conv2d_bn(output_tensor, output_channel_count, 1, 1, name=name+'_group_interconn', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+        
+        # Scales each channel.
+        #output_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_sep')(output_tensor)
+        #compression_tensor = tensorflow.keras.layers.DepthwiseConv2D((1, 1), use_bias=False, name=name+'_out_comp')(compression_tensor)
+        output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_inter_group_add')
+    else:
+        #print ('Dismissed groups:', group_count, 'Input channels:', prev_layer_channel_count, 'Output Channels:', output_channel_count, 'Input channels per group:', input_group_size, 'Output channels per group:', output_group_size)
+        output_tensor = conv2d_bn(output_tensor, output_channel_count, kernel_size, kernel_size, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
+    return output_tensor
 
 def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same', kType=2):
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
@@ -539,6 +582,10 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
         return kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=64)
     elif kType == 25:
         return kConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=64)
+    elif kType == 26:
+        return kConv2DType2(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=128)
+    elif kType == 27:
+        return kConv2DType3(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=128)
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
