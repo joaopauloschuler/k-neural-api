@@ -99,6 +99,11 @@ Above image was generated from:
 
 <p><img src="https://github.com/joaopauloschuler/neural-api/blob/master/docs/park.jpg?raw=true" width=714px></img></p>
 
+### Scientific Research
+Experiments done for these papers were made with K-CAI API:
+* [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet)
+* [Reliable Deep Learning Plant Leaf Disease Classification Based on Light-Chroma Separated Branches](https://ebooks.iospress.nl/volumearticle/57735)
+
 ### PyDoc
 After installing K-CAI, you can find documentation with:
 ```
