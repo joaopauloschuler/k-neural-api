@@ -560,8 +560,8 @@ def kConv2DType10(last_tensor, filters=32, channel_axis=3, name=None, activation
     if (group_count>1) and (prev_layer_channel_count>=filters):
         compression_tensor = output_tensor
         # if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
-        interleave_step = filters // group_count
-        output_tensor = InterleaveChannels(interleave_step, name=name+'_i'+str(interleave_step))(output_tensor)
+        interleave_step = filters // min_channels_per_group
+        if interleave_step>1: output_tensor = InterleaveChannels(interleave_step, name=name+'_i'+str(interleave_step))(output_tensor)
         output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name+'_c2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
         output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_iga')
     return output_tensor
