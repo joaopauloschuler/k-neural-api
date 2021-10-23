@@ -543,7 +543,7 @@ def kGroupConv2D(last_tensor, filters=32, channel_axis=3, channels_per_group=16,
         last_tensor = conv2d_bn(last_tensor, filters-extra_filters, kernel_size, kernel_size, name=name+'_m'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
     else:
         root = last_tensor
-        path1 = conv2d_bn(root, filters-extra_filters, kernel_size, kernel_size, name=name+'_p1', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
+        path1 = conv2d_bn(root, filters-extra_filters, kernel_size, kernel_size, name=name+'_p1_'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
         path2 = CopyChannels(0, local_channels_per_group)(root)
         path2 = conv2d_bn(path2, extra_filters, kernel_size, kernel_size, name=name+'_p2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=1)
         last_tensor =  tensorflow.keras.layers.Concatenate(axis=3, name=name+'_c')([path1, path2])
