@@ -540,13 +540,13 @@ def kGroupConv2D(last_tensor, filters=32, channel_axis=3, channels_per_group=16,
     extra_filters = filters % groups
     if (extra_filters == 0):
         # excellent
-        last_tensor = conv2d_bn(last_tensor, filters-extra_filters, kernel_size, kernel_size, name=name+'_m', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
+        last_tensor = conv2d_bn(last_tensor, filters-extra_filters, kernel_size, kernel_size, name=name+'_m'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
     else:
         root = last_tensor
         path1 = conv2d_bn(root, filters-extra_filters, kernel_size, kernel_size, name=name+'_p1', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
         path2 = CopyChannels(0, local_channels_per_group)(root)
         path2 = conv2d_bn(path2, extra_filters, kernel_size, kernel_size, name=name+'_p2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=1)
-        last_tensor =  tensorflow.keras.layers.Concatenate(axis=3, name=name+'_c12')([path1, path2])
+        last_tensor =  tensorflow.keras.layers.Concatenate(axis=3, name=name+'_c')([path1, path2])
     return last_tensor, groups
 
 def kConv2DType10(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, min_channels_per_group=16, kernel_size=1, stride_size=1, padding='same', always_intergroup=False):
@@ -555,12 +555,14 @@ def kConv2DType10(last_tensor, filters=32, channel_axis=3, name=None, activation
     It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection.
     """
     output_tensor = last_tensor
-    output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
-    if (group_count>1):
+    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
+    output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name+'_c1', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
+    if (group_count>1) and (prev_layer_channel_count>=filters):
         compression_tensor = output_tensor
-        if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
-        output_tensor = InterleaveChannels(filters // group_count, name=name+'_i')(output_tensor)
-        output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name+'_s2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
+        # if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
+        interleave_step = filters // group_count
+        output_tensor = InterleaveChannels(interleave_step, name=name+'_i'+str(interleave_step))(output_tensor)
+        output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name+'_c2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
         output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_iga')
     return output_tensor
 
@@ -645,6 +647,8 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
         return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=32, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
     elif kType == 34:
         return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=64, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
+    elif kType == 35:
+        return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=128, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
