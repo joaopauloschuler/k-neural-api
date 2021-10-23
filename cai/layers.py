@@ -641,6 +641,10 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
         return kConv2DType9(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding, min_channels_per_group=128, always_intergroup=True)
     elif kType == 32:
         return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=16, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
+    elif kType == 33:
+        return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=32, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
+    elif kType == 34:
+        return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=64, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
