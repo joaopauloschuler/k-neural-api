@@ -536,17 +536,18 @@ def kGroupConv2D(last_tensor, filters=32, channel_axis=3, channels_per_group=16,
                 local_channels_per_group = local_channels_per_group + 1
             if local_channels_per_group * groups > prev_layer_channel_count:
                 last_tensor = FitChannelCountTo(last_tensor, next_channel_count=groups * local_channels_per_group, has_interleaving=False, channel_axis=channel_axis)
-    prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
-    extra_filters = filters % groups
-    if (extra_filters == 0):
-        # excellent
-        last_tensor = conv2d_bn(last_tensor, filters-extra_filters, kernel_size, kernel_size, name=name+'_m'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
+        prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
+        extra_filters = filters % groups
+        if (extra_filters == 0):
+            last_tensor = conv2d_bn(last_tensor, filters-extra_filters, kernel_size, kernel_size, name=name+'_m'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
+        else:
+            root = last_tensor
+            path1 = conv2d_bn(root, filters-extra_filters, kernel_size, kernel_size, name=name+'_p1_'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
+            path2 = CopyChannels(0, local_channels_per_group)(root)
+            path2 = conv2d_bn(path2, extra_filters, kernel_size, kernel_size, name=name+'_p2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=1)
+            last_tensor =  tensorflow.keras.layers.Concatenate(axis=3, name=name+'_c')([path1, path2])
     else:
-        root = last_tensor
-        path1 = conv2d_bn(root, filters-extra_filters, kernel_size, kernel_size, name=name+'_p1_'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=groups)
-        path2 = CopyChannels(0, local_channels_per_group)(root)
-        path2 = conv2d_bn(path2, extra_filters, kernel_size, kernel_size, name=name+'_p2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, groups=1)
-        last_tensor =  tensorflow.keras.layers.Concatenate(axis=3, name=name+'_c')([path1, path2])
+        last_tensor = conv2d_bn(last_tensor, filters, kernel_size, kernel_size, name=name+'_m', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias)
     return last_tensor, groups
 
 def kConv2DType10(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, min_channels_per_group=16, kernel_size=1, stride_size=1, padding='same', always_intergroup=False):
