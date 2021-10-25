@@ -520,16 +520,22 @@ def kConv2DType9(last_tensor, filters=32, channel_axis=3, name=None, activation=
     return output_tensor
     
 def kGroupConv2D(last_tensor, filters=32, channel_axis=3, channels_per_group=16, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
+    """ 
+    This is a grouped convolution wrapper that tries to force the number of input channels per group. You can give any number of filters. You can also add after any layer with any number of channels.
+    """
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     groups = prev_layer_channel_count // channels_per_group
     if prev_layer_channel_count % channels_per_group > 0:
         groups = groups + 1
+    # the number of groups should never be bigger than the number of filters.
     if groups > filters:
         groups = filters
     local_channels_per_group = channels_per_group
     if groups > 1:
+        # do we need to add more channels to make the number of imput channels multiple of channels_per_group?
         if groups * channels_per_group > prev_layer_channel_count:
             last_tensor = FitChannelCountTo(last_tensor, next_channel_count=groups * channels_per_group, has_interleaving=False, channel_axis=channel_axis)
+        # if we have few filters, we might end needing less channels per group. This is the only case that we'll have more channels per group.
         if groups * channels_per_group < prev_layer_channel_count:
             local_channels_per_group = prev_layer_channel_count // groups
             if ( prev_layer_channel_count % groups > 0):
@@ -538,13 +544,17 @@ def kGroupConv2D(last_tensor, filters=32, channel_axis=3, channels_per_group=16,
                 last_tensor = FitChannelCountTo(last_tensor, next_channel_count=groups * local_channels_per_group, has_interleaving=False, channel_axis=channel_axis)
         prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
         extra_filters = filters % groups
+        # should we create an additional path so we can fit the extra filters?
         if (extra_filters == 0):
             last_tensor = conv2d_bn(last_tensor, filters-extra_filters, kernel_size, kernel_size, name=name+'_m'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, padding=padding, strides=(stride_size, stride_size), groups=groups)
         else:
             root = last_tensor
+            # the main path
             path1 = conv2d_bn(root, filters-extra_filters, kernel_size, kernel_size, name=name+'_p1_'+str(groups), activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, padding=padding, strides=(stride_size, stride_size), groups=groups)
-            path2 = CopyChannels(0, local_channels_per_group)(root)
-            path2 = conv2d_bn(path2, extra_filters, kernel_size, kernel_size, name=name+'_p2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, padding=padding, strides=(stride_size, stride_size), groups=1)
+            # we'll create one group per extra filter.
+            path2 = CopyChannels(0, local_channels_per_group * extra_filters)(root)
+            path2 = conv2d_bn(path2, extra_filters, kernel_size, kernel_size, name=name+'_p2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, padding=padding, strides=(stride_size, stride_size), groups=extra_filters)
+            # concats both paths.
             last_tensor =  tensorflow.keras.layers.Concatenate(axis=3, name=name+'_dc')([path1, path2]) # deep concat
     else:
         # deep unmodified.
@@ -559,12 +569,14 @@ def kConv2DType10(last_tensor, filters=32, channel_axis=3, name=None, activation
     output_tensor = last_tensor
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     expansion = (filters > prev_layer_channel_count)
+    # does it make sense to optimize this layer?
     if (prev_layer_channel_count > 2*min_channels_per_group) or (expansion and (prev_layer_channel_count > min_channels_per_group) ):
         output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name+'_c1', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
         if (group_count>1) and (prev_layer_channel_count>=filters):
             compression_tensor = output_tensor
             # if activation is None: output_tensor = tensorflow.keras.layers.Activation(HardSwish)(output_tensor)
             interleave_step = filters // min_channels_per_group
+            # should we interleave?
             if interleave_step>1: output_tensor = InterleaveChannels(interleave_step, name=name+'_i'+str(interleave_step))(output_tensor)
             output_tensor, group_count = kGroupConv2D(output_tensor, filters=filters, channel_axis=channel_axis, channels_per_group=min_channels_per_group, name=name+'_c2', activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='valid')
             output_tensor = tensorflow.keras.layers.add([output_tensor, compression_tensor], name=name+'_iga')
