@@ -3,6 +3,34 @@ import tensorflow.keras.layers
 import cai.util
 import math
 
+# Constants
+# You can find the D6 Diagram at:
+# https://www.researchgate.net/figure/Graphical-representation-of-our-pointwise-convolution-replacement-At-the-left-a-classic_fig1_355214501
+def D6_4ch(): return 15
+def D6_8ch(): return 14
+def D6_16ch(): return 2
+def D6_32ch(): return 13
+def D6_64ch(): return 24
+def D6_128ch(): return 26
+
+def D6v3_16ch(): return 32
+def D6v3_32ch(): return 33
+def D6v3_64ch(): return 34
+def D6v3_128ch(): return 35
+
+# kT3 is just a grouped convolution with the same constraints as explained in the paper:
+# https://www.researchgate.net/publication/355214501_Grouped_Pointwise_Convolutions_Significantly_Reduces_Parameters_in_EfficientNet
+def kT3_16ch(): return 3
+def kT3_32ch(): return 23
+def kT3_64ch(): return 25
+def kT3_128ch(): return 27
+
+def kT3v3_16ch(): return 36
+def kT3v3_32ch(): return 37
+def kT3v3_64ch(): return 38
+def kT3v3_128ch(): return 39
+
+
 class CopyChannels(tensorflow.keras.layers.Layer):
     """
     This layer copies channels from channel_start the number of channels given in channel_count.
