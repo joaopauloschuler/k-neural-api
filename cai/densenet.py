@@ -132,10 +132,12 @@ def kdensenet_conv_block(last_tensor, growth_rate, bottleneck, l2_decay, name, d
     else:
         x1 = keras.layers.BatchNormalization(axis=bn_axis, 
                                    epsilon=1.001e-5)(last_tensor)
-    x1 = keras.layers.Activation('relu')(x1)
+    # To make this implementation compatible with D6 optimization, the position of the activation function has to be changed.
+    # x1 = keras.layers.Activation('relu')(x1)
     x1 = keras.layers.Conv2D(growth_rate, 3,
                        padding='same',
                        use_bias=False,
+                       activation=activation,
                        kernel_regularizer=keras.regularizers.l2(l2_decay))(x1)
     if (dropout_rate>0): x1 = keras.layers.Dropout(dropout_rate)(x1)
     last_tensor = keras.layers.Concatenate(axis=bn_axis)([last_tensor, x1])
