@@ -281,7 +281,8 @@ def densenet_transition_block_paths(last_tensor, compression, l2_decay, name, dr
 
 def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, compression=0.5,
     l2_decay=0.000001,  num_classes=10,  extra_compression=False,  dropout_rate=0.0, 
-    kTypeBlock=0, kTypeTransition=13, first_conv_filters=24, activation=keras.activations.swish):
+    kTypeBlock=0, kTypeTransition=13, first_conv_filters=24, activation=keras.activations.swish, 
+    has_interleave_at_transition=False):
     """Builds a simple densenet model from input to end.
     # Arguments
         pinput_shape: array with input shape.
@@ -306,8 +307,10 @@ def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, comp
         kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
     last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition1', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
+    if (has_interleave_at_transition): last_tensor = cai.layers.InterleaveChannels(growth_rate, name='dntransition1_inter')(last_tensor)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn2', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
     last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
+    if (has_interleave_at_transition): last_tensor = cai.layers.InterleaveChannels(growth_rate*2, name='dntransition2_inter')(last_tensor)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn3', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
     last_tensor = keras.layers.Activation(activation, name='relu')(last_tensor)
@@ -316,6 +319,7 @@ def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, comp
         #    use_bias=False,
         #    kernel_regularizer=keras.regularizers.l2(l2_decay))(last_tensor)
         filters = int(backend.int_shape(last_tensor)[bn_axis] * compression)
+        if (has_interleave_at_transition): last_tensor = cai.layers.InterleaveChannels(growth_rate*3, name='extra_inter')(last_tensor)
         last_tensor = cai.layers.kPointwiseConv2D(last_tensor=last_tensor, filters=filters, channel_axis=bn_axis, name='extra_compression', activation=None, has_batch_norm=False, use_bias=False, kType=kTypeTransition)
         # Extra compression works well with max pooling only.
         last_tensor = keras.layers.GlobalMaxPooling2D(name='last_max_pool')(last_tensor)
