@@ -306,11 +306,11 @@ def ksimple_densenet(pinput_shape, blocks=6, growth_rate=12, bottleneck=48, comp
         input_shape=pinput_shape, 
         kernel_regularizer=keras.regularizers.l2(l2_decay))(img_input)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn1', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
-    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition1', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
     if (has_interleave_at_transition): last_tensor = cai.layers.InterleaveChannels(growth_rate, name='dntransition1_inter')(last_tensor)
+    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition1', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn2', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
-    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
     if (has_interleave_at_transition): last_tensor = cai.layers.InterleaveChannels(growth_rate*2, name='dntransition2_inter')(last_tensor)
+    last_tensor = kdensenet_transition_block(last_tensor, compression, l2_decay, name='dntransition2', dropout_rate=dropout_rate, activation=activation, kType=kTypeTransition)
     last_tensor = kdensenet_block(last_tensor, blocks, growth_rate, bottleneck, l2_decay, name='dn3', dropout_rate=dropout_rate, activation=activation, kType=kTypeBlock)
     last_tensor = keras.layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(last_tensor)
     last_tensor = keras.layers.Activation(activation, name='relu')(last_tensor)
