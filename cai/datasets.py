@@ -951,7 +951,10 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   
   if has_training:
       #calculate class weight
-      classweight = class_weight.compute_class_weight('balanced', np.unique(train_y), train_y)
+      classweight = class_weight.compute_class_weight(
+        class_weight = 'balanced', 
+        classes = np.unique(train_y), 
+        y = train_y)
   else:
       classweight = None
 
