@@ -703,7 +703,8 @@ def compiled_full_two_path_inception_v3(
     input_shape=(224,224,3),
     classes=1000,
     max_mix_idx=10, 
-    model_name='two_path_inception_v3'):
+    model_name='two_path_inception_v3', 
+    optimizer=None):
     """Returns a compiled full two-paths inception v3.
     # Arguments
         input_shape: mandatory input shape. Common values are 
@@ -727,7 +728,8 @@ def compiled_full_two_path_inception_v3(
         deep_two_paths=True,
         deep_two_paths_compression=0.655,
         max_mix_idx=max_mix_idx, 
-        model_name='deep_two_path_inception_v3'
+        model_name='deep_two_path_inception_v3', 
+        optimizer=optimizer
     )
     
 def compiled_inception_v3(
@@ -773,7 +775,8 @@ def compiled_two_path_inception_v3(
     ab_ratio=0.5,
     max_mix_idx=10,
     max_mix_deep_two_paths_idx=-1,
-    model_name='two_path_inception_v3'
+    model_name='two_path_inception_v3', 
+    optimizer=None
     ):
     """Returns a compiled two-paths inception v3.
     # Arguments
@@ -795,6 +798,7 @@ def compiled_two_path_inception_v3(
             architectures with this parameter.
         max_mix_deep_two_paths_idx: last "mixed layer" index with two-paths.
         model_name: model name 
+        optimizer: if present, is the optimizer used for compilation.
     # Returns
         A Keras model instance.
     # Raises
@@ -824,7 +828,10 @@ def compiled_two_path_inception_v3(
     x = keras.layers.Dense(classes, name='preprediction')(x)
     predictions = keras.layers.Activation('softmax',name='prediction')(x)
     model = Model(inputs=base_model.input, outputs=predictions)
-    opt = keras.optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True)
+    if optimizer is None:
+        opt = keras.optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True)
+    else:
+        opt = optimizer
     model.compile(
         loss='categorical_crossentropy',
         optimizer=opt,
