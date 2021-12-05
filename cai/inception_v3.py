@@ -703,7 +703,7 @@ def compiled_full_two_path_inception_v3(
     input_shape=(224,224,3),
     classes=1000,
     max_mix_idx=10, 
-    model_name='two_path_inception_v3', 
+    model_name='two_path_inception_v3',
     optimizer=None):
     """Returns a compiled full two-paths inception v3.
     # Arguments
@@ -712,7 +712,8 @@ def compiled_full_two_path_inception_v3(
         classes: number of classes to classify images into.
         max_mix_idx: last "mixed layer" index. You can create smaller
             architectures with this parameter.
-        model_name: model name 
+        model_name: model name
+        optimizer: if present, is the optimizer used for compilation.
     # Returns
         A Keras model instance.
     # Raises
@@ -728,7 +729,7 @@ def compiled_full_two_path_inception_v3(
         deep_two_paths=True,
         deep_two_paths_compression=0.655,
         max_mix_idx=max_mix_idx, 
-        model_name='deep_two_path_inception_v3', 
+        model_name='deep_two_path_inception_v3',
         optimizer=optimizer
     )
     
@@ -736,7 +737,8 @@ def compiled_inception_v3(
     input_shape=(224,224,3),
     classes=1000,
     max_mix_idx=10, 
-    model_name='two_path_inception_v3'):
+    model_name='two_path_inception_v3',
+    optimizer=None):
     """Returns a compiled two-paths inception v3.
     # Arguments
         input_shape: mandatory input shape. Common values are 
@@ -744,7 +746,8 @@ def compiled_inception_v3(
         classes: number of classes to classify images into.
         max_mix_idx: last "mixed layer" index. You can create smaller
             architectures with this parameter.
-        model_name: model name 
+        model_name: model name
+        optimizer: if present, is the optimizer used for compilation.
     # Returns
         A Keras model instance.
     # Raises
@@ -759,7 +762,8 @@ def compiled_inception_v3(
         two_paths_second_block=False,
         deep_two_paths=False,
         max_mix_idx=max_mix_idx, 
-        model_name='two_path_inception_v3'
+        model_name='two_path_inception_v3',
+        optimizer=optimizer
     )
 
 def compiled_two_path_inception_v3(
@@ -805,7 +809,7 @@ def compiled_two_path_inception_v3(
         ValueError: in case of invalid argument for `weights`,
             or invalid input shape.
     """
-    base_model = cai.models.two_path_inception_v3(
+    base_model = two_path_inception_v3(
         include_top=False, # Has to be false to be compiled below.
         weights=None,
         input_shape=input_shape,
