@@ -11,7 +11,7 @@ import urllib.request
 import scipy.io
 import zipfile
 import requests
-from sklearn.utils
+import sklearn.utils
 from sklearn.model_selection import train_test_split
 from skimage import color as skimage_color
 import skimage.filters
