@@ -11,7 +11,7 @@ import urllib.request
 import scipy.io
 import zipfile
 import requests
-from sklearn.utils import class_weight
+from sklearn.utils
 from sklearn.model_selection import train_test_split
 from skimage import color as skimage_color
 import skimage.filters
@@ -949,14 +949,14 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
             sub_matrix = train_x[:,:,:,channel]
             print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
   
+  class_weight = None
   if has_training:
       #calculate class weight
-      classweight = class_weight.compute_class_weight(
+      local_class_weight = sklearn.utils.class_weight.compute_class_weight(
         class_weight = 'balanced', 
         classes = np.unique(train_y), 
         y = train_y)
-  else:
-      classweight = None
+      class_weight = {i : local_class_weight[i] for i in range(classes_num)}
 
   #convert to categorical
   train_y = keras.utils.to_categorical(train_y, classes_num)
@@ -965,4 +965,4 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if (verbose):
     print("Loaded.")
 
-  return train_x,val_x,test_x,train_y,val_y,test_y,classweight,classes
+  return train_x,val_x,test_x,train_y,val_y,test_y,class_weight,classes
