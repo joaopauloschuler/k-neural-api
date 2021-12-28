@@ -11,7 +11,7 @@ import urllib.request
 import scipy.io
 import zipfile
 import requests
-from sklearn.utils import class_weight
+import sklearn.utils
 from sklearn.model_selection import train_test_split
 from skimage import color as skimage_color
 import skimage.filters
@@ -442,20 +442,60 @@ def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.p
         cv2.imwrite(class_folder+'/img_'+str(img_cnt)+'.png',img)
 
 def fix_bad_tfkeras_channel_order(aImages):
-    """Fixes bad channel order from API loading"""
+    """Fixes bad channel order from API loading."""
     local_x = np.zeros(shape=(aImages.shape[0], aImages.shape[1], aImages.shape[2], aImages.shape[3]))
     local_x[:, :, :, 0] = aImages[:, :, :, 2]
     local_x[:, :, :, 1] = aImages[:, :, :, 1]
     local_x[:, :, :, 2] = aImages[:, :, :, 0]
     return local_x
 
+def fix_img_bad_tfkeras_channel_order(aImages):
+    """Fixes image bad channel order from API loading."""
+    local_x = np.zeros(shape=(aImages.shape[0], aImages.shape[1], aImages.shape[2]))
+    local_x[ :, :, 0] = aImages[ :, :, 2]
+    local_x[ :, :, 1] = aImages[ :, :, 1]
+    local_x[ :, :, 2] = aImages[ :, :, 0]
+    return local_x
+
+def save_tfds_in_format(p_tfds, dest_folder_name='img', format='.png'):
+  """
+  Saves a tensorflow data source as image files. Classes are folders.
+  # Arguments
+    p_tfds: tensorflow dataset.
+    dest_folder_name: destination folder name.
+    format: image format as a file extension.
+  """
+  if not os.path.isdir(dest_folder_name):
+    os.mkdir(dest_folder_name)
+  cnt = 0;
+  for x in p_tfds.as_numpy_iterator():
+    #print(x["id"])
+    #print(x["image"].shape)
+    #print(x["label"])
+    class_idx = str(x["label"])
+    sample_idx = str(cnt)
+    img = fix_img_bad_tfkeras_channel_order(x["image"])
+    class_folder = dest_folder_name + '/class_' + class_idx
+    if not os.path.isdir(class_folder):
+       os.mkdir(class_folder)
+    cv2.imwrite(class_folder+'/img_'+sample_idx+format,img)
+    cnt = cnt + 1
+
 def save_dataset_as_png(aImages, aClasses, dest_folder_name='img'):
-    """Saves a dataset loaded with load_dataset into disk with png format"""
+    """Saves a dataset loaded with load_dataset into disk with png format."""
     save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.png')
 
 def save_dataset_as_jpg(aImages, aClasses, dest_folder_name='img'):
-    """Saves a dataset loaded with load_dataset into disk with png format"""
+    """Saves a dataset loaded with load_dataset into disk with png format."""
     save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.jpg')
+
+def save_tfds_as_png(p_tfds, dest_folder_name='img'):
+    """Saves a tensorflow dataset as png images. Classes are folders."""
+    save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.png')
+
+def save_tfds_as_jpg(p_tfds, dest_folder_name='img'):
+    """Saves a tensorflow dataset as jpg images. Classes are folders."""
+    save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.jpg')
 
 def download_file(remote_url,  local_file):
     r = requests.get(remote_url, stream = True) 
@@ -949,14 +989,14 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
             sub_matrix = train_x[:,:,:,channel]
             print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
   
+  class_weight = None
   if has_training:
       #calculate class weight
-      classweight = class_weight.compute_class_weight(
+      local_class_weight = sklearn.utils.class_weight.compute_class_weight(
         class_weight = 'balanced', 
         classes = np.unique(train_y), 
         y = train_y)
-  else:
-      classweight = None
+      class_weight = {i : local_class_weight[i] for i in range(classes_num)}
 
   #convert to categorical
   train_y = keras.utils.to_categorical(train_y, classes_num)
@@ -965,4 +1005,4 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   if (verbose):
     print("Loaded.")
 
-  return train_x,val_x,test_x,train_y,val_y,test_y,classweight,classes
+  return train_x,val_x,test_x,train_y,val_y,test_y,class_weight,classes
