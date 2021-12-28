@@ -27,15 +27,25 @@ else:
 !cd k && pip install .
 ```
 ## Features
+* A number of new layer types.
 * `cai.util.create_image_generator`: this wrapper has extremely well tested default parameters for image classification data augmentation. For you to get a better image classification accuracy might be just a case of replacing your current data augmentation generator by this one. Give it a go!
-* `cai.datasets.train_model_on_cifar10`: allows you to quickly train a model on CIFAR-10 dataset. It comes with **K-CAI** default data augmentation settings. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
-* `cai.datasets.train_model_on_dataset`: allows you to train a model passed as parameter on a **dataset also passed as parameter**. It comes with **K-CAI** default data augmentation settings making simple to test a given neuronal architecture on multiple datasets. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_100.ipynb).
+* `cai.util.create_image_generator_no_augmentation`: image generator for test datasets.
 * `cai.densenet.simple_densenet`: simple way to create DenseNet models. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
 * `cai.datasets.load_hyperspectral_matlab_image`: downloads (if required) and loads hyperspectral image from a matlab file. This function has been tested with [AVIRIS](http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes) and ROSIS sensor data stored as a matlab files.
 * `cai.models.calculate_heat_map_from_dense_and_avgpool`: calculates a class activation mapping (CAM) inspired on the paper [Learning Deep Features for Discriminative Localization](https://arxiv.org/abs/1512.04150) (see example below).
 * `cai.util.show_neuronal_patterns`: creates an array for visualizing first layer neuronal filters/patterns (see example below).
 * `cai.gradientascent.run_gradient_ascent_octaves`: allows visualizing patterns recognized by inner neuronal layers. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb).
-* `cai.datasets.save_tfds_in_format`: Saves a TensorFlow dataset as image files. Classes are folders.
+* `cai.datasets.save_tfds_in_format`: saves a TensorFlow dataset as image files. Classes are folders.
+* `cai.datasets.load_images_from_folders`: practical way to load small datasets into memory. It supports smart resizing, LAB color encoding and bipolar inputs.
+
+## New Layer Types
+* `cai.layers.CopyChannels`: copies a subset of the input channels.
+* `cai.layers.Negate`: negates (multiplies by -1) the input tensor.
+* `cai.layers.ConcatNegation`: concatenates the input with its negation.
+* `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
+* `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
+* `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. This layers is known to speed up training.
+* `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the paper [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 
 ## Documentation
 The documentation is composed by **examples** and **PyDoc**.
@@ -48,6 +58,7 @@ Some recommended introductory source code examples are:
 * [Experiment your own DenseNet Architecture](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb): this example allows you to experiment your own DenseNet settings. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb)
 * [Gradient Ascent / Deep Dream Example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb): this example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)
 * [Heatmap and Activation Map Examples with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb): this example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
+* [kEffNet](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/kEffNet_v1.ipynb): shows how to create and run kEffNet described in the paper [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 
 The following image shows a car (input sample), its heatmap and both added together.
 
@@ -102,8 +113,8 @@ Above image was generated from:
 
 ### Scientific Research
 Experiments done for these papers were made with K-CAI API:
-* [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet)
-* [Reliable Deep Learning Plant Leaf Disease Classification Based on Light-Chroma Separated Branches](https://ebooks.iospress.nl/volumearticle/57735)
+* [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
+* [Reliable Deep Learning Plant Leaf Disease Classification Based on Light-Chroma Separated Branches](https://ebooks.iospress.nl/volumearticle/57735).
 
 ### PyDoc
 After installing K-CAI, you can find documentation with:
