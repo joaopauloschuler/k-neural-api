@@ -35,6 +35,7 @@ else:
 * `cai.models.calculate_heat_map_from_dense_and_avgpool`: calculates a class activation mapping (CAM) inspired on the paper [Learning Deep Features for Discriminative Localization](https://arxiv.org/abs/1512.04150) (see example below).
 * `cai.util.show_neuronal_patterns`: creates an array for visualizing first layer neuronal filters/patterns (see example below).
 * `cai.gradientascent.run_gradient_ascent_octaves`: allows visualizing patterns recognized by inner neuronal layers. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb).
+* `cai.datasets.save_tfds_in_format`: Saves a TensorFlow dataset as image files. Classes are folders.
 
 ## Documentation
 The documentation is composed by **examples** and **PyDoc**.
