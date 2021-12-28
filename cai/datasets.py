@@ -459,7 +459,7 @@ def fix_img_bad_tfkeras_channel_order(aImages):
 
 def save_tfds_in_format(p_tfds, dest_folder_name='img', format='.png'):
   """
-  Saves a tensorflow data source as image files. Classes are folders.
+  Saves a tensorflow dataset as image files. Classes are folders.
   # Arguments
     p_tfds: tensorflow dataset.
     dest_folder_name: destination folder name.
