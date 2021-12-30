@@ -1,4 +1,4 @@
-# K-CAI NEURAL API [![VERSION](https://img.shields.io/github/v/release/joaopauloschuler/k-neural-api)](https://github.com/joaopauloschuler/k-neural-api/releases)
+# K-CAI NEURAL API [![VERSION](https://img.shields.io/github/v/release/joaopauloschuler/k-neural-api)](https://github.com/joaopauloschuler/k-neural-api/releases)[![DOI](https://zenodo.org/badge/221215803.svg)](https://zenodo.org/badge/latestdoi/221215803)
 <img align="right" src="docs/cai.png" height="192">
 K-CAI NEURAL API is a Keras based neural network API that will allow you to prototype faster!
 
