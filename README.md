@@ -35,7 +35,7 @@ else:
 * `cai.models.calculate_heat_map_from_dense_and_avgpool`: calculates a class activation mapping (CAM) inspired on the paper [Learning Deep Features for Discriminative Localization](https://arxiv.org/abs/1512.04150) (see example below).
 * `cai.util.show_neuronal_patterns`: creates an array for visualizing first layer neuronal filters/patterns (see example below).
 * `cai.gradientascent.run_gradient_ascent_octaves`: allows visualizing patterns recognized by inner neuronal layers. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb).
-* `cai.datasets.save_tfds_in_format`: saves a TensorFlow dataset as image files. Classes are folders.
+* `cai.datasets.save_tfds_in_format`: saves a TensorFlow dataset as image files. Classes are folders. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb).
 * `cai.datasets.load_images_from_folders`: practical way to load small datasets into memory. It supports smart resizing, LAB color encoding and bipolar inputs.
 
 ## New Layer Types
@@ -45,6 +45,8 @@ else:
 * `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
 * `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
 * `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. This layers is known to speed up training.
+* `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
+* `cai.layers.EnforceEvenChannelCount`: enforces that the number of channels is even (divisible by 2).
 * `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the paper [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 
 ## Documentation
@@ -122,6 +124,7 @@ After installing K-CAI, you can find documentation with:
 ```
 python -m pydoc cai.datasets
 python -m pydoc cai.densenet
-python -m pydoc cai.util
+python -m pydoc cai.layers
 python -m pydoc cai.models
+python -m pydoc cai.util
 ```
