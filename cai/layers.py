@@ -167,6 +167,11 @@ def GlobalAverageMaxPooling2D(previous_layer,  name=None):
     ])
 
 def FitChannelCountTo(last_tensor, next_channel_count, has_interleaving=False, channel_axis=3):
+    """
+    Forces the number of channels to fit a specific number of channels.
+    The new number of channels must be bigger than the number of input channels.
+    The number of channels is fitted by concatenating copies of existing channels.
+    """
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     full_copies = next_channel_count // prev_layer_channel_count
     extra_channels = next_channel_count % prev_layer_channel_count
@@ -189,6 +194,9 @@ def FitChannelCountTo(last_tensor, next_channel_count, has_interleaving=False, c
     return last_tensor
 
 def EnforceEvenChannelCount(last_tensor, channel_axis=3):
+    """
+    Enforces that the number of channels is even (divisible by 2).
+    """
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
     if (prev_layer_channel_count % 2 > 0):
         last_tensor = FitChannelCountTo(
@@ -731,6 +739,9 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
         return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=24, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
+    """
+    Parameter efficient pointwise convolution as shown in the paper Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet.
+    """
     return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
 
 def GetClasses():
