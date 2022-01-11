@@ -563,17 +563,18 @@ def kConv2DType9(last_tensor, filters=32, channel_axis=3, name=None, activation=
     
 def kGroupConv2D(last_tensor, filters=32, channel_axis=3, channels_per_group=16, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
     """ 
-    This is a grouped convolution wrapper that tries to force the number of input channels per group. You can give any number of filters. You can also add after any layer with any number of channels.
+    This is a grouped convolution wrapper that tries to force the number of input channels per group. You can give any number of filters and groups.
+    You can also add this layer after any layer with any number of channels independently on any common divisor requirement.
     Follows an example:
         * 1020 input channels.
         * 16 channels per group.
         * 250 filters.
     This is how  kGroupConv2D works:
         * The first step is to make the number of "input channels" multiple of the "number of input channels per group". So, we'll add 4 channels to the input by copying the first 4 channels. The total number of channels will be 1024.
-        * The number of groups will be 1024/16 = 64 groups.
-        * 250 filters isn't divisible by 64. 250 mod 64 = 58. To solve this problem, we'll create 2 paths:
-                Path 1: 250 div 64 = 3 (integer division). So, the first path has a grouped convolutions with 64 groups, 16 input channels per group and 3 filters per group. Total of filters here is 64*3 = 192.
-                Path 2: the remaining 58 filters are included in this convolution. There will be 58 groups with 1 filter each. The first 58 * 16 = 928 channels will be copied and made as input layer for this path.
+        * The number of groups will be 1024/16 = 64 groups with 16 input channels each.
+        * 250 filters isn't divisible by 64 groups. 250 mod 64 = 58. To solve this problem, we'll create 2 paths. The first path deals with the integer division while the second path deals with the remainder (modulo).
+                Path 1: 250 filters divided by 64 groups equals 3 filters per group (integer division). So, the first path has a grouped convolution with 64 groups, 16 input channels per group and 3 filters per group. Total of filters here is 64*3 = 192.
+                Path 2: the remaining 58 filters are included in this paths. There will be 58 groups with 1 filter each. The first 58 * 16 = 928 channels will be copied and made as input layer for this path.
         * Both paths are then concatenated. 192 + 58 = 250 filers or output channels!
     """
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
