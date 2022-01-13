@@ -414,12 +414,16 @@ def EfficientNetB0(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.0, 1.0, 224, 0.2,
                         model_name='efficientnet-b0',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -428,12 +432,16 @@ def EfficientNetB1(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.0, 1.1, 240, 0.2,
                         model_name='efficientnet-b1',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -442,12 +450,16 @@ def EfficientNetB2(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.1, 1.2, 260, 0.3,
                         model_name='efficientnet-b2',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -456,12 +468,16 @@ def EfficientNetB3(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.2, 1.4, 300, 0.3,
                         model_name='efficientnet-b3',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -470,12 +486,16 @@ def EfficientNetB4(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.4, 1.8, 380, 0.4,
                         model_name='efficientnet-b4',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -484,12 +504,16 @@ def EfficientNetB5(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.6, 2.2, 456, 0.4,
                         model_name='efficientnet-b5',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -498,12 +522,16 @@ def EfficientNetB6(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(1.8, 2.6, 528, 0.5,
                         model_name='efficientnet-b6',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
 
@@ -512,15 +540,19 @@ def EfficientNetB7(include_top=True,
                    input_shape=None,
                    pooling=None,
                    classes=1000,
+                   dropout_rate=0.2,
+                   drop_connect_rate=0.2,
                    **kwargs):
     return EfficientNet(2.0, 3.1, 600, 0.5,
                         model_name='efficientnet-b7',
                         include_top=include_top,
                         input_tensor=input_tensor, input_shape=input_shape,
                         pooling=pooling, classes=classes,
+                        dropout_rate=dropout_rate,
+                        drop_connect_rate=drop_connect_rate,
                         **kwargs)
 
-        
+
 def kblock(inputs, activation_fn=swish, drop_rate=0., name='',
           filters_in=32, filters_out=16, kernel_size=3, strides=1,
           expand_ratio=1, se_ratio=0., id_skip=True, kType=1,
