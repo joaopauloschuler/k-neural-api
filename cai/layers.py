@@ -1,5 +1,6 @@
 import tensorflow
 import tensorflow.keras.layers
+import tensorflow.keras.regularizers
 import cai.util
 import math
 
@@ -272,7 +273,8 @@ def conv2d_bn(x,
     has_batch_norm=True,
     has_batch_scale=False,  
     groups=0,
-    kernel_initializer="he_uniform"
+    kernel_initializer="he_uniform",
+    activity_regularizer=tensorflow.keras.regularizers.l2(0.01)
     ):
     """Utility function to apply convolution, batch norm and activation function.
 
@@ -315,7 +317,8 @@ def conv2d_bn(x,
             use_bias=use_bias,
             groups=groups,
             name=conv_name,
-            kernel_initializer=kernel_initializer)(x)
+            kernel_initializer=kernel_initializer,
+            activity_regularizer=activity_regularizer)(x)
     else:
         x = tensorflow.keras.layers.Conv2D(
             filters, (num_row, num_col),
@@ -323,7 +326,8 @@ def conv2d_bn(x,
             padding=padding,
             use_bias=use_bias,
             name=conv_name,
-            kernel_initializer=kernel_initializer)(x)
+            kernel_initializer=kernel_initializer,
+            activity_regularizer=activity_regularizer)(x)
 
     if (has_batch_norm): x = tensorflow.keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
     if activation is not None: x = tensorflow.keras.layers.Activation(activation=activation, name=name)(x)
