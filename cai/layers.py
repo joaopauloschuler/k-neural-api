@@ -274,7 +274,7 @@ def conv2d_bn(x,
     has_batch_scale=False,  
     groups=0,
     kernel_initializer="glorot_uniform",
-    kernel_regularizer=tensorflow.keras.regularizers.l2(0.000001)
+    kernel_regularizer=tensorflow.keras.regularizers.l2(0.0000001)
     ):
     """Utility function to apply convolution, batch norm and activation function.
 
