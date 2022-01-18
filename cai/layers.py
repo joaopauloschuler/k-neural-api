@@ -271,7 +271,8 @@ def conv2d_bn(x,
     activation='relu', 
     has_batch_norm=True,
     has_batch_scale=False,  
-    groups=0
+    groups=0,
+    kernel_initializer="he_uniform"
     ):
     """Utility function to apply convolution, batch norm and activation function.
 
@@ -290,7 +291,7 @@ def conv2d_bn(x,
         has_batch_norm: True means that batch normalization is added.
         has_batch_scale: True means that scaling is added to batch norm.
         groups: number of groups in the convolution
-
+        kernel_initializer: for relu like activation functions, the ideal activation is he uniform.
     # Returns
         Output tensor after applying `Conv2D` and `BatchNormalization`.
     """
@@ -313,14 +314,16 @@ def conv2d_bn(x,
             padding=padding,
             use_bias=use_bias,
             groups=groups,
-            name=conv_name)(x)
+            name=conv_name,
+            kernel_initializer=kernel_initializer)(x)
     else:
         x = tensorflow.keras.layers.Conv2D(
             filters, (num_row, num_col),
             strides=strides,
             padding=padding,
             use_bias=use_bias,
-            name=conv_name)(x)
+            name=conv_name,
+            kernel_initializer=kernel_initializer)(x)
 
     if (has_batch_norm): x = tensorflow.keras.layers.BatchNormalization(axis=bn_axis, scale=has_batch_scale, name=bn_name)(x)
     if activation is not None: x = tensorflow.keras.layers.Activation(activation=activation, name=name)(x)
