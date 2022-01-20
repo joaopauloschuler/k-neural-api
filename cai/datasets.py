@@ -1,4 +1,4 @@
-"""K-CAI data set functions.
+"""K-CAI dataset functions.
 """
 import numpy as np
 import cv2
@@ -13,6 +13,7 @@ import zipfile
 import requests
 import sklearn.utils
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 from skimage import color as skimage_color
 import skimage.filters
 import gc
@@ -1006,3 +1007,60 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
     print("Loaded.")
 
   return train_x,val_x,test_x,train_y,val_y,test_y,class_weight,classes
+
+def print_classification_report(pred_y, test_y):
+  pred_classes_y = np.array(list(np.argmax(pred_y, axis=1)))
+  test_classes_y = np.array(list(np.argmax(test_y, axis=1)))
+  # print("Predicted classes shape:",pred_classes_y.shape)
+  # print("Test classes shape:",test_classes_y.shape)
+  report = classification_report(test_classes_y, pred_classes_y, digits=4)
+  print(report)
+
+def rgb_to_black_white_a(test_x):
+  bw_test = np.copy(test_x)
+  bw_test[ :, :, :, 0] = test_x[ :, :, :, 1] + test_x[ :, :, :, 2]
+  bw_test[ :, :, :, 0] /= 3
+  bw_test[ :, :, :, 1] = bw_test[ :, :, :, 0]
+  bw_test[ :, :, :, 2] = bw_test[ :, :, :, 0]
+  return bw_test
+
+def test_flips(test_x, test_y, model_file_name, has_flip_x=True, has_flip_y=True, has_bw=True):
+  print("Test Original")
+  model = cai.models.load_kereas_model(model_file_name)
+  pred_y = model.predict(test_x)
+  print_classification_report(pred_y, test_y)
+
+  if (has_flip_x):
+    print("Test Flip X")
+    test_x_flip_x = np.flip(test_x, 2)
+    pred_y_fx = model.predict(test_x_flip_x)
+    print_classification_report(pred_y_fx, test_y)
+
+    print("Test Original + Flip X")
+    print_classification_report(pred_y + pred_y_fx, test_y)
+
+  if (has_flip_y):
+    print("Test Flip Y")
+    test_x_flip_y = np.flip(test_x, 1)
+    pred_y_fy = model.predict(test_x_flip_y)
+    print_classification_report(pred_y_fy, test_y)
+
+    print("Test Original + Flip Y")
+    print_classification_report(pred_y + pred_y_fy, test_y)
+
+  if (has_flip_x and has_flip_y):
+    print("Test Original + Flip X + Flip Y")
+    print_classification_report(pred_y + pred_y_fx + pred_y_fy, test_y)
+
+  if (has_bw):
+    print("Test Black and White")
+    bw_test = rgb_to_black_white_a(test_x)
+    pred_y_bw = model.predict(bw_test)
+    print_classification_report(pred_y_bw, test_y)
+
+    print("Test Original + Black and White")
+    print_classification_report(pred_y + pred_y_bw, test_y)
+
+  if (has_flip_x and has_flip_y and has_bw):
+    print("Test Original + Flip X + Flip Y + BW")
+    print_classification_report(pred_y + pred_y_fx + pred_y_fy + pred_y_bw, test_y)
