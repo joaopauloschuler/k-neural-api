@@ -1024,9 +1024,8 @@ def rgb_to_black_white_a(test_x):
   bw_test[ :, :, :, 2] = bw_test[ :, :, :, 0]
   return bw_test
 
-def test_flips(test_x, test_y, model_file_name, has_flip_x=True, has_flip_y=True, has_bw=True):
+def test_flips_on_model(test_x, test_y, model, has_flip_x=True, has_flip_y=True, has_bw=True, center_crop=0.0):
   print("Test Original")
-  model = cai.models.load_kereas_model(model_file_name)
   pred_y = model.predict(test_x)
   print_classification_report(pred_y, test_y)
 
@@ -1051,6 +1050,23 @@ def test_flips(test_x, test_y, model_file_name, has_flip_x=True, has_flip_y=True
   if (has_flip_x and has_flip_y):
     print("Test Original + Flip X + Flip Y")
     print_classification_report(pred_y + pred_y_fx + pred_y_fy, test_y)
+    
+  if (center_crop > 0):
+    print("Cropped and Resized")
+    size_x = test_x.shape[2]
+    size_y = test_x.shape[1]
+    center_crop_px = int( (size_x * (center_crop))/2 )
+    center_crop_py = int( (size_y * (center_crop))/2 )
+    cropped_test_x = test_x[ :, center_crop_py: size_y-center_crop_py, center_crop_px:size_x-center_crop_px, :]
+    print("Cropped shape:", cropped_test_x.shape)
+    crop_resized = cv2_resize_a(cropped_test_x, target_size=(size_y, size_x))
+    pred_y_cr = model.predict(crop_resized)
+    print_classification_report(pred_y_cr, test_y)
+    print("Original + Cropped Resized")
+    print_classification_report(pred_y + pred_y_cr, test_y)
+    if (has_flip_x):
+        print("Original + Flip X + Cropped Resized")
+        print_classification_report(pred_y + pred_y_fx + pred_y_cr, test_y)
 
   if (has_bw):
     print("Test Black and White")
@@ -1064,3 +1080,7 @@ def test_flips(test_x, test_y, model_file_name, has_flip_x=True, has_flip_y=True
   if (has_flip_x and has_flip_y and has_bw):
     print("Test Original + Flip X + Flip Y + BW")
     print_classification_report(pred_y + pred_y_fx + pred_y_fy + pred_y_bw, test_y)
+
+def test_flips_on_saved_model(test_x, test_y, model_file_name, has_flip_x=True, has_flip_y=True, has_bw=True, center_crop=0.0):
+  model = cai.models.load_kereas_model(model_file_name)
+  test_flips_on_model(test_x=test_x, test_y=test_y, model=model, has_flip_x=has_flip_x, has_flip_y=has_flip_y, has_bw=has_bw, center_crop=center_crop)
