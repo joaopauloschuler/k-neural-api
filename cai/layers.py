@@ -274,10 +274,9 @@ def conv2d_bn(x,
     has_batch_scale=False,  
     groups=0,
     kernel_initializer="glorot_uniform",
-    kernel_regularizer=tensorflow.keras.regularizers.l2(0.0000001)
+    kernel_regularizer=None
     ):
-    """Utility function to apply convolution, batch norm and activation function.
-
+    """Practical Conv2D wrapper.
     # Arguments
         x: input tensor.
         filters: filters in `Conv2D`.
@@ -293,8 +292,8 @@ def conv2d_bn(x,
         has_batch_norm: True means that batch normalization is added.
         has_batch_scale: True means that scaling is added to batch norm.
         groups: number of groups in the convolution
-        kernel_initializer: for relu like activation functions, the ideal activation is he uniform.
-        kernel_regularizer: a conservative L2 is always good.
+        kernel_initializer: this is a very big open question.
+        kernel_regularizer: a conservative L2 may be a good idea.
     # Returns
         Output tensor after applying `Conv2D` and `BatchNormalization`.
     """
