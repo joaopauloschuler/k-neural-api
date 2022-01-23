@@ -29,13 +29,13 @@ class GradientAscent(tf.Module):
         tf.TensorSpec(shape=[], dtype=tf.float32),)
   )
   def __call__(self, img, steps, step_size):
-      loss = tf.constant(0.0)
+      loss = tf.constant(0.0, dtype=tf.float32)
       for n in tf.range(steps):
         with tf.GradientTape() as tape:
           # This needs gradients relative to `img`
           # `GradientTape` only watches `tf.Variable`s by default
           tape.watch(img)
-          loss = calc_sum_channel_mean_from_model(img, self.model)
+          loss = tf.cast(calc_sum_channel_mean_from_model(img, self.model), dtype=tf.float32)
 
         # Calculate the gradient of the loss with respect to the pixels of the input image.
         gradients = tape.gradient(loss, img)
