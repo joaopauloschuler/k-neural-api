@@ -129,8 +129,8 @@ python -m pydoc cai.models
 python -m pydoc cai.util
 ```
 
-## Citing this Work
-You can cite this work in BibTeX format with:
+## Citing this API
+You can cite this API in BibTeX format with:
 ```
 @software{k_cai_neural_api_2021_5810092,
   author       = {Joao Paulo Schwarz Schuler},
