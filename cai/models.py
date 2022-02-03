@@ -115,6 +115,16 @@ def CreatePartialModelCopyingChannels(pModel, pOutputLayerName, pChannelStart, p
   outputs = cai.layers.CopyChannels(channel_start=pChannelStart, channel_count=pChannelCount)(outputs)
   return keras.Model(inputs=inputs, outputs=outputs)
 
+def CreatePartialModelFromChannel(pModel, pOutputLayerName, pChannelIdx):
+  """Creates a partial model up to the layer name defined in pOutputLayerName and then copies the channel at index pChannelIdx.
+  # Arguments
+    pModel: original model.
+    pOutputLayerName: last layer in the partial model.
+    hasGlobalAvg: when True, adds a global average pooling at the end.
+    pChannelIdx: output channel index to create the model from.
+  """
+  return CreatePartialModelCopyingChannels(pModel, pOutputLayerName, pChannelStart=pChannelIdx, pChannelCount=1)
+
 def PartialModelPredict(aInput, pModel, pOutputLayerName, hasGlobalAvg=False, pBatchSize=32):
   """Creates a partial model up to the layer name defined in pOutputLayerName and run it
   with aInput.  
