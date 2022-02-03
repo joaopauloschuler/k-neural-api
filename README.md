@@ -128,3 +128,18 @@ python -m pydoc cai.layers
 python -m pydoc cai.models
 python -m pydoc cai.util
 ```
+
+## Citing this API
+You can cite this API in BibTeX format with:
+```
+@software{k_cai_neural_api_2021_5810092,
+  author       = {Joao Paulo Schwarz Schuler},
+  title        = {K-CAI NEURAL API v0.1.6},
+  month        = dec,
+  year         = 2021,
+  publisher    = {Zenodo},
+  version      = {v0.1.6},
+  doi          = {10.5281/zenodo.5810092},
+  url          = {https://doi.org/10.5281/zenodo.5810092}
+}
+```
