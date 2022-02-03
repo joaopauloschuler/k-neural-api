@@ -413,23 +413,20 @@ def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
     """
     return load_dataset(cifar10, lab=lab,  verbose=verbose,  bipolar=bipolar,  base_model_name='cifar10')
     
-def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.png'):
+def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.png', with_horizontal_flip=False, with_vertical_flip=False):
     """Saves a dataset loaded with load_dataset into disk.
     # Arguments
         aImages: array with images. This is usually x_train or x_test.
         aClasses: categorical array. This is usually y_train or y_test.
         dest_folder_name: destination folder name.
         format: image format as a file extension.
+        with_horizontal_flip: adds horizontal flips to the saved images.
+        with_vertical_flip: adds vertical flips to the saved images.
     # Example for saving CIFAR-10 into disk:
     dataset=tf.keras.datasets.cifar10
     x_train, y_train, x_test, y_test = cai.datasets.load_dataset(dataset, lab=False, bipolar=False)
     save_dataset_in_format(x_train*255, y_train, dest_folder_name='train')
     save_dataset_in_format(x_test*255, y_test, dest_folder_name='test')
-    # Returns
-        x_train: array with training images.
-        y_train: array with training labels.
-        x_test: array with testing images.
-        y_test: array with testing labels.
     """
     if not os.path.isdir(dest_folder_name):
         os.mkdir(dest_folder_name)
@@ -440,7 +437,10 @@ def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.p
         class_folder = dest_folder_name + '/class_' + str(class_idx)
         if not os.path.isdir(class_folder):
             os.mkdir(class_folder)
-        cv2.imwrite(class_folder+'/img_'+str(img_cnt)+'.png',img)
+        cv2.imwrite(class_folder+'/img_'+str(img_cnt)+format,img)
+        if (with_horizontal_flip): cv2.imwrite(class_folder+'/h_img_'+str(img_cnt)+format, np.flip(img, 1) )
+        if (with_vertical_flip): cv2.imwrite(class_folder+'/v_img_'+str(img_cnt)+format, np.flip(img, 0) )
+        if (with_horizontal_flip and with_vertical_flip): cv2.imwrite(class_folder+'/hv_img_'+str(img_cnt)+format, np.flip(np.flip(img, 0), 1) )
 
 def fix_bad_tfkeras_channel_order(aImages):
     """Fixes bad channel order from API loading."""
@@ -458,13 +458,15 @@ def fix_img_bad_tfkeras_channel_order(aImages):
     local_x[ :, :, 2] = aImages[ :, :, 0]
     return local_x
 
-def save_tfds_in_format(p_tfds, dest_folder_name='img', format='.png'):
+def save_tfds_in_format(p_tfds, dest_folder_name='img', format='.png', with_horizontal_flip=False, with_vertical_flip=False):
   """
   Saves a tensorflow dataset as image files. Classes are folders.
   # Arguments
     p_tfds: tensorflow dataset.
     dest_folder_name: destination folder name.
     format: image format as a file extension.
+    with_horizontal_flip: adds horizontal flips to the saved images.
+    with_vertical_flip: adds vertical flips to the saved images.
   """
   if not os.path.isdir(dest_folder_name):
     os.mkdir(dest_folder_name)
@@ -480,23 +482,26 @@ def save_tfds_in_format(p_tfds, dest_folder_name='img', format='.png'):
     if not os.path.isdir(class_folder):
        os.mkdir(class_folder)
     cv2.imwrite(class_folder+'/img_'+sample_idx+format,img)
+    if (with_horizontal_flip): cv2.imwrite(class_folder+'/h_img_'+sample_idx+format, np.flip(img, 1) )
+    if (with_vertical_flip): cv2.imwrite(class_folder+'/v_img_'+sample_idx+format, np.flip(img, 0) )
+    if (with_horizontal_flip and with_vertical_flip): cv2.imwrite(class_folder+'/hv_img_'+sample_idx+format, np.flip(np.flip(img, 0), 1) )
     cnt = cnt + 1
 
-def save_dataset_as_png(aImages, aClasses, dest_folder_name='img'):
+def save_dataset_as_png(aImages, aClasses, dest_folder_name='img', with_horizontal_flip=False, with_vertical_flip=False):
     """Saves a dataset loaded with load_dataset into disk with png format."""
-    save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.png')
+    save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.png', with_horizontal_flip=with_horizontal_flip, with_vertical_flip=with_vertical_flip)
 
-def save_dataset_as_jpg(aImages, aClasses, dest_folder_name='img'):
+def save_dataset_as_jpg(aImages, aClasses, dest_folder_name='img', with_horizontal_flip=False, with_vertical_flip=False):
     """Saves a dataset loaded with load_dataset into disk with png format."""
-    save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.jpg')
+    save_dataset_in_format(aImages, aClasses, dest_folder_name=dest_folder_name, format='.jpg', with_horizontal_flip=with_horizontal_flip, with_vertical_flip=with_vertical_flip)
 
-def save_tfds_as_png(p_tfds, dest_folder_name='img'):
+def save_tfds_as_png(p_tfds, dest_folder_name='img', with_horizontal_flip=False, with_vertical_flip=False):
     """Saves a tensorflow dataset as png images. Classes are folders."""
-    save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.png')
+    save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.png', with_horizontal_flip=with_horizontal_flip, with_vertical_flip=with_vertical_flip)
 
-def save_tfds_as_jpg(p_tfds, dest_folder_name='img'):
+def save_tfds_as_jpg(p_tfds, dest_folder_name='img', with_horizontal_flip=False, with_vertical_flip=False):
     """Saves a tensorflow dataset as jpg images. Classes are folders."""
-    save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.jpg')
+    save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.jpg', with_horizontal_flip=with_horizontal_flip, with_vertical_flip=with_vertical_flip)
 
 def download_file(remote_url,  local_file):
     r = requests.get(remote_url, stream = True) 
@@ -838,6 +843,22 @@ def load_image_file_names_from_folder(img_folder_name):
         if absolute_file_name_lower.endswith('.jpg') or absolute_file_name_lower.endswith('.jepg') or absolute_file_name_lower.endswith('.png'):
             output_img_list.append(absolute_file_name)
     return output_img_list
+
+def flip_images_on_folder(img_folder_name, with_horizontal_flip=True, with_vertical_flip=False):
+    """ Flips images on folder. """
+    img_list = os.listdir(img_folder_name)
+    for img_file in img_list:
+        absolute_file_name = img_folder_name+'/'+img_file
+        absolute_file_name_lower = absolute_file_name.lower()
+        if absolute_file_name_lower.endswith('.jpg') or absolute_file_name_lower.endswith('.jepg') or absolute_file_name_lower.endswith('.png'):
+            img = load_img(absolute_file_name)
+            img = img_to_array(img, dtype='float32')
+            h_absolute_dest_file_name = img_folder_name+'/h_'+img_file
+            v_absolute_dest_file_name = img_folder_name+'/v_'+img_file
+            hv_absolute_dest_file_name = img_folder_name+'/hv_'+img_file
+            if (with_horizontal_flip): cv2.imwrite(h_absolute_dest_file_name, np.flip(img, 1) )
+            if (with_vertical_flip): cv2.imwrite(v_absolute_dest_file_name, np.flip(img, 0) )
+            if (with_horizontal_flip and with_vertical_flip): cv2.imwrite(hv_absolute_dest_file_name, np.flip(np.flip(img, 0), 1) )            
 
 def add_padding_to_make_img_array_squared(img):
   sizex = img.shape[0]
