@@ -5,6 +5,7 @@ from tensorflow.keras import backend
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from skimage import color as skimage_color
 import csv
+import random
 
 def save_2d_array_as_csv(a, filename):
     """This function saves a 2D array into the filename (second parameter)
@@ -319,18 +320,18 @@ def deprocess_cp(img,  bipolar=True, tfcast=False):
     return img_result
 
 def rgb2monopolar(img):
-    """Transforms the input image into a monopolar (0, +1) image """
+    """Transforms the input image into a monopolar (0, +1) image. """
     img /= 255
     return img
 
 def rgb2bipolar(img):
-    """Transforms the input image into a bipolar (-2, +2) image """
+    """Transforms the input image into a bipolar (-2, +2) image. """
     img /= 64
     img -= 2
     return img
 
 def rgb2monopolar_lab(img):
-    """Transforms the input image into a monopolar (0, +1) LAB image """
+    """Transforms the input image into a monopolar (0, +1) LAB image. """
     img /= 255
     img = skimage_color.rgb2lab(img)
     img[:,:,0:3] /= [100, 200, 200]
@@ -338,12 +339,24 @@ def rgb2monopolar_lab(img):
     return img
 
 def rgb2bipolar_lab(img):
-    """Transforms the input image into a bipolar (-2, +2) LAB image """
+    """Transforms the input image into a bipolar (-2, +2) LAB image. """
     img /= 255
     img = skimage_color.rgb2lab(img)
     img[:,:,0:3] /= [25, 50, 50]
     img[:,:,0] -= 2
     return img
+
+def rgb2black_white_25percent(img):
+    """Transforms the input image into a black white image in 25% of the cases. """
+    if random.randint(0, 100) < 25:
+        bw_test = np.copy(img)
+        bw_test[ :, :, 0] += img[ :, :, 1] + img[ :, :, 2]
+        bw_test[ :, :, 0] /= 3
+        bw_test[ :, :, 1] = bw_test[ :, :, 0]
+        bw_test[ :, :, 2] = bw_test[ :, :, 0]
+        return bw_test
+    else:
+        return img
 
 # This is the default CAI Image generator with data augmentation
 def create_image_generator(
