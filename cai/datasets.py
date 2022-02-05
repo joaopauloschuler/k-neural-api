@@ -1039,7 +1039,7 @@ def print_classification_report(pred_y, test_y):
 
 def rgb_to_black_white_a(test_x):
   bw_test = np.copy(test_x)
-  bw_test[ :, :, :, 0] = test_x[ :, :, :, 1] + test_x[ :, :, :, 2]
+  bw_test[ :, :, :, 0] += test_x[ :, :, :, 1] + test_x[ :, :, :, 2]
   bw_test[ :, :, :, 0] /= 3
   bw_test[ :, :, :, 1] = bw_test[ :, :, :, 0]
   bw_test[ :, :, :, 2] = bw_test[ :, :, :, 0]
