@@ -358,6 +358,30 @@ def rgb2black_white_25percent(img):
     else:
         return img
 
+def rgb2black_white_50percent(img):
+    """Transforms the input image into a black white image in 50% of the cases. """
+    if random.randint(0, 100) < 50:
+        bw_test = np.copy(img)
+        bw_test[ :, :, 0] += img[ :, :, 1] + img[ :, :, 2]
+        bw_test[ :, :, 0] /= 3
+        bw_test[ :, :, 1] = bw_test[ :, :, 0]
+        bw_test[ :, :, 2] = bw_test[ :, :, 0]
+        return bw_test
+    else:
+        return img
+
+def rgb2black_white_75percent(img):
+    """Transforms the input image into a black white image in 75% of the cases. """
+    if random.randint(0, 100) < 75:
+        bw_test = np.copy(img)
+        bw_test[ :, :, 0] += img[ :, :, 1] + img[ :, :, 2]
+        bw_test[ :, :, 0] /= 3
+        bw_test[ :, :, 1] = bw_test[ :, :, 0]
+        bw_test[ :, :, 2] = bw_test[ :, :, 0]
+        return bw_test
+    else:
+        return img
+
 # This is the default CAI Image generator with data augmentation
 def create_image_generator(
         featurewise_center=False,  # set input mean to 0 over the dataset
