@@ -399,6 +399,31 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
                 print('Channel ', channel, ' min:', np.min(sub_matrix), ' max:', np.max(sub_matrix))
     return x_train, y_train, x_test, y_test
 
+def load_dataset_with_validation(dataset, lab=False, verbose=False, bipolar=True, base_model_name='', validation_size=0.1, validation_flip_horizontal=False, validation_flip_vertical=False):
+    x_train_full, y_train_full, x_test, y_test = load_dataset(dataset, lab=lab, verbose=verbose, bipolar=bipolar, base_model_name=base_model_name)
+    x_train_full_size_int = x_train_full.shape[0]
+    val_size_int = int(x_train_full_size_int * validation_size)
+    # Color Images?
+    if (len(x_train_full.shape) == 4):
+        x_val =    x_train_full[0:val_size_int,  :, :, :]
+        y_val =    y_train_full[0:val_size_int,  :, :, :]
+        x_train = x_train_full[val_size_int:,  :, :, :]
+        y_train = y_train_full[val_size_int:,  :, :, :]
+    else:
+        x_val =    x_train_full[0:val_size_int,  :, :]
+        y_val =    y_train_full[0:val_size_int,  :, :]
+        x_train = x_train_full[val_size_int:,  :, :]
+        y_train = y_train_full[val_size_int:,  :, :]
+
+    if (validation_flip_horizontal):
+        x_val = np.concatenate( (x_val, np.flip(x_val, 2)), axis=0)
+        y_val = np.concatenate( (y_val, y_val), axis=0)
+
+    if (validation_flip_vertical):
+        x_val = np.concatenate( (x_val, np.flip(x_val, 1)), axis=0)
+        y_val = np.concatenate( (y_val, y_val), axis=0)
+    return x_train, y_train, x_val, y_val, x_test, y_test
+
 def load_cifar10_dataset(lab=False,  verbose=False,  bipolar=True):
     """Loads a CIFAR-10 into memory.
     # Arguments
