@@ -406,14 +406,14 @@ def load_dataset_with_validation(dataset, lab=False, verbose=False, bipolar=True
     # Color Images?
     if (len(x_train_full.shape) == 4):
         x_val =    x_train_full[0:val_size_int,  :, :, :]
-        y_val =    y_train_full[0:val_size_int,  :, :, :]
+        y_val =    y_train_full[0:val_size_int,  :]
         x_train = x_train_full[val_size_int:,  :, :, :]
-        y_train = y_train_full[val_size_int:,  :, :, :]
+        y_train = y_train_full[val_size_int:,  :]
     else:
         x_val =    x_train_full[0:val_size_int,  :, :]
-        y_val =    y_train_full[0:val_size_int,  :, :]
+        y_val =    y_train_full[0:val_size_int,  :]
         x_train = x_train_full[val_size_int:,  :, :]
-        y_train = y_train_full[val_size_int:,  :, :]
+        y_train = y_train_full[val_size_int:,  :]
 
     if (validation_flip_horizontal):
         x_val = np.concatenate( (x_val, np.flip(x_val, 2)), axis=0)
