@@ -981,7 +981,13 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
   #read path and categorize to three groups: training, validation and testing. 
   for i,_class in enumerate(classes):
       paths = glob.glob(os.path.join(root_dir,_class,"*"))
-      paths = [n for n in paths if n.lower().endswith(".png") or n.lower().endswith(".jpg") or n.lower().endswith(".jpeg")]
+      paths = [n for n in paths if
+        n.lower().endswith(".png") or
+        n.lower().endswith(".jpg") or
+        n.lower().endswith(".jpeg") or
+        n.lower().endswith(".tif") or
+        n.lower().endswith(".tiff")
+        ]
       random.shuffle(paths)
       cat_total = len(paths)
       if (training_size > 0):
