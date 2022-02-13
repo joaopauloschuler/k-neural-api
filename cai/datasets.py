@@ -21,6 +21,7 @@ import glob
 import multiprocessing
 import math
 import random
+import shutil
 
 def rgb2lab(r, g, b):
     """Converts RGB values to LAB.
@@ -1130,3 +1131,43 @@ def test_flips_on_model(test_x, test_y, model, has_flip_x=True, has_flip_y=True,
 def test_flips_on_saved_model(test_x, test_y, model_file_name, has_flip_x=True, has_flip_y=True, has_bw=True, center_crop=0.0):
   model = cai.models.load_kereas_model(model_file_name)
   test_flips_on_model(test_x=test_x, test_y=test_y, model=model, has_flip_x=has_flip_x, has_flip_y=has_flip_y, has_bw=has_bw, center_crop=center_crop)
+
+def clone_sub_folders(source_folder, dest_folder, verbose=False):
+    """
+    This function clones first level subfolders.
+    """
+    if not os.path.isdir(dest_folder):
+        os.mkdir(dest_folder)
+        if verbose: print ("Creating folder "+dest_folder)
+    subfolders = os.listdir(source_folder)
+    for subfolder in subfolders:
+        if os.path.isdir(source_folder+'/'+subfolder):
+            new_folder = dest_folder+'/'+subfolder
+            if not os.path.isdir(new_folder):
+                if verbose: print ("Creating folder "+new_folder)
+                os.mkdir(new_folder)
+
+def extract_subset_every(source_folder, dest_folder, move_every=10, shift=0, verbose=False):
+    """
+    This is a deterministic function to move a subset of the dataset to another folder.
+    """
+    clone_sub_folders(source_folder, dest_folder, verbose)
+    subfolders = os.listdir(source_folder)
+    for subfolder in subfolders:
+        class_folder = source_folder+'/'+subfolder
+        dest_class_folder = dest_folder+'/'+subfolder
+        # print(class_folder, dest_folder)
+        file_list = sorted([filename for filename in os.listdir(class_folder) if os.path.isfile(class_folder+'/'+filename)])
+        class_file_cnt = len(file_list)
+        start_pos = shift
+        file_pos = start_pos
+        moved_cnt = 0
+        while file_pos < class_file_cnt:
+            source_file = class_folder+'/'+file_list[file_pos]
+            dest_file = dest_class_folder+'/'+file_list[file_pos]
+            if not os.path.isfile(dest_file):
+                # if verbose: print("Moving "+source_file+" to "+dest_file+" "+str(file_pos))
+                shutil.move(source_file, dest_file)
+                moved_cnt += 1
+        file_pos += move_every
+    if verbose: print(str(moved_cnt)+" files have been moved from "+class_folder+" to "+dest_class_folder+".")
