@@ -1169,5 +1169,5 @@ def extract_subset_every(source_folder, dest_folder, move_every=10, shift=0, ver
                 # if verbose: print("Moving "+source_file+" to "+dest_file+" "+str(file_pos))
                 shutil.move(source_file, dest_file)
                 moved_cnt += 1
-        file_pos += move_every
-    if verbose: print(str(moved_cnt)+" files have been moved from "+class_folder+" to "+dest_class_folder+".")
+            file_pos += move_every
+        if verbose: print(str(moved_cnt)+" files have been moved from "+class_folder+" to "+dest_class_folder+".")
