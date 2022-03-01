@@ -115,6 +115,22 @@ def CreatePartialModelCopyingChannels(pModel, pOutputLayerName, pChannelStart, p
   outputs = cai.layers.CopyChannels(channel_start=pChannelStart, channel_count=pChannelCount)(outputs)
   return keras.Model(inputs=inputs, outputs=outputs)
 
+def CreatePartialModelWithSoftMax(pModel, pOutputLayerName, numClasses, newLayerName='k_probs'):
+  """Creates a partial model up to the layer name defined in pOutputLayerName and then adds a dense layer with softmax.
+  This method was built to be used for image classification with transfer learning.
+  # Arguments
+    pModel: original model.
+    pOutputLayerName: last layer in the partial model.
+  """
+  model = cai.models.CreatePartialModel(pModel, pOutputLayerName)
+  inputs = model.input
+  outputs = model.get_layer(pOutputLayerName).output
+  outputs = keras.layers.Dense(numClasses,
+    activation='softmax',
+    name=newLayerName)(outputs)
+  model = keras.models.Model(inputs, outputs)
+  return model
+
 def CreatePartialModelFromChannel(pModel, pOutputLayerName, pChannelIdx):
   """Creates a partial model up to the layer name defined in pOutputLayerName and then copies the channel at index pChannelIdx.
   # Arguments
