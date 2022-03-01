@@ -121,6 +121,8 @@ def CreatePartialModelWithSoftMax(pModel, pOutputLayerName, numClasses, newLayer
   # Arguments
     pModel: original model.
     pOutputLayerName: last layer in the partial model.
+    numClasses: number of classes.
+    newLayerName: last dense/softmax layer name.
   """
   model = cai.models.CreatePartialModel(pModel, pOutputLayerName)
   inputs = model.input
