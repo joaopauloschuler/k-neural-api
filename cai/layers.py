@@ -16,6 +16,7 @@ def D6_32ch(): return 13
 def D6_64ch(): return 24
 def D6_128ch(): return 26
 
+def D6v3_2ch(): return 46
 def D6v3_4ch(): return 45
 def D6v3_8ch(): return 44
 def D6v3_12ch(): return 42
@@ -751,6 +752,8 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
         return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=8, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
     elif kType == 45:
         return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=4, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
+    elif kType == 46:
+        return kConv2DType10(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, min_channels_per_group=2, kernel_size=kernel_size, stride_size=stride_size, padding=padding)
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     """
