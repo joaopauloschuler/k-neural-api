@@ -51,7 +51,7 @@ else:
 * `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. This layers is known to speed up training.
 * `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
 * `cai.layers.EnforceEvenChannelCount`: enforces that the number of channels is even (divisible by 2).
-* `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the paper [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
+* `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 
 ## Documentation
 The documentation is composed by **examples** and **PyDoc**.
@@ -64,7 +64,7 @@ Some recommended introductory source code examples are:
 * [Experiment your own DenseNet Architecture](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb): this example allows you to experiment your own DenseNet settings. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb)
 * [Gradient Ascent / Deep Dream Example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb): this example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)
 * [Heatmap and Activation Map Examples with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb): this example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
-* [kEffNet](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/kEffNet_v1.ipynb): shows how to create and run kEffNet described in the paper [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
+* [kEffNet](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/kEffNet_v1.ipynb): shows how to create and run kEffNet described in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 * [Saving a TensorFlow dataset into png files](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb) so you can use the dataset with Keras image generator.
 
 The following image shows a car (input sample), its heatmap and both added together.
@@ -120,6 +120,7 @@ Above image was generated from:
 
 ### Scientific Research
 Experiments done for these papers were made with K-CAI API:
+* [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://www.researchgate.net/publication/360226228_Grouped_Pointwise_Convolutions_Reduce_Parameters_in_Convolutional_Neural_Networks).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 * [Reliable Deep Learning Plant Leaf Disease Classification Based on Light-Chroma Separated Branches](https://ebooks.iospress.nl/volumearticle/57735).
 
