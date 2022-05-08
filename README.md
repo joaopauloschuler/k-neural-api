@@ -2,13 +2,13 @@
 <img align="right" src="docs/cai.png" height="192">
 K-CAI NEURAL API is a Keras based neural network API that will allow you to prototype faster!
 
-This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the pascal based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/).
+This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the [free pascal](https://www.freepascal.org/) based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/).
 
 ## Prerequisites
 All you need is [Keras](https://keras.io/), [python](https://www.python.org/) and [pip](https://pypi.org/project/pip/).
 
 ### Quick Start with Image Classification
-* [Simple Image Classification with any Dataset](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb): this example shows how to create a model and train it with a dataset passed as parameter. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb)
+For a quick start, you can try the [Simple Image Classification with any Dataset](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb) example. This example shows how to create a model and train it with a dataset passed as parameter. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb) Feel free to modify the parameters and add/remove neural layers directly from your browser.
 
 ## Installation
 ### Via Shell
