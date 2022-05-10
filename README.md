@@ -137,6 +137,10 @@ python -m pydoc cai.util
 * `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
 * `cai.layers.EnforceEvenChannelCount`: enforces that the number of channels is even (divisible by 2).
 * `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
+
+## Give this Project a Star
+This project is an open source project. If you like what you see, please give it a star on github.
+
 ## Citing this API
 You can cite this API in BibTeX format with:
 ```
