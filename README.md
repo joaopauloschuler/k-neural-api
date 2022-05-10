@@ -29,32 +29,6 @@ else:
 
 !cd k && pip install .
 ```
-## Features
-* A number of new layer types.
-* `cai.util.create_image_generator`: this wrapper has extremely well tested default parameters for image classification data augmentation. For you to get a better image classification accuracy might be just a case of replacing your current data augmentation generator by this one. Give it a go!
-* `cai.util.create_image_generator_no_augmentation`: image generator for test datasets.
-* `cai.densenet.simple_densenet`: simple way to create DenseNet models. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
-* `cai.datasets.load_hyperspectral_matlab_image`: downloads (if required) and loads hyperspectral image from a matlab file. This function has been tested with [AVIRIS](http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes) and ROSIS sensor data stored as a matlab files.
-* `cai.models.calculate_heat_map_from_dense_and_avgpool`: calculates a class activation mapping (CAM) inspired on the paper [Learning Deep Features for Discriminative Localization](https://arxiv.org/abs/1512.04150) (see example below).
-* `cai.util.show_neuronal_patterns`: creates an array for visualizing first layer neuronal filters/patterns (see example below).
-* `cai.models.CreatePartialModel(pModel, pOutputLayerName, hasGlobalAvg=False)`: creates a partial model up to the layer name defined in pOutputLayerName.
-* `cai.models.CreatePartialModelCopyingChannels(pModel, pOutputLayerName, pChannelStart, pChannelCount)`: creates a partial model up to the layer name defined in pOutputLayerName and then copies channels starting from pChannelStart with pChannelCount channels.
-* `cai.models.CreatePartialModelFromChannel(pModel, pOutputLayerName, pChannelIdx)`: creates a partial model up to the layer name defined in pOutputLayerName and then copies the channel at index pChannelIdx. Use it in combination with `cai.gradientascent.run_gradient_ascent_octaves` to run gradient ascent from a specific channel or neuron.
-* `cai.models.CreatePartialModelWithSoftMax(pModel, pOutputLayerName, numClasses, newLayerName='k_probs')`: creates a partial model up to the layer name defined in pOutputLayerName and then adds a dense layer with softmax. This method was built to be used for image classification with transfer learning.
-* `cai.gradientascent.run_gradient_ascent_octaves`: allows visualizing patterns recognized by inner neuronal layers. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb). Use it in combination with `cai.models.CreatePartialModel`, `cai.models.CreatePartialModelCopyingChannels` or `cai.models.CreatePartialModelFromChannel`.
-* `cai.datasets.save_tfds_in_format`: saves a TensorFlow dataset as image files. Classes are folders. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb).
-* `cai.datasets.load_images_from_folders`: practical way to load small datasets into memory. It supports smart resizing, LAB color encoding and bipolar inputs.
-
-## New Layer Types
-* `cai.layers.CopyChannels`: copies a subset of the input channels.
-* `cai.layers.Negate`: negates (multiplies by -1) the input tensor.
-* `cai.layers.ConcatNegation`: concatenates the input with its negation.
-* `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
-* `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
-* `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. This layers is known to speed up training.
-* `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
-* `cai.layers.EnforceEvenChannelCount`: enforces that the number of channels is even (divisible by 2).
-* `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 
 ## Documentation
 The documentation is composed by **examples** and **PyDoc**.
@@ -137,6 +111,32 @@ python -m pydoc cai.models
 python -m pydoc cai.util
 ```
 
+## Features
+* A number of new layer types (see below).
+* `cai.util.create_image_generator`: this wrapper has extremely well tested default parameters for image classification data augmentation. For you to get a better image classification accuracy might be just a case of replacing your current data augmentation generator by this one. Give it a go!
+* `cai.util.create_image_generator_no_augmentation`: image generator for test datasets.
+* `cai.densenet.simple_densenet`: simple way to create DenseNet models. See [example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb).
+* `cai.datasets.load_hyperspectral_matlab_image`: downloads (if required) and loads hyperspectral image from a matlab file. This function has been tested with [AVIRIS](http://www.ehu.eus/ccwintco/index.php/Hyperspectral_Remote_Sensing_Scenes) and ROSIS sensor data stored as a matlab files.
+* `cai.models.calculate_heat_map_from_dense_and_avgpool`: calculates a class activation mapping (CAM) inspired on the paper [Learning Deep Features for Discriminative Localization](https://arxiv.org/abs/1512.04150) (see example below).
+* `cai.util.show_neuronal_patterns`: creates an array for visualizing first layer neuronal filters/patterns (see example below).
+* `cai.models.CreatePartialModel(pModel, pOutputLayerName, hasGlobalAvg=False)`: creates a partial model up to the layer name defined in pOutputLayerName.
+* `cai.models.CreatePartialModelCopyingChannels(pModel, pOutputLayerName, pChannelStart, pChannelCount)`: creates a partial model up to the layer name defined in pOutputLayerName and then copies channels starting from pChannelStart with pChannelCount channels.
+* `cai.models.CreatePartialModelFromChannel(pModel, pOutputLayerName, pChannelIdx)`: creates a partial model up to the layer name defined in pOutputLayerName and then copies the channel at index pChannelIdx. Use it in combination with `cai.gradientascent.run_gradient_ascent_octaves` to run gradient ascent from a specific channel or neuron.
+* `cai.models.CreatePartialModelWithSoftMax(pModel, pOutputLayerName, numClasses, newLayerName='k_probs')`: creates a partial model up to the layer name defined in pOutputLayerName and then adds a dense layer with softmax. This method was built to be used for image classification with transfer learning.
+* `cai.gradientascent.run_gradient_ascent_octaves`: allows visualizing patterns recognized by inner neuronal layers. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb). Use it in combination with `cai.models.CreatePartialModel`, `cai.models.CreatePartialModelCopyingChannels` or `cai.models.CreatePartialModelFromChannel`.
+* `cai.datasets.save_tfds_in_format`: saves a TensorFlow dataset as image files. Classes are folders. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb).
+* `cai.datasets.load_images_from_folders`: practical way to load small datasets into memory. It supports smart resizing, LAB color encoding and bipolar inputs.
+
+## New Layer Types
+* `cai.layers.CopyChannels`: copies a subset of the input channels.
+* `cai.layers.Negate`: negates (multiplies by -1) the input tensor.
+* `cai.layers.ConcatNegation`: concatenates the input with its negation.
+* `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
+* `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
+* `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. This layers is known to speed up training.
+* `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
+* `cai.layers.EnforceEvenChannelCount`: enforces that the number of channels is even (divisible by 2).
+* `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 ## Citing this API
 You can cite this API in BibTeX format with:
 ```
