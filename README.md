@@ -111,7 +111,7 @@ python -m pydoc cai.models
 python -m pydoc cai.util
 ```
 
-## Features
+## Feature List
 * A number of new layer types (see below).
 * `cai.util.create_image_generator`: this wrapper has extremely well tested default parameters for image classification data augmentation. For you to get a better image classification accuracy might be just a case of replacing your current data augmentation generator by this one. Give it a go!
 * `cai.util.create_image_generator_no_augmentation`: image generator for test datasets.
