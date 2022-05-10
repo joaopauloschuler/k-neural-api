@@ -8,7 +8,7 @@ This project is a subproject from a bigger and older project called [CAI](https:
 All you need is [Keras](https://keras.io/), [python](https://www.python.org/) and [pip](https://pypi.org/project/pip/).
 
 ### Quick Start with Image Classification
-For a quick start, you can try the [Simple Image Classification with any Dataset](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb) example. This example shows how to create a model and train it with a dataset passed as parameter. Feel free to modify the parameters and add/remove neural layers directly from your browser. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb)
+For a quick start, you can try the [Simple Image Classification with any Dataset](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb) example. This example shows how to create a model and train it with a dataset passed as parameter. Feel free to modify the parameters and to add/remove neural layers directly from your browser. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb)
 
 ## Installation
 ### Via Shell
