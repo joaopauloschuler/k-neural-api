@@ -1,6 +1,6 @@
 # K-CAI NEURAL API [![VERSION](https://img.shields.io/github/v/release/joaopauloschuler/k-neural-api)](https://github.com/joaopauloschuler/k-neural-api/releases)[![DOI](https://zenodo.org/badge/221215803.svg)](https://zenodo.org/badge/latestdoi/221215803)
 <img align="right" src="docs/cai.png" height="192">
-K-CAI NEURAL API is a Keras based neural network API that allows you to prototype faster!
+K-CAI NEURAL API is a Keras based neural network API that allows you to prototype faster, add non-standard layers to your neural network and create parameter-efficient models.
 
 This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the [free pascal](https://www.freepascal.org/) based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/).
 
@@ -131,16 +131,16 @@ These papers were made with K-CAI API:
 * `cai.datasets.save_tfds_in_format`: saves a TensorFlow dataset as image files. Classes are folders. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb).
 * `cai.datasets.load_images_from_folders`: practical way to load small datasets into memory. It supports smart resizing, LAB color encoding and bipolar inputs.
 
-## New Layer Types
+## New Layers
+* `cai.layers.ConcatNegation`: concatenates the input with its negation (input tensor multiplied by -1).
 * `cai.layers.CopyChannels`: copies a subset of the input channels.
-* `cai.layers.Negate`: negates (multiplies by -1) the input tensor.
-* `cai.layers.ConcatNegation`: concatenates the input with its negation.
-* `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
-* `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
-* `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. This layers is known to speed up training.
-* `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
 * `cai.layers.EnforceEvenChannelCount`: enforces that the number of channels is even (divisible by 2).
-* `cai.layers.kPointwiseConv2D`: parameter efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
+* `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
+* `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. `cai.layers.GlobalAverageMaxPooling2D` speeds up training when used as a replacement for standard average pooling and max pooling.
+* `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
+* `cai.layers.kPointwiseConv2D`: parameter-efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
+* `cai.layers.Negate`: negates (multiplies by -1) the input tensor.
+* `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
 
 ## Give this Project a Star
 This project is an open source project. If you like what you see, please give it a star on github.
