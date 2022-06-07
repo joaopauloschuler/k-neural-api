@@ -4,7 +4,7 @@
 K-CAI NEURAL API is a Keras based neural network API that allows you to:
 * [Prototype faster](https://github.com/joaopauloschuler/k-neural-api#quick-start-with-image-classification-on-your-own-web-browser).
 * Add [non-standard layers](https://github.com/joaopauloschuler/k-neural-api#new-layers) to your neural network.
-* Visualize [first layer filters](https://github.com/joaopauloschuler/k-neural-api#first-layer-filters), [activation maps](https://github.com/joaopauloschuler/k-neural-api#activation-maps), [heatmaps](https://github.com/joaopauloschuler/k-neural-api#heatmaps) and [gradient ascent](https://github.com/joaopauloschuler/k-neural-api#gradient-ascent--deep-dream).
+* Visualize [first layer filters](https://github.com/joaopauloschuler/k-neural-api#first-layer-filters), [activation maps](https://github.com/joaopauloschuler/k-neural-api#activation-maps), [heatmaps](https://github.com/joaopauloschuler/k-neural-api#heatmaps) ([see example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb)) and [gradient ascent](https://github.com/joaopauloschuler/k-neural-api#gradient-ascent--deep-dream) ([see example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)).
 * Create [parameter-efficient models](https://github.com/joaopauloschuler/k-neural-api#advanced-image-classification-examples).
 
 This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the [free pascal](https://www.freepascal.org/) based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/).
