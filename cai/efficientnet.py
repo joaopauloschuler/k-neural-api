@@ -689,7 +689,7 @@ def kEfficientNet(
     # Arguments
         width_coefficient: float, scaling coefficient for network width.
         depth_coefficient: float, scaling coefficient for network depth.
-        skip_stride_cnt: number of layers to skip stride. Good for smalll images.
+        skip_stride_cnt: number of layers to skip stride. This parameter is used with smalll images such as CIFAR-10.
         dropout_rate: float, dropout rate before final classifier layer.
         drop_connect_rate: float, dropout rate at skip connections.
         depth_divisor: integer, a unit of network width.
