@@ -48,13 +48,13 @@ These examples show how to train a neural network for the task of [image classif
 * [Saving a TensorFlow dataset into png files](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb) so you can use the dataset with Keras image generator.
 
 ### Advanced Image Classification Examples
-These papers show how to create parameter-efficient models:
+These papers with source code examples show how to create parameter-efficient models:
 * [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
-The following image shows a car (input sample), its heatmap and both added together.
-
+### Heatmaps
+The following image shows a car (left - input sample), its heatmap (center) and both added together (right).
 
 <p><img src="docs/cai-heatmap.png"></img></p>
 
@@ -66,7 +66,7 @@ heat_map = cai.models.calculate_heat_map_from_dense_and_avgpool(InputImage, imag
 
 These are activation map examples:
 <p><img src="docs/cai-activations.png"></img></p>
-Activation maps above have been created with a code similar to this:
+The above shown activation maps have been created with a code similar to this:
 
 ```
 conv_output = cai.models.PartialModelPredict(InputImage, model, 'layer_name', False)
@@ -76,6 +76,7 @@ activation_maps = cai.util.slice_3d_into_2d(aImage=conv_output[0], NumRows=8, Nu
 plt.imshow(activation_maps, interpolation='nearest', aspect='equal')
 ```
 
+### First Layer Filters
 These are filter examples:
 
 <p><img src="docs/cai-filters.png"></img></p>
