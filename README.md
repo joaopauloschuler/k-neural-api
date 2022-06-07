@@ -53,29 +53,6 @@ These papers with source code examples show how to create parameter-efficient mo
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
-### Heatmaps
-The following image shows a car (left - input sample), its heatmap (center) and both added together (right).
-
-<p><img src="docs/cai-heatmap.png"></img></p>
-
-Heatmaps can be produced following this example:
-
-```
-heat_map = cai.models.calculate_heat_map_from_dense_and_avgpool(InputImage, image_class, model, pOutputLayerName='last_conv_layer', pDenseLayerName='dense')
-```
-
-These are activation map examples:
-<p><img src="docs/cai-activations.png"></img></p>
-The above shown activation maps have been created with a code similar to this:
-
-```
-conv_output = cai.models.PartialModelPredict(InputImage, model, 'layer_name', False)
-...
-activation_maps = cai.util.slice_3d_into_2d(aImage=conv_output[0], NumRows=8, NumCols=8, ForceCellMax=True);
-...
-plt.imshow(activation_maps, interpolation='nearest', aspect='equal')
-```
-
 ### First Layer Filters
 These are filter examples:
 
@@ -89,6 +66,33 @@ neuron_patterns = cai.util.show_neuronal_patterns(weights, NumRows = 8, NumCols 
 ...
 plt.imshow(neuron_patterns, interpolation='nearest', aspect='equal')
 ```
+
+### Activation Maps
+These are activation map examples:
+
+<p><img src="docs/cai-activations.png"></img></p>
+
+The above shown activation maps have been created with a code similar to this:
+
+```
+conv_output = cai.models.PartialModelPredict(InputImage, model, 'layer_name', False)
+...
+activation_maps = cai.util.slice_3d_into_2d(aImage=conv_output[0], NumRows=8, NumCols=8, ForceCellMax=True);
+...
+plt.imshow(activation_maps, interpolation='nearest', aspect='equal')
+```
+
+### Heatmaps
+The following image shows a car (left - input sample), its heatmap (center) and both added together (right).
+
+<p><img src="docs/cai-heatmap.png"></img></p>
+
+Heatmaps can be produced following this example:
+
+```
+heat_map = cai.models.calculate_heat_map_from_dense_and_avgpool(InputImage, image_class, model, pOutputLayerName='last_conv_layer', pDenseLayerName='dense')
+```
+
 ### Gradient Ascent & Deep Dream
 With **cai.gradientascent.run_gradient_ascent_octaves**, you can easily run gradient ascent to create Deep Dream like images:
 ```
@@ -99,6 +103,7 @@ plt.figure(figsize = (16, 16))
 plt.imshow(new_img, interpolation='nearest', aspect='equal')
 plt.show()
 ```
+
 <p><img src="docs/park-ga.jpg"></img></p>
 
 Above image was generated from:
