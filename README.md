@@ -1,6 +1,10 @@
 # K-CAI NEURAL API [![VERSION](https://img.shields.io/github/v/release/joaopauloschuler/k-neural-api)](https://github.com/joaopauloschuler/k-neural-api/releases)[![DOI](https://zenodo.org/badge/221215803.svg)](https://zenodo.org/badge/latestdoi/221215803)
 <img align="right" src="docs/cai.png" height="192">
-K-CAI NEURAL API is a Keras based neural network API that allows you to prototype faster, add non-standard layers to your neural network and create parameter-efficient models.
+
+K-CAI NEURAL API is a Keras based neural network API that allows you to:
+* [Prototype faster](https://github.com/joaopauloschuler/k-neural-api#quick-start-with-image-classification-on-your-own-web-browser).
+* Add [non-standard layers](https://github.com/joaopauloschuler/k-neural-api#new-layers) to your neural network.
+* Create [parameter-efficient models](https://github.com/joaopauloschuler/k-neural-api#advanced-image-classification-examples).
 
 This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the [free pascal](https://www.freepascal.org/) based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/).
 
@@ -44,6 +48,7 @@ These examples show how to train a neural network for the task of [image classif
 * [Saving a TensorFlow dataset into png files](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb) so you can use the dataset with Keras image generator.
 
 ### Advanced Image Classification Examples
+These papers show how to create parameter-efficient models:
 * [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
