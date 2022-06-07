@@ -53,7 +53,7 @@ These papers with source code examples show how to create parameter-efficient mo
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
 ### First Layer Filters
-[Gradient Ascent / Deep Dream Example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb) example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)
+The [Heatmap and Activation Map with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb) example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
 
 These are filter examples:
 
@@ -68,11 +68,7 @@ neuron_patterns = cai.util.show_neuronal_patterns(weights, NumRows = 8, NumCols 
 plt.imshow(neuron_patterns, interpolation='nearest', aspect='equal')
 ```
 
-
-
 ### Activation Maps
-[Heatmap and Activation Map Examples with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb) example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
-
 These are activation map examples:
 
 <p><img src="docs/cai-activations.png"></img></p>
@@ -114,6 +110,8 @@ plt.show()
 Above image was generated from:
 
 <p><img src="https://github.com/joaopauloschuler/neural-api/blob/master/docs/park.jpg?raw=true" width=714px></img></p>
+
+There is a ready to use example: [Gradient Ascent / Deep Dream Example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb). [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)
 
 ### PyDoc
 After installing K-CAI, you can find documentation with:
