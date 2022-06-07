@@ -44,8 +44,6 @@ These examples show how to train a neural network for the task of [image classif
 * [DenseNet BC L40 with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb): this example shows how to create a densenet model with `cai.densenet.simple_densenet` and easily train it with `cai.datasets.train_model_on_cifar10`. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_10.ipynb)
 * [DenseNet BC L40 with CIFAR-100](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_100.ipynb): this example shows how to create a densenet model with `cai.densenet.simple_densenet` and easily train it with `cai.datasets.train_model_on_dataset`. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_densenet_bc_l40_with_cifar_100.ipynb)
 * [Experiment your own DenseNet Architecture](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb): this example allows you to experiment your own DenseNet settings. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/densenet_with_cifar.ipynb)
-* [Gradient Ascent / Deep Dream Example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb): this example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)
-* [Heatmap and Activation Map Examples with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb): this example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
 * [Saving a TensorFlow dataset into png files](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb) so you can use the dataset with Keras image generator.
 
 ### Advanced Image Classification Examples
@@ -55,6 +53,8 @@ These papers with source code examples show how to create parameter-efficient mo
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
 ### First Layer Filters
+[Gradient Ascent / Deep Dream Example](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb) example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)
+
 These are filter examples:
 
 <p><img src="docs/cai-filters.png"></img></p>
@@ -68,7 +68,11 @@ neuron_patterns = cai.util.show_neuronal_patterns(weights, NumRows = 8, NumCols 
 plt.imshow(neuron_patterns, interpolation='nearest', aspect='equal')
 ```
 
+
+
 ### Activation Maps
+[Heatmap and Activation Map Examples with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb) example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
+
 These are activation map examples:
 
 <p><img src="docs/cai-activations.png"></img></p>
