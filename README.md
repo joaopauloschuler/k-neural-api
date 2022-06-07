@@ -53,7 +53,7 @@ These papers with source code examples show how to create parameter-efficient mo
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
 ### First Layer Filters
-The [Heatmap and Activation Map with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb) example shows how you can quickly display heatmap (CAM), activation maps and first layer filters/patterns.
+The [Heatmap and Activation Map with CIFAR-10](https://github.com/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb) example shows how you can quickly display heatmaps (CAM), activation maps and first layer filters/patterns.
 
 These are filter examples:
 
