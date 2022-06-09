@@ -401,6 +401,23 @@ def load_dataset(dataset, lab=False,  verbose=False,  bipolar=True,  base_model_
     return x_train, y_train, x_test, y_test
 
 def load_dataset_with_validation(dataset, lab=False, verbose=False, bipolar=True, base_model_name='', validation_size=0.1, validation_flip_horizontal=False, validation_flip_vertical=False):
+    """Loads a dataset (train, validation, test) into memory.
+    # Arguments
+        dataset: object capable of loading the dataset.
+        lab: boolean indicating CIELAB (True) color space of RGB color space (False).
+        verbose: boolean value.
+        bipolar: if true, inputs are given in the rage [-2, +2].
+        validation_size: portion of the dataset dedicated to validation. 0.1 means 10%.
+        validation_flip_horizontal: add horizontally flipped images to the validation subset.
+        validation_flip_vertical: add vertically flipped images to the validation subset.
+    # Returns
+        x_train: array with training images.
+        y_train: array with training labels.
+        x_val: array with validation images.
+        y_val: array with validation labels.
+        x_test: array with testing images.
+        y_test: array with testing labels.
+    """
     x_train_full, y_train_full, x_test, y_test = load_dataset(dataset, lab=lab, verbose=verbose, bipolar=bipolar, base_model_name=base_model_name)
     x_train_full_size_int = x_train_full.shape[0]
     val_size_int = int(x_train_full_size_int * validation_size)
@@ -530,6 +547,11 @@ def save_tfds_as_jpg(p_tfds, dest_folder_name='img', with_horizontal_flip=False,
     save_tfds_in_format(p_tfds, dest_folder_name=dest_folder_name, format='.jpg', with_horizontal_flip=with_horizontal_flip, with_vertical_flip=with_vertical_flip)
 
 def download_file(remote_url,  local_file):
+    """Downloads a remote file from the remote_url parameter into a local file.
+    # Arguments
+    remote_url: remote url from where the file will be downloaded.
+    local_file: local file to be saved.
+    """
     r = requests.get(remote_url, stream = True) 
     with open(local_file,"wb") as local_wb: 
         for chunk in r.iter_content(chunk_size=1024*1024): 
@@ -538,6 +560,7 @@ def download_file(remote_url,  local_file):
                  local_wb.write(chunk)
 
 def unzip_file(local_zip_file, expected_folder_name):
+    """Unzips a local file."""
     with zipfile.ZipFile(local_zip_file, 'r') as zip_ref:
         zip_ref.extractall(expected_folder_name)    
     
