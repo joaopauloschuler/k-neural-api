@@ -258,6 +258,7 @@ def BinaryCompression(last_tensor, name, target_channel_count, has_batch_norm=Tr
     return last_tensor
 
 def GetChannelAxis():
+    """This function returns the channel axis."""
     if tensorflow.keras.backend.image_data_format() == 'channels_first':
         channel_axis = 1
     else:
@@ -366,8 +367,10 @@ def kConv2DType1(last_tensor, filters=32, channel_axis=3, name=None, activation=
 
 def kConv2DType2(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, min_channels_per_group=16, kernel_size=1, stride_size=1, padding='same'):
     """
-    This is the default ktype. It's made by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
-    vary according to input tensor and function parameter. In internal documentation, this is solution D6.
+    This ktype is composed by a grouped convolution followed by interleaving and another grouped comvolution with skip connection. This basic architecture can
+    vary according to the input tensor and its parameters. This is the basic building block for the papers:
+    https://www.researchgate.net/publication/360226228_Grouped_Pointwise_Convolutions_Reduce_Parameters_in_Convolutional_Neural_Networks
+    https://www.researchgate.net/publication/355214501_Grouped_Pointwise_Convolutions_Significantly_Reduces_Parameters_in_EfficientNet
     """
     output_tensor = last_tensor
     prev_layer_channel_count = tensorflow.keras.backend.int_shape(last_tensor)[channel_axis]
