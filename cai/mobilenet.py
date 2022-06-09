@@ -355,8 +355,10 @@ def _depthwise_conv_block(inputs, pointwise_conv_filters, alpha,
 
 def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     depth_multiplier=1, strides=(1, 1), block_id=1,
+    d_separable_activation=None,
     activation=keras.activations.swish,
-    kType=0):
+    kType=0 
+    ):
     """Adds an optimized depthwise convolution block.
 
     A depthwise convolution block consists of a depthwise conv,
@@ -389,6 +391,8 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
             any `dilation_rate` value != 1.
         block_id: Integer, a unique identification designating
             the block number.
+        d_separable_activation: activation function used with depthwise separable convolutions.
+        activation: activation function used with optimized pointwise convolutions.
         kType: k optimized convolutional type.
 
     # Input shape
@@ -426,7 +430,11 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
                                name='conv_dw_%d' % block_id)(x)
     x = layers.BatchNormalization(
         axis=channel_axis, name='conv_dw_%d_bn' % block_id)(x)
-    x = layers.ReLU(6., name='conv_dw_%d_relu' % block_id)(x)
+
+    if d_separable_activation is not None: 
+        x = layers.Activation(activation=d_separable_activation, name='conv_dw_%d_act' % block_id)(x)
+    else:
+        x = layers.ReLU(6., name='conv_dw_%d_relu' % block_id)(x)
 
     #x = layers.Conv2D(pointwise_conv_filters, (1, 1),
     #                  padding='same',
@@ -447,6 +455,7 @@ def kMobileNet(input_shape=None,
     input_tensor=None,
     pooling=None,
     classes=1000,
+    d_separable_activation=None,
     activation=keras.activations.swish,
     kType=0, 
     l_ratio=0.0,
@@ -498,6 +507,8 @@ def kMobileNet(input_shape=None,
         classes: optional number of classes to classify images
             into, only to be specified if `include_top` is True, and
             if no `weights` argument is specified.
+        d_separable_activation: activation function used with depthwise separable convolutions.
+        activation: activation function used with optimized pointwise convolutions.
         kType: k optimized convolutional type.
         l_ratio: proportion of first layer filters dedicated to light.
         ab_ratio: proportion of first layer filters dedicated to color.
@@ -514,10 +525,7 @@ def kMobileNet(input_shape=None,
     """
     img_input = keras.layers.Input(shape=input_shape)
 
-    if backend.image_data_format() == 'channels_first':
-        channel_axis = 1
-    else:
-        channel_axis = 3
+    channel_axis = cai.layers.GetChannelAxis();
 
     local_strides = (1, 1) if (skip_stride_cnt >=0) else (2, 2)
 
@@ -532,27 +540,27 @@ def kMobileNet(input_shape=None,
     else:
         x = _conv_block(img_input, 32, alpha, strides=local_strides)
 
-    x = kdepthwise_conv_block(x, 64, alpha, depth_multiplier, block_id=1, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 64, alpha, depth_multiplier, block_id=1, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
 
     local_strides = (1, 1) if (skip_stride_cnt >=1) else (2, 2)
-    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, strides=local_strides, block_id=2, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, block_id=3, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, strides=local_strides, block_id=2, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 128, alpha, depth_multiplier, block_id=3, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
 
     local_strides = (1, 1) if (skip_stride_cnt >=2) else (2, 2)
-    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, strides=local_strides, block_id=4, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, block_id=5, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, strides=local_strides, block_id=4, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 256, alpha, depth_multiplier, block_id=5, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
 
     local_strides = (1, 1) if (skip_stride_cnt >=3) else (2, 2)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, strides=local_strides, block_id=6, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=7, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=8, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=9, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=10, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=11, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, strides=local_strides, block_id=6, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=7, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=8, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=9, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=10, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 512, alpha, depth_multiplier, block_id=11, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
 
     local_strides = (1, 1) if (skip_stride_cnt >=4) else (2, 2)
-    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, strides=local_strides, block_id=12, activation=activation, kType=kType)
-    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, block_id=13, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, strides=local_strides, block_id=12, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
+    x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, block_id=13, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
 
     if include_top:
         if backend.image_data_format() == 'channels_first':
