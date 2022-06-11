@@ -353,7 +353,7 @@ def _depthwise_conv_block(inputs, pointwise_conv_filters, alpha,
                                   name='conv_pw_%d_bn' % block_id)(x)
     return layers.ReLU(6., name='conv_pw_%d_relu' % block_id)(x)
 
-def kconv_block(inputs, filters, alpha, kernel=(3, 3), strides=(1, 1), activation=None):
+def kconv_block(inputs, filters, alpha, kernel=(3, 3), strides=(1, 1), activation=None, name=None):
     """Adds an initial convolution layer (with batch normalization and relu6).
 
     # Arguments
@@ -403,18 +403,23 @@ def kconv_block(inputs, filters, alpha, kernel=(3, 3), strides=(1, 1), activatio
         Output tensor of block.
     """
     channel_axis = 1 if backend.image_data_format() == 'channels_first' else -1
+    if name is None:
+        name = 'conv1'
     filters = int(filters * alpha)
-    x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)), name='conv1_pad')(inputs)
-    x = layers.Conv2D(filters, kernel,
-                      padding='valid',
-                      use_bias=False,
-                      strides=strides,
-                      name='conv1')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='conv1_bn')(x)
-    if activation is not None:
-        x = layers.Activation(activation=activation, name='conv1_act')(x)
+    if strides == (1, 1):
+        x = inputs
     else:
-        x = layers.ReLU(6., name='conv1_relu')(x)
+        x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)), name=name+'_pad')(inputs)
+    x = layers.Conv2D(filters, kernel,
+        padding ='same' if strides == (1, 1) else 'valid',
+        use_bias =False,
+        strides =strides,
+        name =name)(x)
+    x = layers.BatchNormalization(axis=channel_axis, name=name+'_bn')(x)
+    if activation is not None:
+        x = layers.Activation(activation=activation, name=name+'_act')(x)
+    else:
+        x = layers.ReLU(6., name=name+'_relu')(x)
     return x
 
 def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
@@ -485,13 +490,13 @@ def kdepthwise_conv_block(inputs, pointwise_conv_filters, alpha,
         x = inputs
     else:
         x = layers.ZeroPadding2D(((0, 1), (0, 1)),
-                                 name='conv_pad_%d' % block_id)(inputs)
+            name='conv_pad_%d' % block_id)(inputs)
     x = layers.DepthwiseConv2D((3, 3),
-                               padding='same' if strides == (1, 1) else 'valid',
-                               depth_multiplier=depth_multiplier,
-                               strides=strides,
-                               use_bias=False,
-                               name='conv_dw_%d' % block_id)(x)
+        padding='same' if strides == (1, 1) else 'valid',
+        depth_multiplier=depth_multiplier,
+        strides=strides,
+        use_bias=False,
+        name='conv_dw_%d' % block_id)(x)
     x = layers.BatchNormalization(
         axis=channel_axis, name='conv_dw_%d_bn' % block_id)(x)
 
@@ -598,15 +603,15 @@ def kMobileNet(input_shape=None,
     if (l_ratio > 0.0) and (ab_ratio>0.0):
         l_branch = cai.layers.CopyChannels(0,1)(img_input)
         ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-        l_branch = kconv_block(l_branch, int(round(32*l_ratio)), alpha, strides=local_strides, activation=conv1_activation)
-        ab_branch = kconv_block(ab_branch, int(round(32*ab_ratio)), alpha, strides=local_strides, activation=conv1_activation)
+        l_branch = kconv_block(l_branch, int(round(32*l_ratio)), alpha, strides=local_strides, activation=conv1_activation, name='l')
+        ab_branch = kconv_block(ab_branch, int(round(32*ab_ratio)), alpha, strides=local_strides, activation=conv1_activation, name='ab')
         x = keras.layers.Concatenate(axis=channel_axis, name='l-ab-paths-concat')([l_branch, ab_branch])
     elif (l_ratio > 0.0) and (ab_ratio<=0.0):
         l_branch = cai.layers.CopyChannels(0,1)(img_input)
-        x = kconv_block(l_branch, int(round(32*l_ratio)), alpha, strides=local_strides, activation=conv1_activation)
+        x = kconv_block(l_branch, int(round(32*l_ratio)), alpha, strides=local_strides, activation=conv1_activation, name='l')
     elif (l_ratio <= 0.0) and (ab_ratio>0.0):
         ab_branch = cai.layers.CopyChannels(1,2)(img_input)
-        x = kconv_block(ab_branch, int(round(32*ab_ratio)), alpha, strides=local_strides, activation=conv1_activation)
+        x = kconv_block(ab_branch, int(round(32*ab_ratio)), alpha, strides=local_strides, activation=conv1_activation, name='ab')
     else:
         x = kconv_block(img_input, 32, alpha, strides=local_strides, activation=conv1_activation)
 
