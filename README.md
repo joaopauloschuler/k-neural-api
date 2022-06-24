@@ -52,6 +52,7 @@ These examples show how to train a neural network for the task of [image classif
 ### Advanced Image Classification Examples
 These papers with source code examples show how to create parameter-efficient models:
 * [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
+* [Color-aware two-branch DCNN for efficient plant disease classification](https://github.com/joaopauloschuler/two-branch-plant-disease).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
