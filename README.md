@@ -50,7 +50,7 @@ These examples show how to train a neural network for the task of [image classif
 * [Saving a TensorFlow dataset into png files](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb) so you can use the dataset with Keras image generator.
 
 ### Advanced Image Classification Examples
-These papers with source code examples show how to create parameter-efficient models:
+These papers show how to create parameter-efficient models (source code is available):
 * [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
 * [Color-aware two-branch DCNN for efficient plant disease classification](https://github.com/joaopauloschuler/two-branch-plant-disease).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
