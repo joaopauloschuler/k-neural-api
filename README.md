@@ -2,10 +2,13 @@
 <img align="right" src="docs/cai.png" height="192">
 
 K-CAI NEURAL API is a Keras based neural network API that allows you to:
-* [Prototype faster](https://github.com/joaopauloschuler/k-neural-api#quick-start-with-image-classification-on-your-own-web-browser) ([see example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb)).
+* [Prototype convolutional neural networks faster](https://github.com/joaopauloschuler/k-neural-api#quick-start-with-image-classification-on-your-own-web-browser) ([see example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/simple_image_classification_with_any_dataset.ipynb)).
 * Add [non-standard layers](https://github.com/joaopauloschuler/k-neural-api#new-layers) to your neural network.
 * Visualize [first layer filters](https://github.com/joaopauloschuler/k-neural-api#first-layer-filters), [activation maps](https://github.com/joaopauloschuler/k-neural-api#activation-maps), [heatmaps](https://github.com/joaopauloschuler/k-neural-api#heatmaps) ([see example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/activation_map_heatmap_with_cifar10.ipynb)) and [gradient ascent](https://github.com/joaopauloschuler/k-neural-api#gradient-ascent--deep-dream) ([see example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/cai_gradient_ascent.ipynb)).
-* Create [parameter-efficient models](https://github.com/joaopauloschuler/k-neural-api#advanced-image-classification-examples).
+* Create [parameter-efficient neural networks](https://github.com/joaopauloschuler/kEffNetV1).
+* Create [noise-resistant neural networks](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease) for image classification and [achieve state-of-the-art classification accuracy](https://github.com/joaopauloschuler/two-branch-plant-disease).
+* Use an extremely well tested data augmentation wrapper for image classification (see `cai.util.create_image_generator` below).
+* Save a [Tensorflow dataset](https://www.tensorflow.org/datasets) for image classification into a local folder structure: `cai.datasets.save_tfds_in_format`. See [example](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb).
 
 This project is a subproject from a bigger and older project called [CAI](https://sourceforge.net/projects/cai/) and is sister to the [free pascal](https://www.freepascal.org/) based [CAI NEURAL API](https://github.com/joaopauloschuler/neural-api/).
 
@@ -47,8 +50,9 @@ These examples show how to train a neural network for the task of [image classif
 * [Saving a TensorFlow dataset into png files](https://colab.research.google.com/github/joaopauloschuler/k-neural-api/blob/master/examples/jupyter/k_cai_tfds_example.ipynb) so you can use the dataset with Keras image generator.
 
 ### Advanced Image Classification Examples
-These papers with source code examples show how to create parameter-efficient models:
+These papers show how to create parameter-efficient models (source code is available):
 * [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
+* [Color-aware two-branch DCNN for efficient plant disease classification](https://github.com/joaopauloschuler/two-branch-plant-disease).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet).
 * [Making plant disease classification noise resistant](https://github.com/joaopauloschuler/two-path-noise-lab-plant-disease).
 
@@ -128,6 +132,7 @@ These papers were made with K-CAI API:
 * [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://www.researchgate.net/publication/360226228_Grouped_Pointwise_Convolutions_Reduce_Parameters_in_Convolutional_Neural_Networks).
 * [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://www.researchgate.net/publication/355214501_Grouped_Pointwise_Convolutions_Significantly_Reduces_Parameters_in_EfficientNet).
 * [Reliable Deep Learning Plant Leaf Disease Classification Based on Light-Chroma Separated Branches](https://www.researchgate.net/publication/355215213_Reliable_Deep_Learning_Plant_Leaf_Disease_Classification_Based_on_Light-Chroma_Separated_Branches).
+* [Color-aware two-branch DCNN for efficient plant disease classification](https://www.researchgate.net/publication/361511874_Color-Aware_Two-Branch_DCNN_for_Efficient_Plant_Disease_Classification).
 
 ## Feature List
 * A number of new layer types (see below).
