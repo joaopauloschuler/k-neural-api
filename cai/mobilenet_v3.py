@@ -629,11 +629,11 @@ def kMobileNetV3(stack_fn,
         activation = cai.layers.HardSwish
         se_ratio = 0.25
     
-    x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3), name='Conv_pad')(img_input)
-
     if (skip_stride_cnt<0):
+        x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3), name='Conv_pad')(img_input)
         strides=(2, 2)
     else:
+        x = layers.ZeroPadding2D(padding=1, name='Conv_pad')(img_input)
         strides=(1, 1)
 
     if (l_ratio > 0.0) and (ab_ratio>0.0):
