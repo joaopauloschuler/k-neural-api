@@ -637,13 +637,19 @@ def kMobileNet(input_shape=None,
     x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, strides=local_strides, block_id=12, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
     x = kdepthwise_conv_block(x, 1024, alpha, depth_multiplier, block_id=13, d_separable_activation=d_separable_activation, activation=activation, kType=kType)
 
+    if (pooling is None) or (pooling == 'avg'):
+        x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+    elif pooling == 'max':
+        x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+    elif pooling == 'avgmax':
+        x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
+
     if include_top:
         if backend.image_data_format() == 'channels_first':
             shape = (int(1024 * alpha), 1, 1)
         else:
             shape = (1, 1, int(1024 * alpha))
 
-        x = layers.GlobalAveragePooling2D()(x)
         x = layers.Reshape(shape, name='reshape_1')(x)
         x = layers.Dropout(dropout, name='dropout')(x)
         # The last dense layer should not be optimized.
@@ -653,11 +659,6 @@ def kMobileNet(input_shape=None,
         #x = cai.layers.kPointwiseConv2D(x, filters=classes, channel_axis=cai.layers.GetChannelAxis(), name='conv_preds', activation=None, has_batch_norm=False, use_bias=True, kType=kType)
         x = layers.Reshape((classes,), name='reshape_2')(x)
         x = layers.Activation('softmax', name='act_softmax')(x)
-    else:
-        if pooling == 'avg':
-            x = layers.GlobalAveragePooling2D()(x)
-        elif pooling == 'max':
-            x = layers.GlobalMaxPooling2D()(x)
 
     inputs = img_input
 
