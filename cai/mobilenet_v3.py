@@ -685,6 +685,7 @@ def kMobileNetV3(stack_fn,
         x = layers.GlobalMaxPooling2D(name='max_pool')(x)
     elif pooling == 'avgmax':
         x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
+        last_conv_ch = last_conv_ch * 2
         
     if include_top:
         if channel_axis == 1:
