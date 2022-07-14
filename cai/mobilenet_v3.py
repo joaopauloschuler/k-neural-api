@@ -533,18 +533,21 @@ def kinverted_res_block(x, expansion, filters, kernel_size, stride,
     return x
 
 def kMobileNetV3(stack_fn,
-                last_point_ch,
-                input_shape=None,
-                alpha=1.0,
-                model_type='large',
-                minimalistic=False,
-                include_top=True,
-                input_tensor=None,
-                classes=1000,
-                pooling=None,
-                dropout_rate=0.2,
-                kType=0,
-                **kwargs):
+    last_point_ch,
+    input_shape=None,
+    alpha=1.0,
+    model_type='large',
+    minimalistic=False,
+    include_top=True,
+    input_tensor=None,
+    classes=1000,
+    pooling=None,
+    dropout_rate=0.2,
+    kType=0,
+    l_ratio=0.0,
+    ab_ratio=0.0,
+    skip_stride_cnt=-1,
+    **kwargs):
     """Instantiates the MobileNetV3 architecture.
 
     # Arguments
@@ -601,6 +604,10 @@ def kMobileNetV3(stack_fn,
             - `max` means that global max pooling will
                 be applied.
         dropout_rate: fraction of the input units to drop on the last layer
+        kType: k optimized convolutional type.
+        l_ratio: proportion of first layer filters dedicated to light.
+        ab_ratio: proportion of first layer filters dedicated to color.
+        skip_stride_cnt: number of layers to skip stride. This parameter is used with smalll images such as CIFAR-10.
     # Returns
         A Keras model instance.
 
@@ -621,22 +628,39 @@ def kMobileNetV3(stack_fn,
         kernel = 5
         activation = cai.layers.HardSwish
         se_ratio = 0.25
+    
+    x = img_input
 
-    x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3),
-                             name='Conv_pad')(img_input)
-    x = layers.Conv2D(16,
-                      kernel_size=3,
-                      strides=(2, 2),
-                      padding='valid',
-                      use_bias=False,
-                      name='Conv')(x)
+    if (skip_stride_cnt<0):
+        x = layers.ZeroPadding2D(padding=correct_pad(backend, img_input, 3),
+            name='Conv_pad')(x)
+        strides=(2, 2)
+    else:
+        strides=(1, 1)
+
+    if (l_ratio > 0.0) and (ab_ratio>0.0):
+        l_branch = cai.layers.CopyChannels(0,1)(x)
+        ab_branch = cai.layers.CopyChannels(1,2)(x)
+        l_branch = layers.Conv2D(int(round(16*l_ratio)), kernel_size=3, strides=strides, padding='valid', use_bias=False, name='Conv_l')(l_branch)
+        ab_branch = layers.Conv2D(int(round(16*ab_ratio)), kernel_size=3, strides=strides, padding='valid', use_bias=False, name='Conv_ab')(ab_branch)
+        x = keras.layers.Concatenate(axis=channel_axis, name='l-ab-paths-concat')([l_branch, ab_branch])
+    elif (l_ratio > 0.0) and (ab_ratio<=0.0):
+        l_branch = cai.layers.CopyChannels(0,1)(x)
+        x = layers.Conv2D(int(round(16*l_ratio)), kernel_size=3, strides=strides, padding='valid', use_bias=False, name='Conv_l')(l_branch)
+    elif (l_ratio <= 0.0) and (ab_ratio>0.0):
+        ab_branch = cai.layers.CopyChannels(1,2)(x)
+        x = layers.Conv2D(int(round(16*ab_ratio)), kernel_size=3, strides=strides, padding='valid', use_bias=False, name='Conv_ab')(ab_branch)
+    else:
+        x = layers.Conv2D(16, kernel_size=3, strides=strides, padding='valid', use_bias=False, name='Conv')(x)
+
     x = layers.BatchNormalization(axis=channel_axis,
-                                  epsilon=1e-3,
-                                  momentum=0.999,
-                                  name='Conv/BatchNorm')(x)
+        epsilon=1e-3,
+        momentum=0.999,
+        name='Conv/BatchNorm')(x)
+
     x = layers.Activation(activation)(x)
 
-    x = stack_fn(x, kernel, activation, se_ratio, kType=kType)
+    x = stack_fn(x, kernel, activation, se_ratio, kType=kType, skip_stride_cnt=skip_stride_cnt)
 
     last_conv_ch = _depth(backend.int_shape(x)[channel_axis] * 6)
 
@@ -657,8 +681,14 @@ def kMobileNetV3(stack_fn,
     # x = layers.Activation(activation)(x)
     x = cai.layers.kPointwiseConv2D(x, filters=last_conv_ch, channel_axis=channel_axis, name='Conv_1', activation=activation, has_batch_norm=True, use_bias=False, kType=kType)
 
+    if (pooling is None) or (pooling == 'avg'):
+        x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+    elif pooling == 'max':
+        x = layers.GlobalMaxPooling2D(name='max_pool')(x)
+    elif pooling == 'avgmax':
+        x = cai.layers.GlobalAverageMaxPooling2D(x, name='avgmax_pool')
+        
     if include_top:
-        x = layers.GlobalAveragePooling2D()(x)
         if channel_axis == 1:
             x = layers.Reshape((last_conv_ch, 1, 1))(x)
         else:
@@ -673,106 +703,121 @@ def kMobileNetV3(stack_fn,
             x = layers.Dropout(dropout_rate)(x)
         #Last layer hasn't been transformed.
         x = layers.Conv2D(classes,
-                          kernel_size=1,
-                          padding='same',
-                          name='Logits')(x)
+            kernel_size=1,
+            padding='same',
+            name='Logits')(x)
         x = layers.Flatten()(x)
         x = layers.Softmax(name='Predictions/Softmax')(x)
-    else:
-        if pooling == 'avg':
-            x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-        elif pooling == 'max':
-            x = layers.GlobalMaxPooling2D(name='max_pool')(x)
 
     inputs = img_input
-    
+
     # Create model.
     model = keras.models.Model(inputs, x, name='kMobilenetV3' + model_type+'-'+str(kType))
 
     return model
 
 def kMobileNetV3Small(input_shape=None,
-                     alpha=1.0,
-                     minimalistic=False,
-                     include_top=True,
-                     input_tensor=None,
-                     classes=1000,
-                     pooling=None,
-                     dropout_rate=0.2,
-                     kType=0,
-                     **kwargs):
-    def stack_fn(x, kernel, activation, se_ratio, kType=0):
+        alpha=1.0,
+        minimalistic=False,
+        include_top=True,
+        input_tensor=None,
+        classes=1000,
+        pooling=None,
+        dropout_rate=0.2,
+        kType=0,
+        l_ratio=0.0,
+        ab_ratio=0.0,
+        skip_stride_cnt=-1,
+        **kwargs):
+    def stack_fn(x, kernel, activation, se_ratio, kType=0, skip_stride_cnt=-1):
         def depth(d):
             return _depth(d * alpha)
-        x = kinverted_res_block(x, 1, depth(16), 3, 2, se_ratio, 'relu', 0, kType=kType)
-        x = kinverted_res_block(x, 72. / 16, depth(24), 3, 2, None, 'relu', 1, kType=kType)
-        x = kinverted_res_block(x, 88. / 24, depth(24), 3, 1, None, 'relu', 2, kType=kType)
-        x = kinverted_res_block(x, 4, depth(40), kernel, 2, se_ratio, activation, 3, kType=kType)
-        x = kinverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 4, kType=kType)
-        x = kinverted_res_block(x, 6, depth(40), kernel, 1, se_ratio, activation, 5, kType=kType)
-        x = kinverted_res_block(x, 3, depth(48), kernel, 1, se_ratio, activation, 6, kType=kType)
-        x = kinverted_res_block(x, 3, depth(48), kernel, 1, se_ratio, activation, 7, kType=kType)
-        x = kinverted_res_block(x, 6, depth(96), kernel, 2, se_ratio, activation, 8, kType=kType)
-        x = kinverted_res_block(x, 6, depth(96), kernel, 1, se_ratio, activation, 9, kType=kType)
-        x = kinverted_res_block(x, 6, depth(96), kernel, 1, se_ratio, activation, 10, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=0) else 2
+        x = kinverted_res_block(x,           1, depth(16),         3, local_stride, se_ratio,     'relu',   0, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=1) else 2
+        x = kinverted_res_block(x, 72. / 16, depth(24),         3, local_stride,    None,     'relu',   1, kType=kType)
+        x = kinverted_res_block(x, 88. / 24, depth(24),         3,                 1,    None,     'relu',   2, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=2) else 2
+        x = kinverted_res_block(x,           4, depth(40), kernel, local_stride, se_ratio, activation,   3, kType=kType)
+        x = kinverted_res_block(x,           6, depth(40), kernel,                 1, se_ratio, activation,   4, kType=kType)
+        x = kinverted_res_block(x,           6, depth(40), kernel,                 1, se_ratio, activation,   5, kType=kType)
+        x = kinverted_res_block(x,           3, depth(48), kernel,                 1, se_ratio, activation,   6, kType=kType)
+        x = kinverted_res_block(x,           3, depth(48), kernel,                 1, se_ratio, activation,   7, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=3) else 2
+        x = kinverted_res_block(x,           6, depth(96), kernel, local_stride, se_ratio, activation,   8, kType=kType)
+        x = kinverted_res_block(x,           6, depth(96), kernel,                 1, se_ratio, activation,   9, kType=kType)
+        x = kinverted_res_block(x,           6, depth(96), kernel,                 1, se_ratio, activation, 10, kType=kType)
         return x
     return kMobileNetV3(stack_fn,
-                       1024,
-                       input_shape,
-                       alpha,
-                       'small',
-                       minimalistic,
-                       include_top,
-                       input_tensor,
-                       classes,
-                       pooling,
-                       dropout_rate,
-                       kType=kType,  
-                       **kwargs)
+        1024,
+        input_shape,
+        alpha,
+        'small',
+        minimalistic,
+        include_top,
+        input_tensor,
+        classes,
+        pooling,
+        dropout_rate,
+        kType=kType,
+        l_ratio=l_ratio,
+        ab_ratio=ab_ratio,
+        skip_stride_cnt=skip_stride_cnt,
+        **kwargs)
 
 
 def kMobileNetV3Large(input_shape=None,
-                     alpha=1.0,
-                     minimalistic=False,
-                     include_top=True,
-                     input_tensor=None,
-                     classes=1000,
-                     pooling=None,
-                     dropout_rate=0.2,
-                     kType=0,
-                     **kwargs):
-    def stack_fn(x, kernel, activation, se_ratio, kType=0):
+        alpha=1.0,
+        minimalistic=False,
+        include_top=True,
+        input_tensor=None,
+        classes=1000,
+        pooling=None,
+        dropout_rate=0.2,
+        kType=0,
+        l_ratio=0.0,
+        ab_ratio=0.0,
+        skip_stride_cnt=-1,
+        **kwargs):
+    def stack_fn(x, kernel, activation, se_ratio, kType=0, skip_stride_cnt=-1):
         def depth(d):
             return _depth(d * alpha)
-        x = kinverted_res_block(x, 1, depth(16), 3, 1, None, 'relu', 0, kType=kType)
-        x = kinverted_res_block(x, 4, depth(24), 3, 2, None, 'relu', 1, kType=kType)
-        x = kinverted_res_block(x, 3, depth(24), 3, 1, None, 'relu', 2, kType=kType)
-        x = kinverted_res_block(x, 3, depth(40), kernel, 2, se_ratio, 'relu', 3, kType=kType)
-        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, 'relu', 4, kType=kType)
-        x = kinverted_res_block(x, 3, depth(40), kernel, 1, se_ratio, 'relu', 5, kType=kType)
-        x = kinverted_res_block(x, 6, depth(80), 3, 2, None, activation, 6, kType=kType)
-        x = kinverted_res_block(x, 2.5, depth(80), 3, 1, None, activation, 7, kType=kType)
-        x = kinverted_res_block(x, 2.3, depth(80), 3, 1, None, activation, 8, kType=kType)
-        x = kinverted_res_block(x, 2.3, depth(80), 3, 1, None, activation, 9, kType=kType)
-        x = kinverted_res_block(x, 6, depth(112), 3, 1, se_ratio, activation, 10, kType=kType)
-        x = kinverted_res_block(x, 6, depth(112), 3, 1, se_ratio, activation, 11, kType=kType)
-        x = kinverted_res_block(x, 6, depth(160), kernel, 2, se_ratio, activation, 12, kType=kType)
-        x = kinverted_res_block(x, 6, depth(160), kernel, 1, se_ratio, activation, 13, kType=kType)
-        x = kinverted_res_block(x, 6, depth(160), kernel, 1, se_ratio, activation, 14, kType=kType)
+        x = kinverted_res_block(x,    1,   depth(16),         3,                 1,    None,     'relu',   0, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=0) else 2
+        x = kinverted_res_block(x,    4,   depth(24),         3, local_stride,    None,     'relu',   1, kType=kType)
+        x = kinverted_res_block(x,    3,   depth(24),         3,                 1,    None,     'relu',   2, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=1) else 2
+        x = kinverted_res_block(x,    3,   depth(40), kernel, local_stride, se_ratio,     'relu',   3, kType=kType)
+        x = kinverted_res_block(x,    3,   depth(40), kernel,                 1, se_ratio,     'relu',   4, kType=kType)
+        x = kinverted_res_block(x,    3,   depth(40), kernel,                 1, se_ratio,     'relu',   5, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=2) else 2
+        x = kinverted_res_block(x,    6,   depth(80),         3, local_stride,    None, activation,   6, kType=kType)
+        x = kinverted_res_block(x, 2.5,   depth(80),         3,                 1,    None, activation,   7, kType=kType)
+        x = kinverted_res_block(x, 2.3,   depth(80),         3,                 1,    None, activation,   8, kType=kType)
+        x = kinverted_res_block(x, 2.3,   depth(80),         3,                 1,    None, activation,   9, kType=kType)
+        x = kinverted_res_block(x,    6, depth(112),         3,                 1, se_ratio, activation, 10, kType=kType)
+        x = kinverted_res_block(x,    6, depth(112),         3,                 1, se_ratio, activation, 11, kType=kType)
+        local_stride = 1 if (skip_stride_cnt >=3) else 2
+        x = kinverted_res_block(x,    6, depth(160), kernel, local_stride, se_ratio, activation, 12, kType=kType)
+        x = kinverted_res_block(x,    6, depth(160), kernel,                 1, se_ratio, activation, 13, kType=kType)
+        x = kinverted_res_block(x,    6, depth(160), kernel,                 1, se_ratio, activation, 14, kType=kType)
         return x
     return kMobileNetV3(stack_fn,
-                       1280,
-                       input_shape,
-                       alpha,
-                       'large',
-                       minimalistic,
-                       include_top,
-                       input_tensor,
-                       classes,
-                       pooling,
-                       dropout_rate,
-                       kType=kType,
-                       **kwargs)
+        1280,
+        input_shape,
+        alpha,
+        'large',
+        minimalistic,
+        include_top,
+        input_tensor,
+        classes,
+        pooling,
+        dropout_rate,
+        kType=kType,
+        l_ratio=l_ratio,
+        ab_ratio=ab_ratio,
+        skip_stride_cnt=skip_stride_cnt,
+        **kwargs)
 
 setattr(MobileNetV3Small, '__doc__', MobileNetV3.__doc__)
 setattr(MobileNetV3Large, '__doc__', MobileNetV3.__doc__)
