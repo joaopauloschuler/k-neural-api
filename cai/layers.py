@@ -338,9 +338,18 @@ def conv2d_bn(x,
     return x
 
 def HardSigmoid(x):
+    """
+    This function implements a hard sigmoid like function.
+    You can find more info at https://paperswithcode.com/method/hard-sigmoid .
+    This implementation returns values from 0 to 6.
+    """
     return tensorflow.keras.layers.ReLU( 6.0 )( x + 3.0 ) * ( 1.0 / 6.0 )
 
 def HardSwish(x):
+    """
+    This function implements thet hard swish function.
+    You can find more info at https://paperswithcode.com/method/hard-swish .
+    """
     return tensorflow.keras.layers.Multiply()([tensorflow.keras.layers.Activation(HardSigmoid)(x), x])
     
 def kConv2DType0(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kernel_size=1, stride_size=1, padding='same'):
@@ -766,7 +775,9 @@ def kConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None,
 
 def kPointwiseConv2D(last_tensor, filters=32, channel_axis=3, name=None, activation=None, has_batch_norm=True, has_batch_scale=True, use_bias=True, kType=2):
     """
-    Parameter efficient pointwise convolution as shown in the paper Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet.
+    Parameter efficient pointwise convolution as shown in these papers:
+    https://www.researchgate.net/publication/360226228_Grouped_Pointwise_Convolutions_Reduce_Parameters_in_Convolutional_Neural_Networks
+    https://www.researchgate.net/publication/363413038_An_Enhanced_Scheme_for_Reducing_the_Complexity_of_Pointwise_Convolutions_in_CNNs_for_Image_Classification_Based_on_Interleaved_Grouped_Filters_without_Divisibility_Constraints
     """
     return kConv2D(last_tensor, filters=filters, channel_axis=channel_axis, name=name, activation=activation, has_batch_norm=has_batch_norm, has_batch_scale=has_batch_scale, use_bias=use_bias, kernel_size=1, stride_size=1, padding='same', kType=kType)
 
