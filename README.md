@@ -159,7 +159,7 @@ These papers were made with K-CAI API:
 * `cai.layers.FitChannelCountTo`: forces the number of channels to fit a specific number of channels. The new number of channels must be bigger than the number of input channels. The number of channels is fitted by concatenating copies of existing channels.
 * `cai.layers.GlobalAverageMaxPooling2D`: adds both global Average and Max poolings. `cai.layers.GlobalAverageMaxPooling2D` speeds up training when used as a replacement for standard average pooling and max pooling.
 * `cai.layers.InterleaveChannels`: interleaves channels stepping according to the number passed as parameter.
-* `cai.layers.kPointwiseConv2D`: parameter-efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Significantly Reduces Parameters in EfficientNet](https://github.com/joaopauloschuler/kEffNet) and [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1).
+* `cai.layers.kPointwiseConv2D`: parameter-efficient pointwise convolution as shown in the papers [Grouped Pointwise Convolutions Reduce Parameters in Convolutional Neural Networks](https://github.com/joaopauloschuler/kEffNetV1) and [An Enhanced Scheme for Reducing the Complexity of Pointwise Convolutions in CNNs for Image Classification Based on Interleaved Grouped Filters without Divisibility Constraints](https://github.com/joaopauloschuler/kEffNetV2).
 * `cai.layers.Negate`: negates (multiplies by -1) the input tensor.
 * `cai.layers.SumIntoHalfChannels`: divedes channels into 2 halfs and then sums both halfs. This results into an output with the half of the input channels.
 
