@@ -485,20 +485,40 @@ def save_dataset_in_format(aImages, aClasses, dest_folder_name='img', format='.p
         if (with_vertical_flip): cv2.imwrite(class_folder+'/v_img_'+str(img_cnt)+format, np.flip(img, 0) )
         if (with_horizontal_flip and with_vertical_flip): cv2.imwrite(class_folder+'/hv_img_'+str(img_cnt)+format, np.flip(np.flip(img, 0), 1) )
 
+def bgr_to_rgb_a(aImages):
+    """Transforms an array of images from bgr to rgb.
+    # Arguments
+        aImages: array with images. This is usually x_train or x_test.
+    """
+    return fix_bad_tfkeras_channel_order(aImages)
+
+def bgr_to_rgb(aImage):
+    """Transforms an image array from bgr to rgb.
+    # Arguments
+        aImages: array with images. This is usually x_train or x_test.
+    """
+    return fix_img_bad_tfkeras_channel_order(aImage)
+
 def fix_bad_tfkeras_channel_order(aImages):
-    """Fixes bad channel order from API loading."""
+    """Fixes bad channel order from API loading.
+    # Arguments
+        aImages: array with images. This is usually x_train or x_test.
+    """
     local_x = np.zeros(shape=(aImages.shape[0], aImages.shape[1], aImages.shape[2], aImages.shape[3]))
     local_x[:, :, :, 0] = aImages[:, :, :, 2]
     local_x[:, :, :, 1] = aImages[:, :, :, 1]
     local_x[:, :, :, 2] = aImages[:, :, :, 0]
     return local_x
 
-def fix_img_bad_tfkeras_channel_order(aImages):
-    """Fixes image bad channel order from API loading."""
-    local_x = np.zeros(shape=(aImages.shape[0], aImages.shape[1], aImages.shape[2]))
-    local_x[ :, :, 0] = aImages[ :, :, 2]
-    local_x[ :, :, 1] = aImages[ :, :, 1]
-    local_x[ :, :, 2] = aImages[ :, :, 0]
+def fix_img_bad_tfkeras_channel_order(aImage):
+    """Fixes image bad channel order from API loading.
+        # Arguments
+        aImage: array with one image.
+    """
+    local_x = np.zeros(shape=(aImage.shape[0], aImage.shape[1], aImage.shape[2]))
+    local_x[ :, :, 0] = aImage[ :, :, 2]
+    local_x[ :, :, 1] = aImage[ :, :, 1]
+    local_x[ :, :, 2] = aImage[ :, :, 0]
     return local_x
 
 def save_tfds_in_format(p_tfds, dest_folder_name='img', format='.png', with_horizontal_flip=False, with_vertical_flip=False):
@@ -894,7 +914,12 @@ def load_image_file_names_from_folder(img_folder_name):
     return output_img_list
 
 def flip_images_on_folder(img_folder_name, with_horizontal_flip=True, with_vertical_flip=False):
-    """ Flips images on folder. """
+    """ Flips images on folder. Horizontally flipped images file names start with h_. Vertically flipped start with v_.
+    # Arguments
+    img_folder_name: folder name where the work is done.
+    with_horizontal_flip: adds horizontally flipped images.
+    with_vertical_flip: adds vertically flipped images.
+"""
     img_list = os.listdir(img_folder_name)
     for img_file in img_list:
         absolute_file_name = img_folder_name+'/'+img_file
@@ -1099,6 +1124,10 @@ def print_classification_report(pred_y, test_y):
   print(report)
 
 def rgb_to_black_white_a(test_x):
+  """Transforms an array of images from bgr/rgb to gray levels.
+    # Arguments
+        aImages: array with images. This is usually x_train or x_test.
+  """
   bw_test = np.copy(test_x)
   bw_test[ :, :, :, 0] += test_x[ :, :, :, 1] + test_x[ :, :, :, 2]
   bw_test[ :, :, :, 0] /= 3
