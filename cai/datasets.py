@@ -910,6 +910,10 @@ def flip_images_on_folder(img_folder_name, with_horizontal_flip=True, with_verti
             if (with_horizontal_flip and with_vertical_flip): cv2.imwrite(hv_absolute_dest_file_name, np.flip(np.flip(img, 0), 1) )            
 
 def add_padding_to_make_img_array_squared(img):
+  """ Adds padding to make the image squared.
+  # Arguments
+      img: an image as an array.
+  """
   sizex = img.shape[0]
   sizey = img.shape[1]
   if (sizex == sizey):
@@ -926,8 +930,10 @@ def load_images_from_files(file_names, target_size=(224,224), dtype='float32', s
         file_names: array with file names.
         target_size: output image size.
         dtype: output type.
-        smart_resize: indicates if aspec ration should be kept adding padding.
+        smart_resize: indicates if aspect ratio should be kept via padding.
         lab: indicates if LAB color encoding should be used.
+        rescale: if true, means that the images will be rescaled to [0, +1] or [-2, +2] depending on the bipolar parameter.
+        bipolar: if true with the rescale parameter, images are given in the rage [-2, +2].
     """
     def local_rescale(img,  lab):
         if (lab):
