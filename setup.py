@@ -15,7 +15,7 @@ setup(name='cai',
                         'pandas>=0.22.0',
                         'scikit-image>=0.15.0',
                         'opencv-python>=4.1.2.30', 
-                        'scikit-learn>=0.21.0'
+                        'scikit-learn>=0.21.0',
                         'numpy'],
       classifiers=[
           'Intended Audience :: Developers',
