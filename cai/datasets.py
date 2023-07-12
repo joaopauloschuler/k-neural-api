@@ -1040,7 +1040,8 @@ def load_images_from_folders(seed=None, root_dir=None, lab=False,
         n.lower().endswith(".jpg") or
         n.lower().endswith(".jpeg") or
         n.lower().endswith(".tif") or
-        n.lower().endswith(".tiff")
+        n.lower().endswith(".tiff") or
+        n.lower().endswith(".bmp")
         ]
       random.shuffle(paths)
       cat_total = len(paths)
