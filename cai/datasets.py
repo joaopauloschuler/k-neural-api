@@ -836,7 +836,7 @@ def train_model_on_dataset(model, dataset,  base_model_name, plrscheduler,  batc
     batches_per_validation = np.floor(x_test.shape[0]/batch_size)    
     model_name = base_model_name+'.h5'
     csv_name = base_model_name+'.csv'
-    opt = keras.optimizers.SGD(lr=0.1, momentum=momentum, nesterov=nesterov)
+    opt = keras.optimizers.SGD(learning_rate=0.1, momentum=momentum, nesterov=nesterov)
 
     model.compile(
         loss='categorical_crossentropy',

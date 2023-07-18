@@ -833,7 +833,7 @@ def compiled_two_path_inception_v3(
     predictions = keras.layers.Activation('softmax',name='prediction')(x)
     model = Model(inputs=base_model.input, outputs=predictions)
     if optimizer is None:
-        opt = keras.optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True)
+        opt = keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
     else:
         opt = optimizer
     model.compile(
